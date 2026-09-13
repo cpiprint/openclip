@@ -23,13 +23,26 @@ public struct NewCustomActionPage: View {
         case textSnippet
         case shellScript
     }
-    @State private var actionKind: ActionKind = .openURL
+    @State private var actionKind: ActionKind
     @State private var customURLTemplate: String = "https://google.com/search?q={text}"
     @State private var customSnippetTemplate: String = "**{text}**"
     @State private var customShellScript: String = "echo \"$OPENCLIP_TEXT\" | tr '[:lower:]' '[:upper:]'"
     @State private var replaceSelection: Bool = false
 
-    public init() {}
+    public init(initialKind: String? = nil) {
+        let kind: ActionKind = switch initialKind {
+        case "snippet", "textSnippet": .textSnippet
+        case "shell", "shellScript": .shellScript
+        default: .openURL
+        }
+        _actionKind = State(initialValue: kind)
+        let icon: String = switch kind {
+        case .openURL: "safari.fill"
+        case .textSnippet: "text.quote"
+        case .shellScript: "terminal.fill"
+        }
+        _iconSymbol = State(initialValue: icon)
+    }
 
     public var body: some View {
         SettingsEditorPage {

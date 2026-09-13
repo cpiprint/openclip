@@ -29,19 +29,13 @@ public struct DynamicActionConfigView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(options.enumerated()), id: \.element.id) { index, option in
-                if index > 0 {
-                    Divider()
-                        .padding(.horizontal, 12)
-                }
-                DynamicOptionRowView(
-                    actionID: actionID,
-                    option: option,
-                    optionStore: optionStore,
-                    missingOptionIDs: missingOptionIDs
-                )
-            }
+        ForEach(options, id: \.id) { option in
+            DynamicOptionRowView(
+                actionID: actionID,
+                option: option,
+                optionStore: optionStore,
+                missingOptionIDs: missingOptionIDs
+            )
         }
     }
 }
@@ -159,8 +153,7 @@ struct DynamicOptionRowView: View {
                     .missingFieldHighlight(isMissing)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, 2)
     }
 
     static func choiceDisplayLabel(_ choice: String) -> String {
@@ -283,8 +276,7 @@ private struct SearchEngineURLOptionView: View {
                     .missingFieldHighlight(isMissing)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, 2)
     }
 }
 

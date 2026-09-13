@@ -62,6 +62,17 @@ public final class ActionCustomizationManager: ObservableObject, ActionPresentin
     }
     
     public func override(for actionID: String) -> ActionOverride? {
+        if let existing = overrides[actionID] {
+            if existing.deliveryPreference == nil && actionID == "builtin.define" {
+                var copy = existing
+                copy.deliveryPreference = .preview
+                return copy
+            }
+            return existing
+        }
+        if actionID == "builtin.define" {
+            return ActionOverride(deliveryPreference: .preview)
+        }
         return overrides[actionID]
     }
     

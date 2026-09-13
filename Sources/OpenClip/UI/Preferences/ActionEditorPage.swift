@@ -42,6 +42,7 @@ public struct ActionEditorPage: View {
     /// Cancel still backs out of an accidental reset.
     @State private var appearanceResetPending = false
     @State private var displayMode: Int = 0 // 0 = Icon, 1 = Text
+    @State private var isIconHovered = false
 
     // Custom Action State. The Type picker selects a plain kind — the payload values live in the
     // field state below — so the segment highlight stays stable while the user edits text (a
@@ -69,6 +70,8 @@ public struct ActionEditorPage: View {
     /// to run modal over the window.
     @State private var saveErrorMessage: String?
     @State private var aliasText: String = ""
+    @State private var aliasError: String? = nil
+    @State private var isLoaded = false
     @State private var deliveryPrefString: String = "default"
     @State private var isDuplicating = false
 
@@ -78,6 +81,15 @@ public struct ActionEditorPage: View {
     ) {
         self.action = action
         self.isSidebarPage = isSidebarPage
+        let initialDelivery: String
+        if let pref = ActionCustomizationManager.shared.override(for: action.id)?.deliveryPreference {
+            initialDelivery = pref.rawValue
+        } else if action.id == "builtin.define" {
+            initialDelivery = "preview"
+        } else {
+            initialDelivery = "default"
+        }
+        _deliveryPrefString = State(initialValue: initialDelivery)
     }
 
     private var isCustomAction: Bool {
@@ -157,59 +169,204 @@ public struct ActionEditorPage: View {
     }
 
     private var canProduceTextOutput: Bool {
-        if action.id == "builtin.calculate" { return true }
+        if action.id == "builtin.calculate" || action.id == "builtin.define" { return true }
         if isBuiltin { return false }
         if ActionIdentity.isAIPreset(action) || action.chrome.launchesAI { return true }
         if action is CustomAction {
             return editKind != .openURL
         }
-        if let state = manifestState {
-            let meta = state.manifest.actions[state.targetIndex]
+        if let state = manifestState,
+           let meta = Self.targetMetadata(for: action.id, in: state) {
             switch meta.kind {
-            case .textSnippet, .applescript, .shellInline, .scriptFile:
+            case .textSnippet:
                 return true
             case .url, .webSearch, .keyPress, .service, .shortcut, .group:
                 return false
-            case .js:
-                if let code = meta.scriptCode {
-                    let hasReturnExpr = code.range(of: #"return\s+[^;}\s]"#, options: String.CompareOptions.regularExpression) != nil
-                    let hasPasteOrCopy = code.contains("openclip.paste") || code.contains("openclip.copy")
-                    return hasReturnExpr || hasPasteOrCopy
+            case .applescript:
+                if let code = Self.scriptContent(for: meta, in: state) {
+                    return Self.appleScriptProducesText(code: code)
                 }
-                if let scriptName = meta.script {
-                    let fileURL = state.manifestURL.deletingLastPathComponent().appendingPathComponent(scriptName)
-                    if let content = try? String(contentsOf: fileURL, encoding: .utf8) {
-                        let hasReturnExpr = content.range(of: #"return\s+[^;}\s]"#, options: String.CompareOptions.regularExpression) != nil
-                        let hasPasteOrCopy = content.contains("openclip.paste") || content.contains("openclip.copy")
-                        return hasReturnExpr || hasPasteOrCopy
-                    }
+                return true
+            case .shellInline, .scriptFile:
+                if let code = Self.scriptContent(for: meta, in: state) {
+                    return Self.shellProducesText(code: code)
+                }
+                return true
+            case .js:
+                if let code = Self.scriptContent(for: meta, in: state) {
+                    return Self.jsProducesText(code: code)
                 }
                 return true
             }
         }
+        let base = Self.unwrapBase(action)
+        if let jsAction = base as? JavaScriptAction {
+            return Self.jsProducesText(code: jsAction.scriptCode)
+        }
+        if let asAction = base as? AppleScriptAction {
+            return Self.appleScriptProducesText(code: asAction.appleScriptCode)
+        }
+        if let scriptAction = base as? ScriptAction {
+            if let content = try? String(contentsOf: scriptAction.scriptURL, encoding: .utf8) {
+                return Self.shellProducesText(code: content)
+            }
+            return true
+        }
         return false
     }
 
-    public var body: some View {
-        SettingsEditorPage {
-            VStack(alignment: .leading, spacing: 14) {
-                if isSidebarPage {
-                    // A page the sidebar lists is *about* this action, so it opens the way an
-                    // extension's page does. A sub-page reached from its owner does not: the
-                    // owner's hero already said what you are inside.
-                    let presentation = customizationManager.presented(action, surface: .table)
-                    SettingsHeroHeader(
-                        glyph: .icon(
-                            SettingsHeroHeader.glyph(for: action, presented: presentation),
-                            tint: heroTint
-                        ),
-                        title: presentation.title,
-                        footnote: heroFootnote
-                    )
-                    .padding(.top, -8)
+    private var previewIcon: ActionIcon {
+        ActionAppearanceFields.resolvedPreviewIcon(
+            displayMode: displayMode,
+            title: customTitle,
+            displayTextFallback: action.title,
+            iconSymbol: iconSymbol,
+            initialIconSymbol: initialIconSymbol,
+            baseIcon: baseIconState,
+            textGlyphFallbackSymbol: Self.iconModeFallbackSymbol(for: action)
+        )
+    }
+
+    private var iconButtonHelp: String {
+        switch previewIcon {
+        case .symbol(let name):
+            return name.isEmpty ? String(localized: "Choose icon") : String(localized: "Icon: \(name) — click to change")
+        case .text(let text):
+            if displayMode == 1 {
+                return String(localized: "Popup bar shows “\(text)” — click to choose the icon for icon mode")
+            }
+            return String(localized: "Text glyph “\(text)” — click to replace with an icon")
+        case .url:
+            return String(localized: "Remote image — click to replace with an icon")
+        case .local(let url):
+            if url.path.hasPrefix(Constants.customIconsDirectory.path) {
+                return String(localized: "Custom icon “\(url.lastPathComponent)” — click to change")
+            }
+            return String(localized: "Package image “\(url.lastPathComponent)” — click to replace with an icon")
+        }
+    }
+
+    private var actionDescription: String {
+        let state = manifestState ?? Self.locateManifest(for: action)
+        if let desc = state?.manifest.localizedDescription?.resolve() ?? state?.manifest.description,
+           !desc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return desc
+        }
+        switch action.id {
+        case "builtin.calculate":
+            return String(localized: "Evaluate mathematical expressions directly.")
+        case "builtin.define":
+            return String(localized: "Look up definitions in the macOS Dictionary.")
+        case "builtin.search":
+            return String(localized: "Search the web using your default or chosen search engine.")
+        case "builtin.copy":
+            return String(localized: "Copy selected text to the clipboard.")
+        case "builtin.paste":
+            return String(localized: "Paste current clipboard content.")
+        case "builtin.cut":
+            return String(localized: "Cut selected text to the clipboard.")
+        default:
+            break
+        }
+        if ActionIdentity.isAIPreset(action) || action.chrome.launchesAI {
+            return String(localized: "Process selected text with AI.")
+        }
+        if isCustomAction {
+            return String(localized: "Custom user-authored action.")
+        }
+        if let packageID = ActionIdentity.extensionPackageID(of: action),
+           let info = InstalledExtensionInfo.info(for: packageID, in: coordinator.actions) {
+            return info.name
+        }
+        return ""
+    }
+
+    @ViewBuilder
+    private var heroSection: some View {
+        VStack(spacing: 12) {
+            Button {
+                router.pushIconPicker(writingTo: $iconSymbol)
+            } label: {
+                ZStack(alignment: .bottomTrailing) {
+                    ExtensionIconTile(icon: previewIcon, tint: heroTint, size: 64)
+                        .shadow(color: heroTint.opacity(0.28), radius: 8, y: 3)
+
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 20))
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(Color.secondary)
+                        .background(Circle().fill(Color(nsColor: .windowBackgroundColor)).padding(2))
+                        .offset(x: 4, y: 4)
+                        .opacity(isIconHovered ? 1.0 : 0.7)
+                }
+                .scaleEffect(isIconHovered ? 1.04 : 1.0)
+                .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isIconHovered)
+            }
+            .buttonStyle(.plain)
+            .help(iconButtonHelp)
+            .onHover { isIconHovered = $0 }
+            .accessibilityLabel(String(localized: "Choose icon"))
+            .disabled(manifestMissing)
+
+            VStack(spacing: 4) {
+                let displayTitle = customTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                Text(displayTitle.isEmpty ? action.title : displayTitle)
+                    .font(.system(size: 22, weight: .bold))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if !actionDescription.isEmpty {
+                    Text(actionDescription)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
-                if let bannerText = configurationBannerText {
+                if !heroFootnote.isEmpty && heroFootnote != actionDescription && heroFootnote != displayTitle && heroFootnote != action.title {
+                    Text(heroFootnote)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 1)
+                }
+            }
+            .frame(maxWidth: 440)
+
+            HStack(spacing: 8) {
+                Text("Popup Bar:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Picker("", selection: $displayMode) {
+                    Text("Show Icon").tag(0)
+                    Text("Show Text").tag(1)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 170)
+            }
+            .padding(.top, 2)
+            .disabled(manifestMissing)
+        }
+        .textCase(nil)
+        .frame(maxWidth: .infinity)
+        .padding(.top, 4)
+        .padding(.bottom, 6)
+    }
+
+    public var body: some View {
+        Form {
+            Section {
+                EmptyView()
+            } header: {
+                heroSection
+            }
+
+            if let bannerText = configurationBannerText {
+                Section {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
@@ -219,206 +376,63 @@ public struct ActionEditorPage: View {
                             .foregroundStyle(.primary)
                         Spacer(minLength: 0)
                     }
-                    .padding(10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color.orange.opacity(0.12))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(Color.orange.opacity(0.35), lineWidth: 1)
-                    )
                 }
+            }
 
-                // Hero Header Card (Icon, Name & Display Mode)
-                InsetGroupCard {
-                    ActionAppearanceFields(
-                        title: $customTitle,
-                        displayTextFallback: action.title,
-                        iconSymbol: $iconSymbol,
-                        initialIconSymbol: initialIconSymbol,
-                        baseIcon: baseIconState,
-                        displayMode: $displayMode,
-                        textGlyphFallbackSymbol: Self.iconModeFallbackSymbol(for: action),
-                        onPickIcon: {
-                            router.pushIconPicker(writingTo: $iconSymbol)
-                        }
-                    )
+            Section {
+                SettingsRow(title: "Name") {
+                    TextField(action.title, text: $customTitle)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 240)
+                        .disabled(manifestMissing)
                 }
-                .disabled(manifestMissing)
 
                 if ActionIdentity.isBindable(action) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("KEYBOARD")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                            .padding(.leading, 4)
+                    SettingsRow(title: "Shortcut") {
+                        KeyboardShortcuts.Recorder(for: .actionHotkey(action.id))
+                    }
 
-                        InsetGroupCard {
-                            HStack(spacing: 12) {
-                                Text("Alias")
-                                    .font(.subheadline)
-                                TextField("e.g. tr", text: $aliasText)
-                                    .textFieldStyle(.roundedBorder)
-                                    .frame(width: 80)
-                                    .disabled(manifestMissing)
-
-                                Spacer()
-
-                                Text("Hotkey")
-                                    .font(.subheadline)
-                                KeyboardShortcuts.Recorder(for: .actionHotkey(action.id))
+                    SettingsRow(title: "Alias") {
+                        HStack(spacing: 8) {
+                            if let aliasError {
+                                Text(aliasError)
+                                    .font(.caption2)
+                                    .foregroundStyle(.red)
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
+                            TextField("e.g. tr", text: $aliasText)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(maxWidth: 120)
+                                .disabled(manifestMissing)
                         }
                     }
                 }
 
                 if canProduceTextOutput {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("OUTPUT")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                            .padding(.leading, 4)
-
-                        InsetGroupCard {
-                            HStack(spacing: 12) {
-                                Text("When finished")
-                                    .font(.subheadline)
-                                Spacer()
-                                Picker("", selection: $deliveryPrefString) {
-                                    Text("Default").tag("default")
-                                    Text("Preview").tag("preview")
-                                    Text("Paste").tag("paste")
-                                    Text("Copy").tag("copy")
-                                }
-                                .labelsHidden()
-                                .pickerStyle(.segmented)
-                                .frame(width: 250)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
+                    SettingsRow(title: "When finished") {
+                        Picker("", selection: $deliveryPrefString) {
+                            Text("Default").tag("default")
+                            Text("Preview").tag("preview")
+                            Text("Paste").tag("paste")
+                            Text("Copy").tag("copy")
                         }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .frame(width: 250)
                     }
                 }
 
-                // Options Section (shown only when the action declares configurable options)
                 if !action.actionOptions.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("OPTIONS")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                            .padding(.leading, 4)
-
-                        InsetGroupCard {
-                            DynamicActionConfigView(
-                                actionID: action.id,
-                                options: action.actionOptions,
-                                optionStore: SecretActionOptionStore(),
-                                missingOptionIDs: Set(configurationRequest?.missingOptionIDs ?? [])
-                            )
-                        }
-                    }
-                } else if logicEditable {
-                    // Execution Logic Section (GUI-authored custom actions only)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("EXECUTION LOGIC")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                            .padding(.leading, 4)
-
-                        InsetGroupCard {
-                            VStack(alignment: .leading, spacing: 0) {
-                                HStack(spacing: 12) {
-                                    Text("Type")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    Picker("Type", selection: $editKind) {
-                                        Text("Open URL").tag(EditKind.openURL)
-                                        Text("Text Snippet").tag(EditKind.textSnippet)
-                                        Text("Shell Script").tag(EditKind.shellScript)
-                                    }
-                                    .pickerStyle(.segmented)
-                                    .labelsHidden()
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-
-                                Divider()
-                                    .padding(.horizontal, 12)
-
-                                Group {
-                                    switch editKind {
-                                    case .openURL:
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text("URL Template").font(.caption).foregroundStyle(.secondary)
-                                            TextField("https://example.com/search?q={text}", text: $customURLTemplate)
-                                                .textFieldStyle(.roundedBorder)
-                                        }
-                                    case .textSnippet:
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text("Snippet Template").font(.caption).foregroundStyle(.secondary)
-                                            TextEditor(text: $customSnippetTemplate)
-                                                .font(.system(.body, design: .monospaced))
-                                                .frame(height: 90)
-                                                .scrollContentBackground(.hidden)
-                                                .padding(6)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                                        .fill(Color.primary.opacity(0.04))
-                                                        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Color.primary.opacity(0.12)))
-                                                )
-                                        }
-                                    case .shellScript:
-                                        VStack(alignment: .leading, spacing: 6) {
-                                            Text("Shell Script (Zsh)").font(.caption).foregroundStyle(.secondary)
-                                            TextEditor(text: $customShellScript)
-                                                .font(.system(.body, design: .monospaced))
-                                                .frame(height: 110)
-                                                .scrollContentBackground(.hidden)
-                                                .padding(6)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                                        .fill(Color.primary.opacity(0.04))
-                                                        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Color.primary.opacity(0.12)))
-                                                )
-
-                                            Toggle("Replace selected text with output", isOn: $replaceSelection)
-                                                .font(.subheadline)
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
-                            }
-                        }
-                    }
-                } else if manifestMissing {
-                    // Warning only when manifest is truly unlocatable / standalone script
-                    InsetGroupCard {
-                        HStack(alignment: .top, spacing: 10) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 13))
-                                .padding(.top, 1)
-
-                            Text("This action is a standalone script file with no editable manifest. Re-create it as an extension package to customize its behavior.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(12)
-                    }
+                    DynamicActionConfigView(
+                        actionID: action.id,
+                        options: action.actionOptions,
+                        optionStore: SecretActionOptionStore(),
+                        missingOptionIDs: Set(configurationRequest?.missingOptionIDs ?? [])
+                    )
                 }
-            }
-        } footer: {
-            VStack(alignment: .leading, spacing: 10) {
-                if let saveErrorMessage {
-                    SettingsInlineError(message: saveErrorMessage)
-                }
-
-                HStack(spacing: 12) {
+            } header: {
+                Text("Configuration")
+            } footer: {
+                HStack {
                     Button("Reset to Default") {
                         resetAppearance()
                     }
@@ -426,36 +440,145 @@ public struct ActionEditorPage: View {
                     .foregroundStyle(.secondary)
                     .font(.caption)
                     .disabled(manifestMissing)
+                    Spacer()
+                }
+                .padding(.top, 4)
+            }
 
-                    if isDuplicating {
-                        Text("Duplicating…")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            if logicEditable {
+                Section {
+                    SettingsRow(title: "Type") {
+                        Picker("Type", selection: $editKind) {
+                            Text("Open URL").tag(EditKind.openURL)
+                            Text("Text Snippet").tag(EditKind.textSnippet)
+                            Text("Shell Script").tag(EditKind.shellScript)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
                     }
 
-                    Spacer()
+                    Group {
+                        switch editKind {
+                        case .openURL:
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("URL Template").font(.caption).foregroundStyle(.secondary)
+                                TextField("https://example.com/search?q={text}", text: $customURLTemplate)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                        case .textSnippet:
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Snippet Template").font(.caption).foregroundStyle(.secondary)
+                                TextEditor(text: $customSnippetTemplate)
+                                    .font(.system(.body, design: .monospaced))
+                                    .frame(height: 90)
+                                    .scrollContentBackground(.hidden)
+                                    .padding(6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .fill(Color.primary.opacity(0.04))
+                                            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Color.primary.opacity(0.12)))
+                                    )
+                            }
+                        case .shellScript:
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Shell Script (Zsh)").font(.caption).foregroundStyle(.secondary)
+                                TextEditor(text: $customShellScript)
+                                    .font(.system(.body, design: .monospaced))
+                                    .frame(height: 110)
+                                    .scrollContentBackground(.hidden)
+                                    .padding(6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .fill(Color.primary.opacity(0.04))
+                                            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Color.primary.opacity(0.12)))
+                                    )
 
-                    Button(isSidebarPage ? "Revert" : "Cancel") { close() }
-                        .keyboardShortcut(.cancelAction)
-
-                    Button("Save Changes") {
-                        Task {
-                            if await saveChanges() {
-                                close()
+                                Toggle("Replace selected text with output", isOn: $replaceSelection)
+                                    .font(.subheadline)
                             }
                         }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(saveDisabled)
-                    .keyboardShortcut(.defaultAction)
+                    .padding(.vertical, 4)
+                } header: {
+                    Text("Execution Logic")
+                }
+            } else if manifestMissing {
+                Section {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .foregroundStyle(.secondary)
+                            .font(.system(size: 13))
+                            .padding(.top, 1)
+
+                        Text("This action is a standalone script file with no editable manifest. Re-create it as an extension package to customize its behavior.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
         }
+        .formStyle(.grouped)
         .onAppear {
             loadInitialState()
+            DispatchQueue.main.async {
+                isLoaded = true
+            }
         }
         .onDisappear {
+            if isLoaded {
+                autoSave()
+            }
             router.clearConfigurationRequest(for: action.id)
+        }
+        .task(id: customTitle) {
+            guard isLoaded else { return }
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            autoSave()
+        }
+        .task(id: aliasText) {
+            guard isLoaded else { return }
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            autoSave()
+        }
+        .onChange(of: displayMode) { _, _ in
+            guard isLoaded else { return }
+            autoSave()
+        }
+        .onChange(of: iconSymbol) { _, _ in
+            guard isLoaded else { return }
+            autoSave()
+        }
+        .onChange(of: deliveryPrefString) { _, _ in
+            guard isLoaded else { return }
+            autoSave()
+        }
+        .onChange(of: editKind) { _, _ in
+            guard isLoaded else { return }
+            autoSave()
+        }
+        .onChange(of: replaceSelection) { _, _ in
+            guard isLoaded else { return }
+            autoSave()
+        }
+        .task(id: customURLTemplate) {
+            guard isLoaded else { return }
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            autoSave()
+        }
+        .task(id: customSnippetTemplate) {
+            guard isLoaded else { return }
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            autoSave()
+        }
+        .task(id: customShellScript) {
+            guard isLoaded else { return }
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            autoSave()
         }
         // The toolbar's ellipsis menu belongs to whichever page is on screen; levels underneath
         // stay mounted, so each one answers only for itself.
@@ -543,6 +666,137 @@ public struct ActionEditorPage: View {
         return ExtensionManager.uniformActionID(metadata: meta, manifest: state.manifest, index: state.targetIndex) == actionID
     }
 
+    /// Resolves the specific `ExtensionActionMetadata` for `actionID`. If `actionID` belongs to a
+    /// sub-action of a group, searches through the group's `subActions` hierarchy.
+    static func targetMetadata(for actionID: String, in state: LocatedManifest) -> ExtensionActionMetadata? {
+        guard state.manifest.actions.indices.contains(state.targetIndex) else { return nil }
+        let topMeta = state.manifest.actions[state.targetIndex]
+        let topID = ExtensionManager.uniformActionID(metadata: topMeta, manifest: state.manifest, index: state.targetIndex)
+        if topID == actionID {
+            return topMeta
+        }
+        func searchSubActions(_ subActions: [ExtensionActionMetadata], parentID: String) -> ExtensionActionMetadata? {
+            for (subIndex, sub) in subActions.enumerated() {
+                let subID = "\(parentID).\(sub.id ?? String(subIndex))"
+                if subID == actionID {
+                    return sub
+                }
+                if let nested = sub.subActions, let found = searchSubActions(nested, parentID: subID) {
+                    return found
+                }
+            }
+            return nil
+        }
+        if let subActions = topMeta.subActions {
+            return searchSubActions(subActions, parentID: topID)
+        }
+        return topMeta
+    }
+
+    static func scriptContent(for meta: ExtensionActionMetadata, in state: LocatedManifest) -> String? {
+        if let code = meta.scriptCode, !code.isEmpty {
+            return code
+        }
+        if let scriptName = meta.script, !scriptName.isEmpty {
+            let fileURL = state.manifestURL.deletingLastPathComponent().appendingPathComponent(scriptName)
+            return try? String(contentsOf: fileURL, encoding: .utf8)
+        }
+        return nil
+    }
+
+    /// Determines if a JavaScript extension produces text output governed by the delivery preference.
+    static func jsProducesText(code: String) -> Bool {
+        let entryPattern = #"(?:(?:async\s+)?function\s+(?:action|main)\s*\([^)]*\)|(?:var|let|const\s+)?(?:action|main)\s*=\s*(?:async\s*)?(?:function\s*\([^)]*\)|\([^)]*\)\s*=>|[a-zA-Z0-9_]+\s*=>))\s*\{([\s\S]*)\}"#
+        let body: String
+        if let match = code.range(of: entryPattern, options: .regularExpression) {
+            body = String(code[match])
+        } else {
+            body = code
+        }
+
+        let hasReturnExpr = body.range(of: #"return\s+(?!(?:true|false|undefined|null)\b)[^;}\s]"#, options: .regularExpression) != nil
+        if !hasReturnExpr {
+            if code.range(of: #"=>\s*[^{\s]"#, options: .regularExpression) != nil {
+                return true
+            }
+            return false
+        }
+        return true
+    }
+
+    /// Determines if an AppleScript extension produces text output.
+    static func appleScriptProducesText(code: String) -> Bool {
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return false }
+        if trimmed.hasPrefix("say ") { return false }
+        if trimmed.contains("tell application \"System Events\"") && trimmed.contains("keystroke") {
+            return false
+        }
+        if trimmed.contains("return \"\"") || trimmed.contains("return ''") {
+            return false
+        }
+        if trimmed.contains("do shell script") && trimmed.contains("main.sh") {
+            return false
+        }
+        return true
+    }
+
+    /// Determines if a shell extension produces text output to stdout.
+    static func shellProducesText(code: String) -> Bool {
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return false }
+
+        // QuickLook preview window (e.g. qlmanage -p in QR Code Generator)
+        if trimmed.contains("qlmanage") {
+            return false
+        }
+
+        // Background process with output redirected to /dev/null and no stdout
+        if (trimmed.contains(">/dev/null") || trimmed.contains("> /dev/null")) && trimmed.contains("&") {
+            if !trimmed.contains("echo ") && !trimmed.contains("printf ") && !trimmed.contains("cat ") {
+                return false
+            }
+        }
+
+        // Swift / Cocoa GUI runner or binary with no stdout (e.g. Large Type)
+        if (trimmed.contains("swift ") || trimmed.contains("main.swift") || trimmed.contains("largetype")) &&
+           (trimmed.contains(">/dev/null") || !trimmed.contains("echo ")) {
+            return false
+        }
+
+        // Piping into `open` (e.g. `printf ... | open -f -a TextEdit`) or bare `open -a`
+        if trimmed.contains("| open ") || trimmed.contains("| /usr/bin/open ") {
+            return false
+        }
+
+        // Opens an application without producing text
+        if trimmed.contains("open -a ") || trimmed.contains("open -f ") || trimmed.contains("open -g ") {
+            if !trimmed.contains("echo ") && !trimmed.contains("| implode") {
+                return false
+            }
+        }
+
+        // Emits only JSON toast effects (like Harper check/dictionary/forget)
+        if trimmed.contains("{\"type\":\"toast\"") || trimmed.contains("{type:\"toast\"") {
+            if !trimmed.contains("| implode") && !trimmed.contains("type:\"copy\"") {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    private static func unwrapBase(_ action: any Action) -> any Action {
+        var cur = action
+        while true {
+            if let d = cur as? DeliveryDecoratedAction { cur = d.base; continue }
+            if let k = cur as? KeywordDecoratedAction { cur = k.base; continue }
+            if let m = cur as? MenuDecoratedAction { cur = m.base; continue }
+            break
+        }
+        return cur
+    }
+
     // MARK: - State loading
 
     private func loadInitialState() {
@@ -552,6 +806,8 @@ public struct ActionEditorPage: View {
         customTitle = override?.customTitle ?? action.title
         if let pref = override?.deliveryPreference {
             deliveryPrefString = pref.rawValue
+        } else if action.id == "builtin.define" {
+            deliveryPrefString = "preview"
         } else {
             deliveryPrefString = "default"
         }
@@ -644,11 +900,10 @@ public struct ActionEditorPage: View {
     }
 
     private func resetAppearance() {
-        // Editors-only reset: persisted overrides/manifest are cleared on Save, so Cancel still
-        // backs out of an accidental reset.
-        appearanceResetPending = true
+        ActionCustomizationManager.shared.resetOverride(for: action.id)
+        appearanceResetPending = false
         initialStoredSymbol = nil
-        deliveryPrefString = "default"
+        deliveryPrefString = (action.id == "builtin.define") ? "preview" : "default"
         seedBaseline(from: action.icon)
         if case .text = action.icon {
             displayMode = 1
@@ -656,6 +911,16 @@ public struct ActionEditorPage: View {
             displayMode = 0
         }
         customTitle = action.title
+        aliasText = ""
+        _ = ActionBindingStore.shared.setAlias("", for: action.id)
+        aliasError = nil
+        if let customAction = action as? CustomAction {
+            _ = saveCustomActionChanges(customAction)
+        } else if !isBuiltin {
+            Task {
+                _ = await saveManifestChanges()
+            }
+        }
     }
 
     // MARK: - Saving
@@ -667,18 +932,21 @@ public struct ActionEditorPage: View {
         return false
     }
 
-    private func saveChanges() async -> Bool {
-        saveErrorMessage = nil
-        if ActionIdentity.isBindable(action) {
-            switch ActionBindingStore.shared.setAlias(aliasText, for: action.id) {
-            case .accepted, .cleared:
-                break
-            case .invalid:
-                return fail(String(localized: "Aliases can only use letters, numbers, and hyphens."))
-            case .collision:
-                return fail(String(localized: "That alias is already used."))
-            }
+    private func saveAlias() {
+        guard ActionIdentity.isBindable(action) else { return }
+        switch ActionBindingStore.shared.setAlias(aliasText, for: action.id) {
+        case .accepted, .cleared:
+            aliasError = nil
+        case .invalid:
+            aliasError = String(localized: "Letters, numbers, and hyphens only")
+        case .collision:
+            aliasError = String(localized: "Alias already in use")
         }
+    }
+
+    private func autoSave() {
+        guard isLoaded, !manifestMissing else { return }
+        saveAlias()
         if appearanceResetPending {
             ActionCustomizationManager.shared.resetOverride(for: action.id)
             appearanceResetPending = false
@@ -686,12 +954,14 @@ public struct ActionEditorPage: View {
             saveAppearanceOverride()
         }
         if let customAction = action as? CustomAction {
-            return saveCustomActionChanges(customAction)
+            _ = saveCustomActionChanges(customAction)
+            return
         }
-        if isBuiltin {
-            return true
+        if !isBuiltin {
+            Task {
+                _ = await saveManifestChanges()
+            }
         }
-        return await saveManifestChanges()
     }
 
     private func saveCustomActionChanges(_ customAction: CustomAction) -> Bool {
@@ -744,7 +1014,7 @@ public struct ActionEditorPage: View {
         case "preview": .preview
         case "paste": .paste
         case "copy": .copy
-        default: nil
+        default: (action.id == "builtin.define") ? .preview : nil
         }
         ActionCustomizationManager.shared.setDeliveryPreference(pref, for: action.id)
     }

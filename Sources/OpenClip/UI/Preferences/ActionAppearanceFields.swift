@@ -164,6 +164,7 @@ struct ActionAppearanceFields: View {
 // MARK: - Inset Group Card Container
 
 struct InsetGroupCard<Content: View>: View {
+    @Environment(\.colorScheme) private var colorScheme
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -172,12 +173,28 @@ struct InsetGroupCard<Content: View>: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
+                .fill(cardFill)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color.primary.opacity(0.10), lineWidth: 1)
+                .stroke(cardStroke, lineWidth: 1)
         )
+    }
+
+    private var cardFill: Color {
+        if colorScheme == .dark {
+            return Color.white.opacity(0.065)
+        } else {
+            return Color.primary.opacity(0.04)
+        }
+    }
+
+    private var cardStroke: Color {
+        if colorScheme == .dark {
+            return Color.white.opacity(0.12)
+        } else {
+            return Color.primary.opacity(0.06)
+        }
     }
 }
 

@@ -1,11 +1,9 @@
 // CustomActionsPage.swift
 // OpenClip
 //
-// The user's own actions — Open URL, Text Snippet, Shell Script — as one sidebar page, the way
-// Raycast keeps Quicklinks and Script Commands together: a hero, then each action in the same
-// `ActionSettingsRow` table the Shortcuts page and an extension's page use, and the way to add
-// another. Duplicating or deleting one is done from
-// its own page's toolbar menu.
+// The user's own actions — Open URL, Text Snippet, Shell Script — as one sidebar page:
+// a hero header, quick-start cards for creating new actions, and each action in the same
+// ActionSettingsRow table the Shortcuts page and an extension's page use.
 
 import SwiftUI
 import Core
@@ -18,6 +16,8 @@ struct CustomActionsPage: View {
     @ObservedObject private var coordinator = ActionCoordinator.shared
     @ObservedObject private var customizationManager = ActionCustomizationManager.shared
     @ObservedObject private var router = SettingsRouter.shared
+
+    @State private var hoveredKind: String? = nil
     /// Why an alias typed in the table below was refused.
     @State private var aliasError: String?
 
@@ -47,13 +47,8 @@ struct CustomActionsPage: View {
                 )
             }
 
-            Section {
-                if customActions.isEmpty {
-                    Text("No custom actions yet.")
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 8)
-                } else {
+            if !customActions.isEmpty {
+                Section {
                     ForEach(customActions, id: \.id) { action in
                         ActionSettingsRow(
                             action: action,
@@ -65,29 +60,108 @@ struct CustomActionsPage: View {
                             }
                         )
                     }
-                }
+                } header: {
+                    Text("Actions")
+                } footer: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        if let aliasError {
+                            SettingsInlineError(message: aliasError)
+                        }
 
-                SettingsDisclosureRow {
-                    router.push(.newCustomAction)
-                } content: {
-                    Label("Add Custom Action", systemImage: "plus.circle")
-                        .foregroundStyle(Color.accentColor)
-                }
-            } header: {
-                Text("Actions")
-            } footer: {
-                VStack(alignment: .leading, spacing: 10) {
-                    if let aliasError {
-                        SettingsInlineError(message: aliasError)
+                        Text("Open an action to change its name, icon, shortcut or what it does, or to delete it. Use Customize to place it in the popup bar.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
+                }
+            }
 
-                    Text("Open an action to change its name, icon, shortcut or what it does, or to delete it. Use Customize to place it in the popup bar.")
+            Section {
+                quickCreateRow(
+                    kind: "url",
+                    title: "Open URL",
+                    subtitle: "Open a web URL or search engine query using the selected text",
+                    systemImage: "safari.fill",
+                    tint: .blue
+                )
+
+                quickCreateRow(
+                    kind: "snippet",
+                    title: "Text Snippet",
+                    subtitle: "Transform or format the selection using template placeholders",
+                    systemImage: "text.quote",
+                    tint: .green
+                )
+
+                quickCreateRow(
+                    kind: "shell",
+                    title: "Shell Script",
+                    subtitle: "Execute a bash or zsh script with the selection in OPENCLIP_TEXT",
+                    systemImage: "terminal.fill",
+                    tint: .purple
+                )
+            } header: {
+                Text(customActions.isEmpty ? "Get Started" : "Create New Action")
+            } footer: {
+                if customActions.isEmpty {
+                    Text("Custom actions appear in your popup bar and palette. You can trigger them anytime with hotkeys or aliases.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func quickCreateRow(
+        kind: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
+        systemImage: String,
+        tint: Color
+    ) -> some View {
+        Button {
+            router.push(.newCustomAction(kind: kind))
+        } label: {
+            HStack(spacing: 12) {
+                SettingsIconTile(systemImage: systemImage, tint: tint, size: 28)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+
+                    Text(subtitle)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .bold))
+                    Text("Create")
+                        .font(.caption.weight(.medium))
+                }
+                .foregroundStyle(tint)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(tint.opacity(hoveredKind == kind ? 0.22 : 0.12))
+                )
+                .scaleEffect(hoveredKind == kind ? 1.04 : 1.0)
+                .animation(.easeInOut(duration: 0.15), value: hoveredKind == kind)
+            }
+            .contentShape(Rectangle())
+            .padding(.vertical, 3)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered in
+            hoveredKind = isHovered ? kind : nil
+        }
     }
 
     private func kindDescription(_ action: any Action) -> String {

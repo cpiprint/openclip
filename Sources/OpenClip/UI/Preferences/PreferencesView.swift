@@ -120,6 +120,7 @@ public struct PreferencesView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .openClipExtensionsDidChange)) { _ in
             packageReloadToken += 1
+            loadDisabledState()
         }
         .onChange(of: router.path) { _, newPath in
             syncToolbar()
@@ -141,9 +142,11 @@ public struct PreferencesView: View {
                 router.push(.newGroup(
                     memberIDs: CustomizePage.groupCandidates(selectedRowIDs: selectedRowIDs, coordinator: coordinator)
                 ))
-            case .addCustomAction: router.push(.newCustomAction)
+            case .addCustomAction: router.push(.newCustomAction())
             case .addApplication: router.push(.addApplication)
             case .addAIAction: router.push(.aiNewPreset)
+            case .installExtensionFile: presentInstallExtensionPanel()
+            case .refreshStore: Task { await storeViewModel.refreshCatalog() }
             case .setStoreSort(let sort): storeViewModel.selectedSort = sort
             case .setPageToggle(let isOn): setPageToggle(isOn)
             case .pageMenuItem(let id): runPageMenuItem(id)
@@ -263,7 +266,7 @@ public struct PreferencesView: View {
     private func pageMenuItems(for page: SettingsPage) -> [SettingsToolbarMenuItem] {
         switch page {
         case .store:
-            return SettingsToolbarAccessories.storeMenuItems(isRefreshing: storeViewModel.isLoading)
+            return []
         case .extensionPackage(let id):
             guard InstalledExtensionInfo.info(for: id, in: coordinator.actions) != nil else { return [] }
             let details = packageDetails?.packageID == id ? packageDetails : nil
@@ -386,17 +389,21 @@ public struct PreferencesView: View {
     /// `SettingsSidebarOrder`. A row answers a search for any of its actions' names or keywords,
     /// so "verify" finds the JWT extension and "sum" finds Calculate.
     private var secondGroupRows: [SettingsSidebarRow] {
-        var rows: [SettingsSidebarRow] = [SettingsSidebarRow(systemPage: .ai)]
+        var rows: [SettingsSidebarRow] = [
+            SettingsSidebarRow(systemPage: .ai, isDisabled: !aiManager.isAIEnabled)
+        ]
 
         for action in coordinator.actions where ActionIdentity.isBuiltin(action)
             && !action.chrome.launchesAI
             && action.chrome.rowStyle != .actionGroup {
             let presentation = customizationManager.presented(action, surface: .table)
+            let isActionDisabled = disabledActionIDs.contains(action.id)
             rows.append(SettingsSidebarRow(
                 page: .builtinAction(id: action.id),
                 title: presentation.title,
                 keywords: action.keywords + [action.id],
-                tile: .icon(SettingsHeroHeader.glyph(for: action, presented: presentation), tint: SettingsTint.openClip)
+                tile: .icon(SettingsHeroHeader.glyph(for: action, presented: presentation), tint: SettingsTint.openClip),
+                isDisabled: isActionDisabled
             ))
         }
 
@@ -404,11 +411,15 @@ public struct PreferencesView: View {
             var keywords = info.commands.map { customizationManager.presented($0, surface: .table).title }
             keywords.append(contentsOf: info.commands.flatMap(\.keywords))
             keywords.append(info.packageID)
+            let isPkgDisabled = disabledPackages.contains(info.packageID)
+                || info.gatedReason != nil
+                || (!info.commands.isEmpty && info.commands.allSatisfy { disabledActionIDs.contains($0.id) })
             rows.append(SettingsSidebarRow(
                 page: .extensionPackage(id: info.packageID),
                 title: info.name,
                 keywords: keywords,
-                tile: .icon(info.icon, tint: SettingsTint.extensionTint(for: info.packageID))
+                tile: .icon(info.icon, tint: SettingsTint.extensionTint(for: info.packageID)),
+                isDisabled: isPkgDisabled
             ))
         }
 
@@ -538,8 +549,8 @@ public struct PreferencesView: View {
             )
         case .action(let id):
             actionEditor(for: id)
-        case .newCustomAction:
-            NewCustomActionPage()
+        case .newCustomAction(let kind):
+            NewCustomActionPage(initialKind: kind)
         case .newGroup(let memberIDs):
             NewGroupPage(memberActionIDs: memberIDs)
         case .iconPicker:

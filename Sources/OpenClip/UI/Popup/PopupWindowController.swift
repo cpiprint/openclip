@@ -82,6 +82,10 @@ public class PopupWindowController {
     /// row), for the result card header. Lifecycle mirrors `pendingActionTitle`. Internal for tests.
     var pendingActionIcon: ActionIcon? = nil
 
+    /// The most recent bar/palette action's ID, for delivery preference resolution. Lifecycle mirrors
+    /// `pendingActionTitle`. Internal for tests.
+    var pendingActionID: String? = nil
+
     /// In-flight delivery context snapshotted before an action performs, preserved across hide()
     /// so an asynchronous action that finishes after popup dismissal or app-switching delivers with
     /// its original context. Internal for tests.
@@ -349,6 +353,7 @@ public class PopupWindowController {
                 self.pendingDelivery = action.delivery
                 self.pendingActionTitle = action.title
                 self.pendingActionIcon = action.displayIcon(using: ActionCustomizationManager.shared)
+                self.pendingActionID = action.id
                 self.inFlightDeliveryContext = self.deliverySnapshot(for: action)
             },
             onRunLoadingAction: { [weak self] action in
@@ -1040,6 +1045,7 @@ public class PopupWindowController {
         pendingDelivery = nil
         pendingActionTitle = nil
         pendingActionIcon = nil
+        pendingActionID = nil
         accumulatedScrollDelta = 0
         isRightClickInProgress = false
         modeStore.isProcessingAI = false
@@ -1584,6 +1590,7 @@ public class PopupWindowController {
                 self.pendingDelivery = action.delivery
                 self.pendingActionTitle = action.title
                 self.pendingActionIcon = action.displayIcon(using: ActionCustomizationManager.shared)
+                self.pendingActionID = action.id
                 self.inFlightDeliveryContext = self.deliverySnapshot(for: action)
             },
             onActionPerformed: { [weak self] actionID in
@@ -2052,9 +2059,9 @@ public class PopupWindowController {
         let actionDelivery = action?.delivery ?? pendingDelivery
         let title = action?.title ?? pendingActionTitle
         let icon = action?.displayIcon(using: ActionCustomizationManager.shared) ?? pendingActionIcon
+        let actionID = action?.id ?? pendingActionID
         let targetApp = previousFrontmostApp ?? (frontmostApplicationProvider()?.bundleIdentifier != Bundle.main.bundleIdentifier ? frontmostApplicationProvider() : previousFrontmostApp)
-        let customPref = action.flatMap { ActionCustomizationManager.shared.override(for: $0.id)?.deliveryPreference }
-        let effectivePref = (intent == .primary && customPref != nil) ? customPref! : preference(for: intent)
+        let effectivePref = preference(forActionID: actionID, clickIntent: intent)
         return DeliveryContext(
             policy: currentActionContext?.selection.appPolicy ?? .default,
             clickIntent: intent,
@@ -2093,6 +2100,7 @@ public class PopupWindowController {
         pendingDelivery = nil
         pendingActionTitle = nil
         pendingActionIcon = nil
+        pendingActionID = nil
         if shouldDismiss(result, delivery: resolvedDelivery) {
             hide()
         }
@@ -2214,6 +2222,21 @@ public class PopupWindowController {
             ?? (clickIntent == .primary ? .paste : .copy)
     }
 
+    /// Resolves the delivery preference for a specific action, honoring user customization overrides.
+    /// Actions without an explicit override fall back to their domain default (e.g. `builtin.define`
+    /// maps to `.preview` at default) or to the global General-tab setting.
+    private func preference(forActionID actionID: String?, clickIntent: ActionResultDelivery.ClickIntent) -> ResultDeliveryPreference {
+        if clickIntent == .primary,
+           let actionID,
+           let customPref = ActionCustomizationManager.shared.override(for: actionID)?.deliveryPreference {
+            return customPref
+        }
+        if actionID == "builtin.define" && clickIntent == .primary {
+            return .preview
+        }
+        return preference(for: clickIntent)
+    }
+
     private func isText(_ result: ActionResult) -> Bool {
         guard case .text = result else { return false }
         return true
@@ -2271,7 +2294,7 @@ public class PopupWindowController {
         // precedes it, so `pendingDelivery`/`pendingActionTitle` must stay untouched: a later
         // `deliverResult` (e.g. a completion-paste from a preview card) must never reuse this
         // perform's declaration.
-        let preference = preference(for: clickIntent)
+        let preference = preference(forActionID: action.id, clickIntent: clickIntent)
         let targetApp = previousFrontmostApp ?? (frontmostApplicationProvider()?.bundleIdentifier != Bundle.main.bundleIdentifier ? frontmostApplicationProvider() : previousFrontmostApp)
         let delivery = DeliveryContext(
             policy: context.selection.appPolicy,
@@ -2338,7 +2361,7 @@ public class PopupWindowController {
             clickIntent: clickIntent,
             delivery: action.delivery,
             application: targetApp,
-            preference: preference(for: clickIntent),
+            preference: preference(forActionID: action.id, clickIntent: clickIntent),
             actionTitle: action.title,
             actionIcon: action.displayIcon(using: ActionCustomizationManager.shared),
             selection: context.selection

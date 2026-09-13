@@ -40,6 +40,8 @@ public enum PreferencesToolbarAction: Sendable {
     case addCustomAction
     case addApplication
     case addAIAction
+    case installExtensionFile
+    case refreshStore
     /// The Store's list order was picked from the sort menu.
     case setStoreSort(StoreSort)
     /// The trailing switch was moved. The window decides what it means for the page on screen.
@@ -80,6 +82,10 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
         static let title = NSToolbarItem.Identifier("openclip.preferences.title")
         /// The Store's list order.
         static let sort = NSToolbarItem.Identifier("openclip.preferences.sort")
+        /// Install extension from file.
+        static let storeInstall = NSToolbarItem.Identifier("openclip.preferences.storeInstall")
+        /// Refresh extension catalog.
+        static let refresh = NSToolbarItem.Identifier("openclip.preferences.refresh")
         /// The page subject's ellipsis menu, trailing. Its switch is a title bar accessory.
         static let pageMenu = NSToolbarItem.Identifier("openclip.preferences.pageMenu")
         static let search = NSToolbarItem.Identifier("openclip.preferences.search")
@@ -113,6 +119,10 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
     private weak var actionItem: NSToolbarItem?
     private weak var searchField: NSSearchField?
     private weak var sortItem: NSMenuToolbarItem?
+    private weak var storeInstallItem: NSToolbarItem?
+    private weak var storeInstallButton: NSButton?
+    private weak var refreshItem: NSToolbarItem?
+    private weak var refreshButton: NSButton?
     private weak var actionButton: NSButton?
     private weak var pageMenuItem: NSToolbarItem?
     private weak var pageMenuButton: NSButton?
@@ -144,7 +154,7 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
 
         model.$isRefreshing
             .sink { [weak self] isRefreshing in
-                self?.actionButton?.isEnabled = !(isRefreshing && self?.model.page == .store)
+                self?.refreshButton?.isEnabled = !isRefreshing
             }
             .store(in: &cancellables)
 
@@ -187,6 +197,8 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
     private func sync(page: SettingsPage) {
         setHidden(searchItem, page != .store)
         setHidden(sortItem, page != .store)
+        setHidden(storeInstallItem, page != .store)
+        setHidden(refreshItem, page != .store)
 
         switch page {
         case .customize:
@@ -338,6 +350,14 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
         model.actions.send(.setStoreSort(sort))
     }
 
+    @objc private func storeInstallPressed(_ sender: NSButton) {
+        model.actions.send(.installExtensionFile)
+    }
+
+    @objc private func refreshPressed(_ sender: NSButton) {
+        model.actions.send(.refreshStore)
+    }
+
     @objc private func pageMenuItemPressed(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? String else { return }
         model.actions.send(.pageMenuItem(id))
@@ -380,7 +400,7 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
         // pushed the search field into the overflow menu at the window's minimum size.
         [
             ItemID.navigation, ItemID.title, .flexibleSpace,
-            ItemID.action, ItemID.search, ItemID.sort, ItemID.pageMenu
+            ItemID.action, ItemID.search, ItemID.sort, ItemID.storeInstall, ItemID.refresh, ItemID.pageMenu
         ]
     }
 
@@ -520,6 +540,43 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
             item.toolTip = String(localized: "Sort")
             item.visibilityPriority = .high
             sortItem = item
+            setHidden(item, model.page != .store)
+            return item
+
+        case ItemID.storeInstall:
+            let button = NSButton(
+                image: NSImage(systemSymbolName: "square.and.arrow.down", accessibilityDescription: String(localized: "Install from File…")) ?? NSImage(),
+                target: self,
+                action: #selector(storeInstallPressed(_:))
+            )
+            button.bezelStyle = .toolbar
+
+            let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+            item.view = button
+            item.label = String(localized: "Install from File…")
+            item.toolTip = String(localized: "Install from File…")
+            item.visibilityPriority = .high
+            storeInstallButton = button
+            storeInstallItem = item
+            setHidden(item, model.page != .store)
+            return item
+
+        case ItemID.refresh:
+            let button = NSButton(
+                image: NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: String(localized: "Refresh Catalog")) ?? NSImage(),
+                target: self,
+                action: #selector(refreshPressed(_:))
+            )
+            button.bezelStyle = .toolbar
+            button.isEnabled = !model.isRefreshing
+
+            let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+            item.view = button
+            item.label = String(localized: "Refresh Catalog")
+            item.toolTip = String(localized: "Refresh Catalog")
+            item.visibilityPriority = .high
+            refreshButton = button
+            refreshItem = item
             setHidden(item, model.page != .store)
             return item
 

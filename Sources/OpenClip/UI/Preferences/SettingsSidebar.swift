@@ -22,23 +22,26 @@ struct SettingsSidebarRow: Identifiable {
     let title: String
     let keywords: [String]
     let tile: Tile
+    let isDisabled: Bool
 
     var id: String { page.id }
 
-    init(page: SettingsPage, title: String, keywords: [String] = [], tile: Tile) {
+    init(page: SettingsPage, title: String, keywords: [String] = [], tile: Tile, isDisabled: Bool = false) {
         self.page = page
         self.title = title
         self.keywords = keywords
         self.tile = tile
+        self.isDisabled = isDisabled
     }
 
     /// A system page row: title, glyph and search terms come from the page itself.
-    init(systemPage page: SettingsPage) {
+    init(systemPage page: SettingsPage, isDisabled: Bool = false) {
         self.init(
             page: page,
             title: page.staticTitle ?? page.id,
             keywords: page.searchKeywords,
-            tile: .symbol(page.systemImage, tint: page.tint)
+            tile: .symbol(page.systemImage, tint: page.tint),
+            isDisabled: isDisabled
         )
     }
 
@@ -322,9 +325,12 @@ struct SettingsSidebar: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
         }
+        .opacity(row.isDisabled ? 0.45 : 1.0)
+        .saturation(row.isDisabled ? 0.5 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: row.isDisabled)
         .padding(.vertical, 2)
         .tag(row.page)
-        .accessibilityLabel(row.title)
+        .accessibilityLabel(row.isDisabled ? String(localized: "\(row.title) (Disabled)") : row.title)
     }
 
     /// A real `NSSearchField`, the control System Settings uses in the same spot,

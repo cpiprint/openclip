@@ -45,7 +45,7 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
     // Pages reached from a sidebar page.
     /// One action's settings, or one group's when the id names a group.
     case action(id: String)
-    case newCustomAction
+    case newCustomAction(kind: String? = nil)
     case newGroup(memberIDs: [String])
     /// The icon chooser. It writes to the binding held in `SettingsRouter.iconTarget`; the token
     /// only keeps two consecutive choosers distinct in the path.
@@ -68,7 +68,7 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
         case .builtinAction(let id): return "builtin:\(id)"
         case .customActions: return "customActions"
         case .action(let id): return "action:\(id)"
-        case .newCustomAction: return "newCustomAction"
+        case .newCustomAction(let kind): return "newCustomAction:\(kind ?? "")"
         case .newGroup: return "newGroup"
         case .iconPicker(let token): return "iconPicker:\(token)"
         case .aiPreset(let id): return "aiPreset:\(id)"
