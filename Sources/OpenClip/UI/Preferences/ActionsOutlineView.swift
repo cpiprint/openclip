@@ -289,6 +289,30 @@ struct ActionsOutlineView: NSViewRepresentable {
     /// Double-click on a row: opens that row's settings page.
     let onOpenNode: (OutlineNode) -> Void
 
+    init(
+        coordinator: ActionCoordinator,
+        customizationManager: ActionCustomizationManager,
+        searchQuery: String = "",
+        disabledActionIDs: Binding<Set<String>> = .constant([]),
+        disabledPackages: Binding<Set<String>> = .constant([]),
+        selectedRowIDs: Binding<Set<String>>,
+        onAliasMessage: @escaping (String?) -> Void = { _ in },
+        onEditGroup: @escaping (String) -> Void,
+        onCreateGroupFromSelection: @escaping () -> Void,
+        onOpenNode: @escaping (OutlineNode) -> Void
+    ) {
+        self.coordinator = coordinator
+        self.customizationManager = customizationManager
+        self.searchQuery = searchQuery
+        self._disabledActionIDs = disabledActionIDs
+        self._disabledPackages = disabledPackages
+        self._selectedRowIDs = selectedRowIDs
+        self.onAliasMessage = onAliasMessage
+        self.onEditGroup = onEditGroup
+        self.onCreateGroupFromSelection = onCreateGroupFromSelection
+        self.onOpenNode = onOpenNode
+    }
+
     func makeCoordinator() -> ActionsOutlineCoordinator {
         ActionsOutlineCoordinator(self)
     }

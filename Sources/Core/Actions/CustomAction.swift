@@ -167,10 +167,12 @@ public struct CustomAction: ConfigurableAction, Codable, Sendable, Equatable {
                 stdinText: nil
             ))
 
-            // Raw runtime result: JSON stdout wins; plain-text stdout pastes when replaceSelection
-            // is true (replacing the selection) or copies otherwise.
+            // Raw runtime result: JSON stdout wins; plain-text stdout file detection wins if existing file and !replaceSelection;
+            // plain-text stdout pastes when replaceSelection is true (replacing the selection) or copies otherwise.
             if let jsonResult = ShellResultMapper.actionResult(from: output.stdout, actionID: id) {
                 raw = jsonResult
+            } else if !replaceSelection, let fileResult = ShellResultMapper.detectFileResult(from: output.stdout) {
+                raw = fileResult
             } else if !output.stdout.isEmpty {
                 raw = replaceSelection ? .paste(output.stdout) : .copy(output.stdout)
             } else {

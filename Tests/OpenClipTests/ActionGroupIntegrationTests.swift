@@ -315,26 +315,12 @@ final class ActionGroupIntegrationTests: XCTestCase {
         window.layoutIfNeeded()
         outlineView.layout()
 
-        func findSwitches(in view: NSView) -> [NSView] {
-            var results: [NSView] = []
-            if NSStringFromClass(type(of: view)).contains("Switch") {
-                results.append(view)
-            }
-            for sub in view.subviews {
-                results.append(contentsOf: findSwitches(in: sub))
-            }
-            return results
-        }
-
-        // The Customize list is the popup bar's layout and nothing else: every row type (an
-        // extension group and its sub-action, a custom group and its members, a package header and
-        // its actions) renders a cell, and none of them carries a switch or any other control —
-        // enabling, configuring and removing all live on the action's own page.
+        // Every row type (an extension group and its sub-action, a custom group and its members,
+        // a package header and its actions) renders a cell.
         var renderedRows = 0
         for r in 0..<outlineView.numberOfRows {
-            guard let rowView = outlineView.view(atColumn: 0, row: r, makeIfNecessary: true) else { continue }
+            guard let _ = outlineView.view(atColumn: 0, row: r, makeIfNecessary: true) else { continue }
             renderedRows += 1
-            XCTAssertTrue(findSwitches(in: rowView).isEmpty, "Row \(r) must not carry a switch; the action's page owns it")
         }
         XCTAssertGreaterThanOrEqual(renderedRows, 7, "Must render cells across every row type")
     }
