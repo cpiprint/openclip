@@ -8,6 +8,40 @@
 - **Ask AI from the search palette**: a palette query that matches no action now offers **Ask AI: “…”** and **Save as AI tool** instead of the "No matches" dead end. ⏎ (or ⌘1/⌘2) shows the answer in the result card with a diff; ⇧⏎ **replaces the selection in place** the moment the answer lands (copied instead when the app can't paste). Ask AI generates a concise task title (`<title>`) instead of showing the full prompt. **Save as AI tool** generates a clean reusable action name (`<tool_name>`) and saves it as a custom AI action — searchable in the palette, in the AI Tools bar and editable under Preferences › AI › Actions.
 - **Refine AI answers in the result card**: the card features an inline follow-up field on the left of Copy and Paste. The card dynamically expands its width to fit both the field and the action buttons up to a maximum limit. When typing a follow-up, Copy and Paste smoothly collapse and the input field expands to the right with an up-arrow send button. ⏎ (or clicking the up arrow) runs AI on the current answer. The card stays put while it refines: the previous answer stays visible under a spinner in the field, the new answer streams into the same card and settles with a diff comparing the original selection with the latest answer, and Esc cancels refinement or clears input. Each follow-up carries session history as context so the model keeps intent, tone, and language consistent.
 
+### Fixes & Stability
+- **Log File Timestamps**: The rotating log file sink now formats timestamps on its own serial queue instead of on the thread that emitted the log, so its `DateFormatter` is never shared across threads ([#45](https://github.com/ganeshmshetty/openclip/issues/45)).
+
+---
+
+## v1.5.0 - 2026-09-10
+
+### Highlights
+- **Resizable Result Cards & Search Palette**: Action output cards, AI streaming responses, and the action search palette can now be resized by dragging edges or corner handles, remembering your preferred maximum size without blowing up short responses ([#78](https://github.com/ganeshmshetty/openclip/pull/78)).
+- **Per-Action Global Hotkeys & Search Aliases**: Trigger favorite actions instantly with dedicated global keyboard shortcuts, or assign custom search aliases for rapid invocation in the palette.
+- **Extension Group & Sub-Action Reordering**: Fully customize your action workflow by reordering extension groups and individual member actions via drag-and-drop in Preferences, complete with custom member icon overrides ([#68](https://github.com/ganeshmshetty/openclip/issues/68)).
+- **Universal Binaries (Apple Silicon & Intel Macs)**: Universal binary distribution restored with multi-stage verification across release archives and DMGs, ensuring OpenClip runs natively on both Intel and Apple Silicon Macs ([#72](https://github.com/ganeshmshetty/openclip/pull/72)).
+- **In-App Updater Release Notes Delivery**: Fixed an issue where update changelogs failed to appear during updates by upgrading the release pipeline to Sparkle 2.9, providing native markdown release notes directly in the update window.
+- **Redesigned DMG Installer**: Beautiful new branded installer window with Retina-sharp HTML-rendered backgrounds, guided drop indicators, and scroll-free layout built via `dmgbuild` ([#67](https://github.com/ganeshmshetty/openclip/pull/67)).
+
+### Features & Improvements
+- **Resizable Result Card and Search Palette**: The result card that shows an action's output (including before/after diffs and AI responses) and the action-search palette can now be resized by dragging their right edge, bottom edge, or the bottom-right corner grip. Resized dimensions are remembered as an intelligent maximum constraint: short answers stay compact, while longer text expands up to your preferred dimensions ([#78](https://github.com/ganeshmshetty/openclip/pull/78) by [@Meldiron](https://github.com/Meldiron)).
+- **Per-Action Global Hotkeys and Search Aliases**: Assign direct system-wide keyboard shortcuts and custom keyword aliases to any individual action, allowing you to trigger actions anywhere without opening the floating menu.
+- **Extension Group & Member Reordering**: Multi-action extension groups and member actions can now be rearranged via drag-and-drop within Preferences › Actions. Sub-action ordering is persisted cleanly in `extensionGroupMemberOrder`, and individual member actions can be customized with custom icons in the group editor sheet ([#68](https://github.com/ganeshmshetty/openclip/issues/68)).
+- **Custom Icon Importing**: Import custom icon assets (SF Symbols, custom SVG/PNG images) to personalize action buttons and extension groups in Preferences.
+- **Per-Command Extension Settings**: Commands inside a multi-command extension now display the settings cog in Preferences › Actions whenever options are declared, enabling inline configuration of API keys, endpoints, and parameters ([#79](https://github.com/ganeshmshetty/openclip/pull/79) by [@Meldiron](https://github.com/Meldiron)).
+- **Redesigned DMG Installer**: The disk image now opens with a styled installation window aligned with `getopenclip.app` design tokens, featuring a Retina 1×/2× TIFF background, branded icon placements, and clean zero-scroll geometry ([#67](https://github.com/ganeshmshetty/openclip/pull/67) by [@Meldiron](https://github.com/Meldiron)).
+- **Synchronous Palette Resolution & Prewarming**: Hotkey invocation now resolves the search palette synchronously while prewarming selection context in the background, eliminating trigger latency.
+- **Extension Store Catalog Refresh**: Added a dedicated Refresh button to Preferences › Store header to bypass cached catalog entries and fetch updates immediately, paired with single-line description formatting.
+- **Visual Palette & Toast Polish**: Styled search palette with neutral selection highlights and capped floating toast notifications to 40 characters for compact readability.
+
+### Security & Distribution
+- **Signed, Hardened & Notarized Builds**: OpenClip is now signed with an Apple Developer ID certificate, built with the hardened runtime genuinely enabled, and notarized and stapled by Apple — the app and the disk image both. macOS opens it without a Gatekeeper warning, and nothing has to strip a quarantine attribute to make it launch. Every previous release was ad-hoc signed: the packaging step finished with `codesign --deep`, which replaced Xcode's hardened signature with an unhardened ad-hoc one, so the app could not be notarized and Gatekeeper refused it on every Mac but the one that built it.
+- **Accessibility Permission Survives Updates**: An ad-hoc signature identifies an app by a hash that changes with every build, so macOS treated each update as a brand-new application and dropped the Accessibility grant. A Developer ID signature identifies it by bundle ID and team instead, so the permission now persists across updates. Upgrading to this version needs the Accessibility toggle re-granted one last time.
+- **Minimal Entitlements**: The hardened runtime is granted exactly one exception, for the Apple events that AppleScript actions send. JIT, library-validation, and dynamic-linker exceptions are all withheld, and the release scripts fail if a build's entitlements ever differ from the file that declares them. Building from source still needs no Apple Developer account: local builds are ad-hoc signed with the same hardening and entitlements.
+
+### Fixes & Stability
+- **Log File Timestamps**: The rotating log file sink now formats timestamps on its own serial queue instead of on the thread that emitted the log, so its `DateFormatter` is never shared across threads ([#45](https://github.com/ganeshmshetty/openclip/issues/45)).
+
 ---
 
 ## v1.5.0 - 2026-09-10
