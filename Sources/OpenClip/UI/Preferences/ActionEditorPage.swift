@@ -161,11 +161,10 @@ public struct ActionEditorPage: View {
         return ""
     }
 
+    /// The hero tile is the same everywhere: the system accent colour, so an action's page reads
+    /// as OpenClip regardless of which package the action came from.
     private var heroTint: Color {
-        if let packageID = ActionIdentity.extensionPackageID(of: action) {
-            return SettingsTint.extensionTint(for: packageID)
-        }
-        return SettingsTint.openClip
+        SettingsTint.openClip
     }
 
     private var canProduceTextOutput: Bool {
@@ -254,25 +253,33 @@ public struct ActionEditorPage: View {
         }
         switch action.id {
         case "builtin.calculate":
-            return String(localized: "Evaluate mathematical expressions directly.")
+            return String(localized: "Evaluate math expressions.")
         case "builtin.define":
-            return String(localized: "Look up definitions in the macOS Dictionary.")
+            return String(localized: "Look a word up in the macOS Dictionary.")
         case "builtin.search":
-            return String(localized: "Search the web using your default or chosen search engine.")
+            return String(localized: "Search the web with your chosen engine.")
         case "builtin.copy":
-            return String(localized: "Copy selected text to the clipboard.")
+            return String(localized: "Copy the selected text.")
         case "builtin.paste":
-            return String(localized: "Paste current clipboard content.")
+            return String(localized: "Paste the clipboard content.")
         case "builtin.cut":
-            return String(localized: "Cut selected text to the clipboard.")
+            return String(localized: "Cut the selected text.")
+        case "builtin.calendar":
+            return String(localized: "Add the selected text as a calendar event.")
+        case "builtin.openurl":
+            return String(localized: "Open the selected text as a link.")
+        case "builtin.reveal_in_finder":
+            return String(localized: "Reveal the selected file path in Finder.")
+        case "builtin.completion":
+            return String(localized: "Complete the word you are typing.")
         default:
             break
         }
         if ActionIdentity.isAIPreset(action) || action.chrome.launchesAI {
-            return String(localized: "Process selected text with AI.")
+            return String(localized: "Run the selected text through AI.")
         }
         if isCustomAction {
-            return String(localized: "Custom user-authored action.")
+            return String(localized: "A custom action you wrote.")
         }
         if let packageID = ActionIdentity.extensionPackageID(of: action),
            let info = InstalledExtensionInfo.info(for: packageID, in: coordinator.actions) {
@@ -334,22 +341,6 @@ public struct ActionEditorPage: View {
                 }
             }
             .frame(maxWidth: 440)
-
-            HStack(spacing: 8) {
-                Text("Popup Bar:")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Picker("", selection: $displayMode) {
-                    Text("Show Icon").tag(0)
-                    Text("Show Text").tag(1)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 170)
-            }
-            .padding(.top, 2)
-            .disabled(manifestMissing)
         }
         .textCase(nil)
         .frame(maxWidth: .infinity)
@@ -381,10 +372,22 @@ public struct ActionEditorPage: View {
 
             Section {
                 SettingsRow(title: "Name") {
-                    TextField(action.title, text: $customTitle)
+                    TextField(action.title, text: $customTitle, prompt: Text(action.title))
+                        .labelsHidden()
                         .textFieldStyle(.roundedBorder)
                         .frame(maxWidth: 240)
                         .disabled(manifestMissing)
+                }
+
+                SettingsRow(title: "Show as") {
+                    Picker("", selection: $displayMode) {
+                        Text("Icon").tag(0)
+                        Text("Text").tag(1)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 140)
+                    .disabled(manifestMissing)
                 }
 
                 if ActionIdentity.isBindable(action) {
@@ -399,7 +402,8 @@ public struct ActionEditorPage: View {
                                     .font(.caption2)
                                     .foregroundStyle(.red)
                             }
-                            TextField("e.g. tr", text: $aliasText)
+                            TextField("Alias", text: $aliasText, prompt: Text("e.g. tr"))
+                                .labelsHidden()
                                 .textFieldStyle(.roundedBorder)
                                 .frame(maxWidth: 120)
                                 .disabled(manifestMissing)
@@ -518,6 +522,9 @@ public struct ActionEditorPage: View {
             }
         }
         .formStyle(.grouped)
+        // Centre the form at the shared measure while its scroll view runs the full width of the
+        // detail column, so the scroll indicator stays at the window edge.
+        .settingsPaneWidth()
         .onAppear {
             loadInitialState()
             DispatchQueue.main.async {
@@ -598,10 +605,9 @@ public struct ActionEditorPage: View {
     /// window does.
     private func confirmDelete() {
         guard isCustomAction else { return }
-        let name = customizationManager.presented(action, surface: .table).title
         router.confirmDestructive(
-            title: String(localized: "Delete \(name)?"),
-            message: String(localized: "The action is removed from the popup bar and the palette."),
+            title: String(localized: "Delete?"),
+            message: "",
             confirmTitle: String(localized: "Delete")
         ) {
             deleteAction()

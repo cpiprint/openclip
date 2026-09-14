@@ -57,4 +57,38 @@ final class ActionIconResolveTests: XCTestCase {
         XCTAssertEqual(ActionIcon.resolve(from: "custom:   "), .symbol(Constants.defaultIconSymbol))
         XCTAssertEqual(ActionIcon.resolve(from: "custom:sub/folder/icon.png"), .symbol(Constants.defaultIconSymbol))
     }
+
+    // MARK: - Optical sizing
+
+    /// The symbols the settings sidebar shows, each pinned to the correction that keeps the icon
+    /// column even. A regression here is exactly what made the sidebar's glyphs run uneven.
+    func testShippedSymbolsAreClassifiedForEvenOpticalSizing() {
+        let expected: [String: IconOpticalCategory] = [
+            // Built-in actions.
+            "sparkles": .thinLine,
+            "calendar.badge.plus": .standard,
+            "equal.circle": .thinLine,
+            "doc.on.doc": .wideAspect,
+            "scissors": .wideAspect,
+            "character.book.closed": .thinLine,
+            "link": .thinLine,
+            "doc.on.clipboard": .wideAspect,
+            "folder": .wideAspect,
+            "magnifyingglass": .thinLine,
+            "text.badge.plus": .wideAspect,
+            // Settings chrome.
+            "slider.horizontal.3": .standard,
+        ]
+        for (symbol, category) in expected {
+            XCTAssertEqual(IconOpticalCategory.classify(symbolName: symbol), category, symbol)
+        }
+    }
+
+    /// Wide glyphs must shrink and thin ones must grow — growing a wide glyph was the original bug.
+    func testWideGlyphsShrinkAndThinGlyphsGrow() {
+        XCTAssertLessThan(IconOpticalCategory.wideAspect.opticalMultiplier, 1.0)
+        XCTAssertLessThan(IconOpticalCategory.solidOrFilled.opticalMultiplier, 1.0)
+        XCTAssertGreaterThan(IconOpticalCategory.thinLine.opticalMultiplier, 1.0)
+        XCTAssertEqual(IconOpticalCategory.standard.opticalMultiplier, 1.0)
+    }
 }

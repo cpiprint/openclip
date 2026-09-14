@@ -2,11 +2,60 @@
 
 ---
 
-## Unreleased
+## v1.6.0 - 2026-09-14
+
+### First signed & notarized release
+- **This is the first OpenClip release that is genuinely signed, hardened, and notarized.** The v1.5.0 notes announced this, but that work landed after the tag — every build before this one was ad-hoc signed, which cannot be notarized, so Gatekeeper refused it on every Mac but the one that built it.
+- **Upgrading from an ad-hoc build needs the Accessibility permission re-granted one last time.** An ad-hoc signature identifies an app by a per-build hash, so macOS treated each update as a brand-new application and dropped the grant. This release signs with a Developer ID certificate keyed to the bundle ID and Team ID instead, so from here on the permission survives updates. The same one-time reset applies to any Input Monitoring or Screen Recording grants.
+- **Fresh installs** open with no Gatekeeper warning and no quarantine workaround. The app runs under the hardened runtime with a single entitlement (Apple events, for AppleScript actions), and both the app and the disk image are signed, notarized, and stapled.
+
+### Highlights
+- **A Settings window rebuilt like System Settings**: one router, a searchable sidebar, and a real page for every installed extension, built-in action, and custom action. Toolbar switches, inline notices instead of popovers/sheets/alerts, drag-to-group, and a Store you can sort.
+- **Ask AI from the palette**: a query that matches no action now offers **Ask AI: “…”** and **Save as AI tool**. ⏎ (or ⌘1/⌘2) opens the answer in the result card with a diff; ⇧⏎ replaces the selection in place.
+- **Refine answers without leaving the card**: an inline follow-up field re-runs AI on the current answer, keeps the previous answer visible, carries the session as context, and diffs the net change from your original selection.
+- **AI engines: local CLIs and universal local models**, with intelligent model resolution, plus standalone Ask AI, Apply to Selection, and improved Office selection retrieval.
+- **Duplicate extensions and custom actions**, pin result cards, and a Store that sorts by Featured, Name, Downloads, or Recently Added with real publish dates.
 
 ### Features & Improvements
+
+#### Settings
+- **Rebuilt on stock AppKit controls and one router.** The sidebar is a real `NSSearchField` above a list that filters pages by title and keyword, split into what OpenClip ships and what you installed, with a native back/forward group (⌘[ / ⌘]) and a title that names the current page.
+- **A page for everything.** Every installed extension gets a page — hero with icon, version, author, and description; a package on/off switch; each command with its own switch and settings; Update when the Store has one; Show in Finder; and an inline-confirmed Remove. AI gets its own page with the engine form and prompt library, and every built-in action opens its own editor page.
+- **Customize owns the popup bar only.** Drag rows to reorder, or drop one action onto another to group them the way Home-screen icons group. An extension's commands reorder within their own group and cannot be dragged out of their package. A group that loses its last member is removed.
+- **One row shape everywhere** — switch, icon and name that opens the action's page, alias, hotkey, and chevron — so the Shortcuts table, an extension's commands, and Custom Actions line up and behave identically instead of drifting apart.
+- **The sidebar reads by colour**: OpenClip's own pages are neutral chrome, everything the app ships is the brand blue, and each third-party extension keeps a colour derived from its identifier that can never collide with the brand.
+- **No popovers, sheets, or alerts**: action and group editors, the icon chooser, new action/group, AI prompts, and Add Application are pages in the same column, kept mounted so a draft survives drilling in, and failures surface as an inline notice.
+- **Store** gets a sort menu (Featured / Name / Downloads / Recently Added), a publish date beside each row's download count, offline and update states, a no-cache Refresh, and **Install from File…**.
+
+#### AI
 - **Ask AI from the search palette**: a palette query that matches no action now offers **Ask AI: “…”** and **Save as AI tool** instead of the "No matches" dead end. ⏎ (or ⌘1/⌘2) shows the answer in the result card with a diff; ⇧⏎ **replaces the selection in place** the moment the answer lands (copied instead when the app can't paste). Ask AI generates a concise task title (`<title>`) instead of showing the full prompt. **Save as AI tool** generates a clean reusable action name (`<tool_name>`) and saves it as a custom AI action — searchable in the palette, in the AI Tools bar and editable under Preferences › AI › Actions.
 - **Refine AI answers in the result card**: the card features an inline follow-up field on the left of Copy and Paste. The card dynamically expands its width to fit both the field and the action buttons up to a maximum limit. When typing a follow-up, Copy and Paste smoothly collapse and the input field expands to the right with an up-arrow send button. ⏎ (or clicking the up arrow) runs AI on the current answer. The card stays put while it refines: the previous answer stays visible under a spinner in the field, the new answer streams into the same card and settles with a diff comparing the original selection with the latest answer, and Esc cancels refinement or clears input. Each follow-up carries session history as context so the model keeps intent, tone, and language consistent.
+- **CLI tools, universal local models, and intelligent model resolution** ([#91](https://github.com/ganeshmshetty/openclip/pull/91)): run AI through local command-line tools, use a local model on any hardware, and let OpenClip resolve the right model for you. Legacy Ollama settings migrate automatically, and CLI probes time out instead of hanging.
+- **Standalone Ask AI and Apply to Selection**, plus improved Office selection retrieval.
+- **Clearer AI rows and one identity**: the palette's AI fallback rows now read Rewrite Selection / Ask a Question / Save as AI Tool and share the app's AI glyph.
+
+#### Result card, actions & extensions
+- **Duplicate extensions and custom actions**, with Duplicate moved off the outline into the action's own page.
+- **Result card polish**: a pin button, Copy and Paste hidden (with ⌘C a no-op) while an answer streams, and a frozen size during refinement so a long answer scrolls instead of jumping the card.
+- **Selection engine extracted** into the standalone OpenSelection package (0.1.1).
+
+### Security & Distribution
+- **Inside-out signing, notarization, and artifact verification** ([#82](https://github.com/ganeshmshetty/openclip/pull/82) by [@Meldiron](https://github.com/Meldiron)): packaging no longer runs `codesign --deep`, which re-signs outside-in and strips the hardened runtime and entitlements. The app is signed deepest-first, notarized, and stapled; the DMG is signed, notarized, and stapled on its own; and the pipeline verifies the app as it comes out of both the zip and the mounted image, failing if the artifact is not distributable.
+
+### Fixes & Stability
+- A single-command extension page no longer renders an empty card, and the actions hint reads in the singular.
+- The hero scrolls with the page instead of staying pinned under the toolbar.
+- No title-bar hairline on any page, and no sidebar footer buttons sitting on the rows.
+- The sidebar search field has its own strip instead of overlaying the list.
+- The page switch sits bare in the title bar and no longer stretches to the toolbar's height.
+- The Store's sort control lives in the page so the toolbar stops overflowing.
+- A follow-up keeps the field focused so Esc can cancel, and a refinement never re-opens a dismissed card.
+- Store offline states, no-cache refresh, and update detection.
+
+### Contributors
+- **Matej Bačo ([@Meldiron](https://github.com/Meldiron))** — Developer ID signing, hardened runtime, and notarization ([#82](https://github.com/ganeshmshetty/openclip/pull/82)), palette Ask AI ([#85](https://github.com/ganeshmshetty/openclip/pull/85)), in-place result-card refinement ([#89](https://github.com/ganeshmshetty/openclip/pull/89)), and the unified Settings window.
+- **Ganesh M ([@ganeshmshetty](https://github.com/ganeshmshetty))** — AI CLI tools, universal local models, and model resolution ([#91](https://github.com/ganeshmshetty/openclip/pull/91)), and inline extension results ([#81](https://github.com/ganeshmshetty/openclip/pull/81)).
+- **JTOBIN ([@binjto-boop](https://github.com/binjto-boop))** — rebuilding the preferences window on stock AppKit controls ([#83](https://github.com/ganeshmshetty/openclip/pull/83)).
 
 ---
 

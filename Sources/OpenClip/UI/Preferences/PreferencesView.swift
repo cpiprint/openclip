@@ -52,7 +52,7 @@ public enum PreferenceTab: String, CaseIterable, Hashable, Sendable {
 
 @MainActor
 public struct PreferencesView: View {
-    /// Widest the Customize list grows; the grouped `Form` pages set their own width.
+    /// Widest the Customize list grows; every other pane is capped by `SettingsLayout`.
     private static let customizeListMaxWidth: CGFloat = 880
 
     @State private var disabledActionIDs: Set<String> = []
@@ -65,6 +65,8 @@ public struct PreferencesView: View {
     @State private var packageDetails: ExtensionPackageDetails?
     /// Bumped when extensions change, so the details above are read again.
     @State private var packageReloadToken = 0
+    /// Bumped when system settings (such as accent color) change, refreshing sidebar tiles.
+    @State private var systemColorsToken = 0
     @StateObject private var storeViewModel = ExtensionsStoreViewModel()
     @ObservedObject private var coordinator = ActionCoordinator.shared
     @ObservedObject private var customizationManager = ActionCustomizationManager.shared
@@ -122,6 +124,9 @@ public struct PreferencesView: View {
             packageReloadToken += 1
             loadDisabledState()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSColor.systemColorsDidChangeNotification)) { _ in
+            systemColorsToken += 1
+        }
         .onChange(of: router.path) { _, newPath in
             syncToolbar()
             if newPath.last == .store && storeViewModel.extensions.isEmpty {
@@ -143,6 +148,7 @@ public struct PreferencesView: View {
                     memberIDs: CustomizePage.groupCandidates(selectedRowIDs: selectedRowIDs, coordinator: coordinator)
                 ))
             case .addCustomAction: router.push(.newCustomAction())
+            case .openCustomActions: router.select(.customActions)
             case .addApplication: router.push(.addApplication)
             case .addAIAction: router.push(.aiNewPreset)
             case .installExtensionFile: presentInstallExtensionPanel()
@@ -311,8 +317,8 @@ public struct PreferencesView: View {
         guard case .extensionPackage(let id) = router.currentPage,
               let info = InstalledExtensionInfo.info(for: id, in: coordinator.actions) else { return }
         router.confirmDestructive(
-            title: String(localized: "Uninstall \(info.name)?"),
-            message: String(localized: "Its files and settings are deleted from this Mac."),
+            title: String(localized: "Uninstall?"),
+            message: "",
             confirmTitle: String(localized: "Uninstall")
         ) {
             uninstallExtension(info)
@@ -320,18 +326,12 @@ public struct PreferencesView: View {
     }
 
     private func uninstallExtension(_ info: InstalledExtensionInfo) {
-        let name = info.name
         let packageID = info.packageID
         Task {
             do {
                 try await ExtensionManager.shared.uninstallExtension(actionID: info.uninstallActionID)
                 NotificationCenter.default.post(name: .openClipExtensionsDidChange, object: nil)
                 router.select(.customize)
-                router.notify(SettingsNotice(
-                    title: String(localized: "Extension Removed"),
-                    message: String(localized: "\(name) was removed from this Mac."),
-                    style: .info
-                ))
             } catch {
                 Log.extensions.error("Failed to uninstall extension '\(packageID, privacy: .public)': \(error.localizedDescription)")
                 router.notifyError(
@@ -390,7 +390,13 @@ public struct PreferencesView: View {
     /// so "verify" finds the JWT extension and "sum" finds Calculate.
     private var secondGroupRows: [SettingsSidebarRow] {
         var rows: [SettingsSidebarRow] = [
-            SettingsSidebarRow(systemPage: .ai, isDisabled: !aiManager.isAIEnabled)
+            SettingsSidebarRow(
+                page: .ai,
+                title: SettingsPage.ai.staticTitle ?? "AI",
+                keywords: SettingsPage.ai.searchKeywords,
+                tile: .bare(.symbol(SettingsPage.ai.systemImage)),
+                isDisabled: !aiManager.isAIEnabled
+            )
         ]
 
         for action in coordinator.actions where ActionIdentity.isBuiltin(action)
@@ -402,7 +408,7 @@ public struct PreferencesView: View {
                 page: .builtinAction(id: action.id),
                 title: presentation.title,
                 keywords: action.keywords + [action.id],
-                tile: .icon(SettingsHeroHeader.glyph(for: action, presented: presentation), tint: SettingsTint.openClip),
+                tile: .bare(SettingsHeroHeader.glyph(for: action, presented: presentation)),
                 isDisabled: isActionDisabled
             ))
         }
@@ -418,7 +424,7 @@ public struct PreferencesView: View {
                 page: .extensionPackage(id: info.packageID),
                 title: info.name,
                 keywords: keywords,
-                tile: .icon(info.icon, tint: SettingsTint.extensionTint(for: info.packageID)),
+                tile: .bare(Self.plainGlyph(info.icon)),
                 isDisabled: isPkgDisabled
             ))
         }
@@ -430,10 +436,19 @@ public struct PreferencesView: View {
             page: .customActions,
             title: SettingsPage.customActions.staticTitle ?? "",
             keywords: SettingsPage.customActions.searchKeywords + customTitles,
-            tile: .symbol(SettingsPage.customActions.systemImage, tint: SettingsPage.customActions.tint)
+            tile: .bare(.symbol(SettingsPage.customActions.systemImage))
         ))
 
         return SettingsSidebarOrder.sorted(rows)
+    }
+
+    /// A glyph that reads at sidebar size. An icon shipped as text renders as a word, which is
+    /// wider than a row's glyph slot, so those fall back to the extension mark.
+    private static func plainGlyph(_ icon: ActionIcon) -> ActionIcon {
+        if case .text(let text) = icon, text.count > 2 {
+            return .symbol("puzzlepiece.extension")
+        }
+        return icon
     }
 
     /// `List` selection is optional by contract; the page never is, so a nil write (Escape,
@@ -455,6 +470,7 @@ public struct PreferencesView: View {
             systemRows: systemRows,
             extensionRows: secondGroupRows
         )
+        .id(systemColorsToken)
         .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
     }
 
@@ -504,8 +520,10 @@ public struct PreferencesView: View {
         switch page {
         case .general:
             GeneralTab()
+                .settingsPaneWidth()
         case .appearance:
             AppearanceTab()
+                .settingsPaneWidth()
         case .customize, .shortcuts:
             CustomizePage(
                 selectedRowIDs: $selectedRowIDs,
@@ -516,12 +534,16 @@ public struct PreferencesView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .appRules:
             AppRulesTab()
+                .settingsPaneWidth()
         case .store:
             ExtensionStoreView(viewModel: storeViewModel)
+                .settingsPaneWidth(SettingsLayout.storeMaxWidth)
         case .about:
             AboutTab()
+                .settingsPaneWidth()
         case .ai:
             AIPage()
+                .settingsPaneWidth()
         case .extensionPackage(let id):
             if let info = InstalledExtensionInfo.info(for: id, in: coordinator.actions),
                info.commands.count == 1,
@@ -535,6 +557,7 @@ public struct PreferencesView: View {
                     disabledActionIDs: $disabledActionIDs,
                     disabledPackages: $disabledPackages
                 )
+                .settingsPaneWidth()
             }
         case .builtinAction(let id):
             if let action = coordinator.actions.first(where: { $0.id == id }) {
@@ -547,6 +570,7 @@ public struct PreferencesView: View {
                 disabledActionIDs: $disabledActionIDs,
                 disabledPackages: $disabledPackages
             )
+            .settingsPaneWidth()
         case .action(let id):
             actionEditor(for: id)
         case .newCustomAction(let kind):

@@ -91,21 +91,68 @@ actor RemoteTemplateIconCache {
     }
 }
 
+/// SF Symbols draw at wildly different optical sizes for the same point size: an open outlined
+/// circle like `equal.circle` sits well inside its box, while a two-page `doc.on.doc` runs edge to
+/// edge. Scaling them all identically left the sidebar's icon column visibly uneven, so every
+/// symbol OpenClip ships is now named here and scaled to read the same size; only unknown symbols
+/// (an extension's own, say) fall through to the heuristics in `classify`.
 public enum IconOpticalCategory: Sendable {
+    /// Heavy, filled shapes: shrink so their solid mass matches the line-drawn icons.
     case solidOrFilled
+    /// Thin, open strokes: grow so they are not lost beside the heavier glyphs.
     case thinLine
+    /// Glyphs already as wide as their box: shrink to keep the column's left edge even.
     case wideAspect
+    /// Neither extreme.
     case standard
 
+    /// The symbols OpenClip ships, each with the correction that makes it match the rest. Keys are
+    /// lower-cased symbol names.
+    private static let known: [String: IconOpticalCategory] = [
+        // Thin, open strokes read small for their size, so they grow.
+        "sparkle": .thinLine,
+        "sparkles": .thinLine,
+        "link": .thinLine,
+        "magnifyingglass": .thinLine,
+        "equal.circle": .thinLine,
+        "character.book.closed": .thinLine,
+        "pencil": .thinLine,
+        "wand.and.stars": .thinLine,
+        "command": .thinLine,
+        "shield.checkered": .thinLine,
+        // Wide glyphs already fill the box sideways, so they shrink to match the column.
+        "doc.on.doc": .wideAspect,
+        "doc.on.clipboard": .wideAspect,
+        "folder": .wideAspect,
+        "scissors": .wideAspect,
+        "text.badge.plus": .wideAspect,
+        // Solid or compact shapes read heavy for their size.
+        "gearshape.fill": .solidOrFilled,
+        "bag.fill": .solidOrFilled,
+        "paintbrush.fill": .solidOrFilled,
+        "info.circle.fill": .solidOrFilled,
+        "puzzlepiece.extension.fill": .solidOrFilled,
+        "bolt.fill": .solidOrFilled,
+        // The settings sidebar's compact leftovers.
+        "slider.horizontal.3": .standard,
+        "calendar.badge.plus": .standard,
+    ]
+
     public static func classify(symbolName: String) -> IconOpticalCategory {
+        if let known = known[symbolName.lowercased()] { return known }
+
         let name = symbolName.lowercased()
-        if name.contains(".fill") || name.contains("circle.fill") || name.contains("square.fill") || name.contains("character.book") || name.contains("equal.circle") {
+        if name.contains(".fill") || name.contains("square.fill") || name.contains("circle.fill") {
             return .solidOrFilled
         }
-        if name.contains("doc.on.doc") || name.contains("rectangle") || name.contains("arrow.left.arrow.right") || name.contains("text.align") {
+        if name.contains("doc.on.") || name.contains("rectangle") || name.contains("folder")
+            || name.contains("arrow.left.arrow.right") || name.contains("text.align")
+            || name.contains("calendar") || name.contains("tablecells") || name.contains("scissors") {
             return .wideAspect
         }
-        if name.contains("scissors") || name.contains("pencil") || name.contains("wand") || name.contains("magnifyingglass") || name.contains("sparkles") || name.contains("link") {
+        if name.contains("circle") || name.contains("magnifyingglass") || name.contains("link")
+            || name.contains("sparkle") || name.contains("pencil") || name.contains("wand")
+            || name.contains("book") || name.contains("character") || name.contains("textformat") {
             return .thinLine
         }
         return .standard
@@ -114,18 +161,18 @@ public enum IconOpticalCategory: Sendable {
     public var opticalMultiplier: CGFloat {
         switch self {
         case .solidOrFilled: return 0.88
-        case .thinLine:       return 1.05
-        case .wideAspect:     return 1.04
-        case .standard:       return 1.0
+        case .thinLine:      return 1.10
+        case .wideAspect:    return 0.92
+        case .standard:      return 1.00
         }
     }
 
     public var symbolWeight: Font.Weight {
         switch self {
         case .solidOrFilled: return .regular
-        case .thinLine:       return .medium
-        case .wideAspect:     return .medium
-        case .standard:       return .medium
+        case .thinLine:      return .medium
+        case .wideAspect:    return .medium
+        case .standard:      return .medium
         }
     }
 }

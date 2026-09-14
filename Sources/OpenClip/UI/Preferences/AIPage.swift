@@ -27,7 +27,7 @@ struct AIPage: View {
                 SettingsHeroHeader(
                     glyph: .symbol(SettingsPage.ai.systemImage, tint: SettingsPage.ai.tint),
                     title: String(localized: "AI Tools"),
-                    subtitle: String(localized: "Rewrite, summarize, translate or ask about the selected text, using the engine below.")
+                    subtitle: String(localized: "Rewrite, summarize, translate or ask about the selected text.")
                 )
             }
 

@@ -3,11 +3,12 @@
 //
 // The action-search palette's AI fallback. When a typed query matches no action, the query itself
 // is offered as an instruction for the configured AI provider: run it once on the selection
-// ("Ask AI"), or save it as a reusable AI tool — an `AIActionPreset`, which from then on is a
+// ("Rewrite Selection"), or save it as a reusable AI tool — an `AIActionPreset`, which from then on is a
 // searchable palette action and a row in Preferences → AI → Actions — and run it. Pure
 // presentation model kept out of the view so the rules (when the rows appear, how a prompt is
 // turned into a tool title) are unit-testable without hosting SwiftUI.
 import Foundation
+import Core
 
 /// One row of the palette's AI fallback, in display order.
 enum PaletteAIPromptRow: Hashable, CaseIterable {
@@ -127,20 +128,17 @@ enum PaletteAIPrompt {
     static func rowTitle(_ row: PaletteAIPromptRow, query: String = "") -> String {
         switch row {
         case .apply:
-            return String(localized: "Apply to Selection")
+            return String(localized: "Rewrite Selection")
         case .ask:
-            return String(localized: "Ask AI")
+            return String(localized: "Ask a Question")
         case .save:
-            return String(localized: "Save and Ask AI")
+            return String(localized: "Save as AI Tool")
         }
     }
 
-    /// The row's SF Symbol.
+    /// The row's SF Symbol. `sparkle` (singular) is the app's AI mark — the same glyph the AI Tools
+    /// launcher and every AI preset wear — so all three palette AI rows read as one family.
     static func rowSymbol(_ row: PaletteAIPromptRow) -> String {
-        switch row {
-        case .apply: return "sparkles"
-        case .ask: return "questionmark.bubble"
-        case .save: return "plus.circle"
-        }
+        Constants.defaultAIIconSymbol
     }
 }

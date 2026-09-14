@@ -296,11 +296,11 @@ struct ActionsOutlineView: NSViewRepresentable {
         searchQuery: String = "",
         disabledActionIDs: Binding<Set<String>> = .constant([]),
         disabledPackages: Binding<Set<String>> = .constant([]),
-        selectedRowIDs: Binding<Set<String>>,
+        selectedRowIDs: Binding<Set<String>> = .constant([]),
         onAliasMessage: @escaping (String?) -> Void = { _ in },
-        onEditGroup: @escaping (String) -> Void,
-        onCreateGroupFromSelection: @escaping () -> Void,
-        onOpenNode: @escaping (OutlineNode) -> Void
+        onEditGroup: @escaping (String) -> Void = { _ in },
+        onCreateGroupFromSelection: @escaping () -> Void = { },
+        onOpenNode: @escaping (OutlineNode) -> Void = { _ in }
     ) {
         self.coordinator = coordinator
         self.customizationManager = customizationManager

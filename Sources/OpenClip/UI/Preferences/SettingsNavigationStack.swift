@@ -42,13 +42,51 @@ struct SettingsNavigationStack<Content: View>: View {
 
 // MARK: - Page layout
 
+/// Shared metrics for the settings window's content.
+enum SettingsLayout {
+    /// Widest the content of a settings pane grows before it is centred. Editor pages, the action
+    /// editor and the icon chooser all cap to this so every pane reads at the same measure
+    /// regardless of how wide the window is.
+    static let contentMaxWidth: CGFloat = 560
+    /// The Store's list is capped a little wider than the rest of the panes so its rows keep room
+    /// to breathe.
+    static let storeMaxWidth: CGFloat = 640
+}
+
+extension View {
+    /// Centres a settings pane's content at `maxWidth` while leaving the scroll view itself the
+    /// full width of the detail column, so the scroll indicator stays at the window edge instead
+    /// of moving in with the content. Pane content that manages its own width (editor pages'
+    /// pinned footer, the Customize table) does not use this.
+    func settingsPaneWidth(_ maxWidth: CGFloat = SettingsLayout.contentMaxWidth) -> some View {
+        modifier(SettingsPaneWidth(maxWidth: maxWidth))
+    }
+}
+
+/// Measures the pane and insets only its scroll *content*, via `contentMargins(for: .scrollContent)`,
+/// so the group cards read at a fixed measure but the scroll indicator remains at the pane edge.
+private struct SettingsPaneWidth: ViewModifier {
+    let maxWidth: CGFloat
+
+    func body(content: Content) -> some View {
+        GeometryReader { proxy in
+            content
+                .contentMargins(
+                    .horizontal,
+                    max(0, (proxy.size.width - maxWidth) / 2),
+                    for: .scrollContent
+                )
+        }
+    }
+}
+
 /// A page that edits something and ends with buttons: scrolling content above, a pinned footer
 /// below. The footer is where Cancel / Save live, so it never scrolls out of reach.
 @MainActor
 struct SettingsEditorPage<Content: View, Footer: View>: View {
-    /// Widest the content grows; matches the grouped `Form` panes' card width at the window's
-    /// default size so pages line up when you move between them.
-    var contentMaxWidth: CGFloat = 640
+    /// Widest the content grows; the grouped `Form` panes cap to the same value so pages line up
+    /// when you move between them.
+    var contentMaxWidth: CGFloat = SettingsLayout.contentMaxWidth
     @ViewBuilder let content: () -> Content
     @ViewBuilder let footer: () -> Footer
 

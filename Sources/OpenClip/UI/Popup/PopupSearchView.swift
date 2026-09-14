@@ -356,33 +356,23 @@ public struct PopupSearchView: View {
     }
 
     private var topBlurOverlay: some View {
-        let bg = cardBackgroundColor
-        return LinearGradient(
-            stops: [
-                .init(color: bg, location: 0.0),
-                .init(color: bg.opacity(0.85), location: 0.55),
-                .init(color: bg.opacity(0.0), location: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
+        PopupEdgeFade(
+            edge: .top,
+            effectiveTheme: effectiveTheme,
+            colorScheme: colorScheme,
+            height: 52,
+            cardColor: cardBackgroundColor
         )
-        .frame(height: 52)
-        .allowsHitTesting(false)
     }
 
     private var bottomBlurOverlay: some View {
-        let bg = cardBackgroundColor
-        return LinearGradient(
-            stops: [
-                .init(color: bg.opacity(0.0), location: 0.0),
-                .init(color: bg.opacity(0.85), location: 0.45),
-                .init(color: bg, location: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
+        PopupEdgeFade(
+            edge: .bottom,
+            effectiveTheme: effectiveTheme,
+            colorScheme: colorScheme,
+            height: 48,
+            cardColor: cardBackgroundColor
         )
-        .frame(height: 48)
-        .allowsHitTesting(false)
     }
 
 
@@ -452,22 +442,20 @@ public struct PopupSearchView: View {
         .padding(.leading, 10)
         .padding(.trailing, 6)
         .frame(height: 34)
-        .background(searchFieldBackground)
+        .background(searchFieldChrome)
     }
 
-    private var searchFieldBackground: some View {
-        let shape = RoundedRectangle(cornerRadius: 10, style: .continuous)
-        let strokeColor = colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.12)
-        let darkTint = Color.black.opacity(colorScheme == .dark ? 0.28 : 0.06)
-        let shadow1 = Color.black.opacity(colorScheme == .dark ? 0.28 : 0.14)
-        let shadow2 = Color.black.opacity(colorScheme == .dark ? 0.12 : 0.06)
-
-        return shape
-            .fill(.ultraThinMaterial)
-            .overlay(shape.fill(darkTint))
-            .overlay(shape.stroke(strokeColor, lineWidth: 0.5))
-            .shadow(color: shadow1, radius: 6, x: 0, y: 2.5)
-            .shadow(color: shadow2, radius: 1, x: 0, y: 0.5)
+    /// The search field's own chrome. Over glass the blurred top fade is already the field's
+    /// backdrop, so a second material here stacks into a visible rounded overlay; classic keeps
+    /// the frosted field on its opaque card.
+    @ViewBuilder
+    private var searchFieldChrome: some View {
+        if effectiveTheme == "glass" {
+            Color.clear
+        } else {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(.ultraThinMaterial)
+        }
     }
 
     /// Closes the palette by dropping the scope back to the full list (Esc with an empty scoped

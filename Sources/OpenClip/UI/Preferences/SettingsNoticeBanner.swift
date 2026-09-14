@@ -30,20 +30,35 @@ struct SettingsNoticeBanner: View {
         }
     }
 
+    private var displayTitle: String {
+        if notice.isConfirmation, let confirmTitle = notice.confirmTitle {
+            if confirmTitle == String(localized: "Uninstall") {
+                return String(localized: "Uninstall?")
+            } else if confirmTitle == String(localized: "Delete") {
+                return String(localized: "Delete?")
+            }
+            return "\(confirmTitle)?"
+        }
+        return notice.title
+    }
+
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: notice.isConfirmation ? .center : .top, spacing: 10) {
             Image(systemName: symbol)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(symbolColor)
-                .padding(.top, 1)
+                .padding(.top, notice.isConfirmation ? 0 : 1)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(notice.title)
+                Text(displayTitle)
                     .font(.system(size: 13, weight: .semibold))
-                Text(notice.message)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
+                if !notice.isConfirmation && !notice.message.isEmpty {
+                    Text(notice.message)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             Spacer(minLength: 8)
@@ -52,11 +67,13 @@ struct SettingsNoticeBanner: View {
                 // A question, so it gets the two buttons an alert would have had — and the
                 // destructive one is never the default, so Return cannot go through with it.
                 Button("Cancel", action: onDismiss)
+                    .controlSize(.small)
                     .keyboardShortcut(.cancelAction)
 
                 Button(notice.confirmTitle ?? String(localized: "Continue")) {
                     onConfirm?()
                 }
+                .controlSize(.small)
                 .buttonStyle(.borderedProminent)
                 .tint(.red)
             } else {
@@ -74,8 +91,8 @@ struct SettingsNoticeBanner: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .frame(maxWidth: 560)
+        .padding(.vertical, notice.isConfirmation ? 10 : 12)
+        .frame(maxWidth: notice.isConfirmation ? 280 : 560)
         .settingsGlassCard(cornerRadius: 14)
         .shadow(color: Color.black.opacity(0.14), radius: 12, x: 0, y: 6)
         .padding(.horizontal, 20)

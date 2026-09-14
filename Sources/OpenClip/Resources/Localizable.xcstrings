@@ -1,6 +1,34 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ (Disabled)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（已停用）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（已停用）"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (désactivé)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@（無効）"
+          }
+        }
+      }
+    },
     "%@ download": {
       "localizations": {
         "zh-Hans": {
@@ -281,6 +309,34 @@
         }
       }
     },
+    "A custom action you wrote.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你创建的自定义动作。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你建立的自訂動作。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une action personnalisée que vous avez créée."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたが作成したカスタムアクション。"
+          }
+        }
+      }
+    },
     "A newer version is in the Store.": {
       "localizations": {
         "zh-Hans": {
@@ -557,6 +613,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "情報"
+          }
+        }
+      }
+    },
+    "About the Actions list": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关于“动作”列表"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關於「動作」列表"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À propos de la liste Actions"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アクションリストについて"
           }
         }
       }
@@ -1261,6 +1345,34 @@
         }
       }
     },
+    "Add the selected text as a calendar event.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将所选文本添加为日历事件。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將選取的文字加入行事曆行程。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter le texte sélectionné comme événement de calendrier."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択したテキストをカレンダーイベントとして追加します。"
+          }
+        }
+      }
+    },
     "Add to Group": {
       "localizations": {
         "zh-Hans": {
@@ -1341,6 +1453,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "エイリアス"
+          }
+        }
+      }
+    },
+    "Alias already in use": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "别名已被使用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "別名已被使用"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alias déjà utilisé"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エイリアスは既に使用されています"
           }
         }
       }
@@ -1905,62 +2045,6 @@
         }
       }
     },
-    "Apply to Selection": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "应用到所选内容"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "套用到選取內容"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appliquer à la sélection"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選択範囲に適用"
-          }
-        }
-      }
-    },
-    "Ask AI": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "询问 AI"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "詢問 AI"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Demander à l’IA"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AIに依頼"
-          }
-        }
-      }
-    },
     "Ask AI: “%@”": {
       "localizations": {
         "zh-Hans": {
@@ -1985,6 +2069,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "AIに依頼: 「%@」"
+          }
+        }
+      }
+    },
+    "Ask a Question": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提问"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提出問題"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poser une question"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "質問する"
           }
         }
       }
@@ -3389,6 +3501,34 @@
         }
       }
     },
+    "Complete the word you are typing.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "补全你正在输入的单词。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "補全你正在輸入的單字。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compléter le mot que vous êtes en train de saisir."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入力中の単語を補完します。"
+          }
+        }
+      }
+    },
     "Condense this text to be significantly shorter while keeping all essential information, the original language, and the tone. Preserve the overall formatting such as paragraphs and lists": {
       "localizations": {
         "zh-Hans": {
@@ -3949,6 +4089,34 @@
         }
       }
     },
+    "Copy the selected text.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制所选文本。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "複製選取的文字。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier le texte sélectionné."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択したテキストをコピーします。"
+          }
+        }
+      }
+    },
     "Create": {
       "localizations": {
         "zh-Hans": {
@@ -4369,6 +4537,34 @@
         }
       }
     },
+    "Cut the selected text.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剪切所选文本。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剪下選取的文字。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couper le texte sélectionné."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択したテキストをカットします。"
+          }
+        }
+      }
+    },
     "Dark": {
       "localizations": {
         "zh-Hans": {
@@ -4537,6 +4733,34 @@
         }
       }
     },
+    "Delete / Uninstall": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除 / 卸载"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除 / 解除安裝"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer / Désinstaller"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除 / アンインストール"
+          }
+        }
+      }
+    },
     "Delete Action": {
       "localizations": {
         "zh-Hans": {
@@ -4701,6 +4925,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "このアクションを削除しますか?"
+          }
+        }
+      }
+    },
+    "Delete?": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除？"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除しますか？"
           }
         }
       }
@@ -5065,6 +5317,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "ドラッグしてポップアップバーを並べ替えます。アクションを別のアクションにドロップするとグループになり、グループにドロップすると追加されます。最後の 1 つを外すとグループは消えます。行をダブルクリックすると設定が開きます。"
+          }
+        }
+      }
+    },
+    "Drag to reorder. Drag actions onto the group in the Actions list to add more.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动以重新排序。将动作拖到“动作”列表中的分组上可添加更多。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖曳以重新排序。將動作拖到「動作」列表中的分組上可加入更多。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser pour réorganiser. Déposez des actions sur le groupe dans la liste Actions pour en ajouter."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ドラッグして並べ替えます。「アクション」リストのグループにアクションをドラッグすると追加できます。"
           }
         }
       }
@@ -5709,6 +5989,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "おすすめの拡張機能"
+          }
+        }
+      }
+    },
+    "Evaluate math expressions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计算数学表达式。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "計算數學運算式。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Évaluer des expressions mathématiques."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数式を計算します。"
           }
         }
       }
@@ -7225,6 +7533,34 @@
         }
       }
     },
+    "Icon": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图标"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圖示"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icône"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイコン"
+          }
+        }
+      }
+    },
     "Icon: %@ — click to change": {
       "localizations": {
         "zh-Hans": {
@@ -7277,6 +7613,62 @@
           "stringUnit": {
             "state": "translated",
             "value": "インストール"
+          }
+        }
+      }
+    },
+    "Install %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装 %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝 %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ をインストール"
+          }
+        }
+      }
+    },
+    "Install Extension": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装扩展"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝擴充功能"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer une extension"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拡張機能をインストール"
           }
         }
       }
@@ -7869,6 +8261,34 @@
         }
       }
     },
+    "Letters, numbers, and hyphens only": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只能包含字母、数字和连字符"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只能包含字母、數字和連字號"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lettres, chiffres et traits d'union uniquement"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "英数字とハイフンのみ使用できます"
+          }
+        }
+      }
+    },
     "Light": {
       "localizations": {
         "zh-Hans": {
@@ -8005,6 +8425,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "ローカルモデル (LM Studio/Ollama)"
+          }
+        }
+      }
+    },
+    "Look a word up in the macOS Dictionary.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 macOS 词典中查词。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 macOS 辭典中查詢單字。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher un mot dans le dictionnaire macOS."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 辞書で単語を調べます。"
           }
         }
       }
@@ -9017,6 +9465,34 @@
         }
       }
     },
+    "No response generated": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未生成响应"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未產生回應"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune réponse générée"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "応答が生成されませんでした"
+          }
+        }
+      }
+    },
     "No text selected or on clipboard": {
       "localizations": {
         "zh-Hans": {
@@ -9577,6 +10053,34 @@
         }
       }
     },
+    "Open an action to change its name, icon, shortcut or what it does, or to delete it. Use Actions to place it in the popup bar.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开动作可更改其名称、图标、快捷键或功能，也可将其删除。使用“动作”将其放入弹出栏。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開啟動作可更改其名稱、圖示、快速鍵或功能，也可將其刪除。使用「動作」將其放入彈出列。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrez une action pour modifier son nom, son icône, son raccourci ou son comportement, ou pour la supprimer. Utilisez Actions pour la placer dans la barre contextuelle."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アクションを開くと、名前、アイコン、ショートカット、動作の変更や削除ができます。「アクション」を使ってポップアップバーに配置します。"
+          }
+        }
+      }
+    },
     "Open an action to change its name, icon, shortcut or what it does, or to delete it. Use Customize to place it in the popup bar.": {
       "localizations": {
         "zh-Hans": {
@@ -9657,6 +10161,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "MITライセンスに基づくオープンソース"
+          }
+        }
+      }
+    },
+    "Open the selected text as a link.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将所选文本作为链接打开。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將選取的文字以連結開啟。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir le texte sélectionné comme lien."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択したテキストをリンクとして開きます。"
           }
         }
       }
@@ -10249,6 +10781,34 @@
         }
       }
     },
+    "Paste the clipboard content.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粘贴剪贴板内容。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "貼上剪貼板內容。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coller le contenu du presse-papiers."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クリップボードの内容を貼り付けます。"
+          }
+        }
+      }
+    },
     "Paste the response over the selection (⏎)": {
       "localizations": {
         "zh-Hans": {
@@ -10497,6 +11057,62 @@
           "stringUnit": {
             "state": "translated",
             "value": "Perplexity AI"
+          }
+        }
+      }
+    },
+    "Pin result card": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "固定结果卡片"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "固定結果卡片"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Épingler la carte de résultat"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結果カードを固定"
+          }
+        }
+      }
+    },
+    "Pin — keep card open when moved": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "固定 — 移动时保持卡片打开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "固定 — 移動時保持卡片開啟"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Épingler — garder la carte ouverte lors du déplacement"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ピン留め — 移動してもカードを開いたままにする"
           }
         }
       }
@@ -12209,6 +12825,34 @@
         }
       }
     },
+    "Reveal the selected file path in Finder.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在访达中显示所选文件路径。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Finder 中顯示選取的檔案路徑。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Révéler le chemin du fichier sélectionné dans le Finder."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択したファイルパスを Finder で表示します。"
+          }
+        }
+      }
+    },
     "Revert": {
       "localizations": {
         "zh-Hans": {
@@ -12261,6 +12905,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "リライト"
+          }
+        }
+      }
+    },
+    "Rewrite Selection": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重写所选内容"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重寫選取內容"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réécrire la sélection"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択範囲を書き換え"
           }
         }
       }
@@ -12321,30 +12993,30 @@
         }
       }
     },
-    "Rewrite, summarize, translate or ask about the selected text, using the engine below.": {
+    "Rewrite, summarize, translate or ask about the selected text.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "使用下方的引擎对选中的文本进行改写、总结、翻译或提问。"
+            "value": "对选中的文本进行改写、总结、翻译或提问。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "使用下方的引擎對選取的文字進行改寫、摘要、翻譯或提問。"
+            "value": "對選取的文字進行改寫、摘要、翻譯或提問。"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Réécrivez, résumez, traduisez ou interrogez le texte sélectionné avec le moteur ci-dessous."
+            "value": "Réécrivez, résumez, traduisez ou interrogez le texte sélectionné."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "以下のエンジンを使って、選択したテキストを書き換え、要約、翻訳、または質問します。"
+            "value": "選択したテキストを書き換え、要約、翻訳、または質問します。"
           }
         }
       }
@@ -12401,6 +13073,62 @@
           "stringUnit": {
             "state": "translated",
             "value": "右クリックまたは⇧クリック"
+          }
+        }
+      }
+    },
+    "Run": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运行"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "執行"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exécuter"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "実行"
+          }
+        }
+      }
+    },
+    "Run the selected text through AI.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 AI 处理所选文本。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用 AI 處理選取的文字。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traiter le texte sélectionné avec l'IA."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択したテキストを AI で処理します。"
           }
         }
       }
@@ -12489,30 +13217,30 @@
         }
       }
     },
-    "Save and Ask AI": {
+    "Save as AI Tool": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存并询问 AI"
+            "value": "保存为 AI 工具"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "儲存並詢問 AI"
+            "value": "儲存為 AI 工具"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enregistrer et demander à l’IA"
+            "value": "Enregistrer comme outil IA"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存してAIに依頼"
+            "value": "AIツールとして保存"
           }
         }
       }
@@ -12797,6 +13525,34 @@
         }
       }
     },
+    "Search actions, shortcuts, or aliases": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索动作、快捷键或别名"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋動作、快速鍵或別名"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher des actions, raccourcis ou alias"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アクション、ショートカット、エイリアスを検索"
+          }
+        }
+      }
+    },
     "Search all actions": {
       "localizations": {
         "zh-Hans": {
@@ -12933,6 +13689,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "ショートカットを検索"
+          }
+        }
+      }
+    },
+    "Search the web with your chosen engine.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用你选择的搜索引擎进行搜索。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用你選擇的搜尋引擎搜尋網路。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher sur le Web avec le moteur de votre choix."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択した検索エンジンでウェブを検索します。"
           }
         }
       }
@@ -13161,6 +13945,34 @@
         }
       }
     },
+    "Select the actions in the Actions list first, or drag one action onto another to group them.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先在“动作”列表中选择动作，或将一个动作拖到另一个动作上以合并为分组。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請先在「動作」列表中選擇動作，或將一個動作拖到另一個動作上以合併為分組。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez d'abord les actions dans la liste Actions, ou faites glisser une action sur une autre pour les regrouper."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "まず「アクション」リストでアクションを選択するか、アクションを別のアクションにドラッグしてグループ化します。"
+          }
+        }
+      }
+    },
     "Select the actions on Customize first, or drag one action onto another to group them.": {
       "localizations": {
         "zh-Hans": {
@@ -13241,6 +14053,62 @@
           "stringUnit": {
             "state": "translated",
             "value": "選択したテキストが長すぎるため、このプロバイダでは処理できません。"
+          }
+        }
+      }
+    },
+    "Send follow-up": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送追问"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "傳送追問"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoyer une relance"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォローアップを送信"
+          }
+        }
+      }
+    },
+    "Send follow-up (⏎)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送追问 (⏎)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "傳送追問 (⏎)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoyer une relance (⏎)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォローアップを送信 (⏎)"
           }
         }
       }
@@ -13521,6 +14389,62 @@
           "stringUnit": {
             "state": "translated",
             "value": "テキストを表示"
+          }
+        }
+      }
+    },
+    "Show as": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示为"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示為"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher sous forme de"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示形式"
+          }
+        }
+      }
+    },
+    "Show as:": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示为："
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示為："
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher sous forme de :"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示形式:"
           }
         }
       }
@@ -14109,6 +15033,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "翻訳先言語："
+          }
+        }
+      }
+    },
+    "Text": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文本"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texte"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テキスト"
           }
         }
       }
@@ -15177,6 +16129,34 @@
         }
       }
     },
+    "Uninstall?": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卸载？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解除安裝？"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désinstaller ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストールしますか？"
+          }
+        }
+      }
+    },
     "Unknown App": {
       "localizations": {
         "zh-Hans": {
@@ -15201,6 +16181,62 @@
           "stringUnit": {
             "state": "translated",
             "value": "不明なアプリ"
+          }
+        }
+      }
+    },
+    "Unpin result card": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消固定结果卡片"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消固定結果卡片"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détacher la carte de résultat"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結果カードのピン留めを解除"
+          }
+        }
+      }
+    },
+    "Unpin — card will dismiss automatically": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消固定 — 卡片将自动关闭"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消固定 — 卡片將自動關閉"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détacher — la carte se fermera automatiquement"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ピン留め解除 — カードは自動的に閉じます"
           }
         }
       }

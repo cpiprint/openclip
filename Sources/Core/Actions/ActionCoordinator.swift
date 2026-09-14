@@ -270,10 +270,12 @@ public final class ActionCoordinator: ObservableObject, Sendable {
         return true
     }
 
-    /// Returns the new group's id, or nil when nothing eligible was left to put in it — an empty
-    /// group is not kept (see `saveAndApplyGroupDefs`).
+    /// Returns the new group's id. A group made with no members is kept — the user asked for an
+    /// empty folder to fill later — but one emptied by taking its last member out is still removed
+    /// (see `saveAndApplyGroupDefs(pruningEmptiedFrom:)`).
     @discardableResult
     public func createGroup(title: String, iconName: String, memberActionIDs: [String] = []) -> String? {
+        let hadMembers = nonEmptyGroupIDs
         var seen = Set<String>()
         var deduped: [String] = []
         for rawID in memberActionIDs {
@@ -297,7 +299,7 @@ public final class ActionCoordinator: ObservableObject, Sendable {
         let newDef = ActionGroupDef(id: newID, title: title, iconName: resolvedIcon, memberActionIDs: deduped)
         updated.append(newDef)
         actionGroupDefs = updated
-        saveAndApplyGroupDefs()
+        saveAndApplyGroupDefs(pruningEmptiedFrom: hadMembers)
         return actionGroupDefs.contains(where: { $0.id == newID }) ? newID : nil
     }
 
@@ -323,6 +325,7 @@ public final class ActionCoordinator: ObservableObject, Sendable {
 
     public func updateGroup(groupID: String, title: String, iconName: String, memberActionIDs: [String]) {
         guard let index = actionGroupDefs.firstIndex(where: { $0.id == groupID }) else { return }
+        let hadMembers = nonEmptyGroupIDs.subtracting([groupID])
         let existingMembers = Set(actionGroupDefs[index].memberActionIDs)
         var seen = Set<String>()
         var deduped: [String] = []
@@ -337,7 +340,10 @@ public final class ActionCoordinator: ObservableObject, Sendable {
         actionGroupDefs[index].title = title
         actionGroupDefs[index].iconName = resolvedIcon
         actionGroupDefs[index].memberActionIDs = deduped
-        saveAndApplyGroupDefs()
+        // An editor save keeps the group even with nothing in it: the user may have made the
+        // folder empty on purpose (or is editing a newly created empty one). Only the drag/edit
+        // paths that explicitly take a member out of a group disband an emptied group.
+        saveAndApplyGroupDefs(pruningEmptiedFrom: hadMembers)
         syncCatalogOrder(for: groupID, memberIDs: deduped)
     }
 
@@ -366,6 +372,7 @@ public final class ActionCoordinator: ObservableObject, Sendable {
         guard isEligibleForGrouping(actionID: trimmedID) else { return }
         guard trimmedID != groupID else { return }
 
+        let hadMembers = nonEmptyGroupIDs
         // Remove action from any other existing group
         var updated = actionGroupDefs
         for i in 0..<updated.count {
@@ -384,7 +391,7 @@ public final class ActionCoordinator: ObservableObject, Sendable {
         }
         updated[targetIndex].memberActionIDs = members
         actionGroupDefs = updated
-        saveAndApplyGroupDefs()
+        saveAndApplyGroupDefs(pruningEmptiedFrom: hadMembers)
     }
 
     public func memberActionIDs(for groupID: String) -> [String] {
@@ -405,8 +412,9 @@ public final class ActionCoordinator: ObservableObject, Sendable {
 
     public func removeFromGroup(actionID: String, groupID: String) {
         guard let index = actionGroupDefs.firstIndex(where: { $0.id == groupID }) else { return }
+        let hadMembers = nonEmptyGroupIDs
         actionGroupDefs[index].memberActionIDs.removeAll { $0 == actionID }
-        saveAndApplyGroupDefs()
+        saveAndApplyGroupDefs(pruningEmptiedFrom: hadMembers)
     }
 
     public func reset() {
@@ -420,7 +428,7 @@ public final class ActionCoordinator: ObservableObject, Sendable {
         settingsStore.set(.actionGroups, value: data)
     }
 
-    private func saveAndApplyGroupDefs() {
+    private func saveAndApplyGroupDefs(pruningEmptiedFrom previouslyNonEmpty: Set<String> = []) {
         for i in 0..<actionGroupDefs.count {
             let groupID = actionGroupDefs[i].id
             let existingMembers = Set(actionGroupDefs[i].memberActionIDs)
@@ -432,10 +440,22 @@ public final class ActionCoordinator: ObservableObject, Sendable {
         // onto nothing: taking the last action out of a group takes the group with it, however it
         // left — dragged to the top level, dragged into another group, or deleted outright.
         //
+        // What counts as "taking the last action out" is a group that *had* members before this
+        // mutation and has none now, which is what `previouslyNonEmpty` records. A group the user
+        // created empty, or saved from its editor with nothing in it, was already empty, so it is
+        // a folder awaiting actions and stays.
+        //
         // Only mutations come through here. `loadGroupDefs` deliberately does not, so a group whose
         // members have not been registered yet survives launch.
-        actionGroupDefs.removeAll { $0.memberActionIDs.isEmpty }
+        actionGroupDefs.removeAll { $0.memberActionIDs.isEmpty && previouslyNonEmpty.contains($0.id) }
         saveGroupDefs(actionGroupDefs)
         registry.setGroupDefs(actionGroupDefs)
+    }
+
+    /// The ids of the groups that hold at least one member right now. Captured before a mutation so
+    /// `saveAndApplyGroupDefs(pruningEmptiedFrom:)` can tell a group that was emptied from one that
+    /// was created empty.
+    private var nonEmptyGroupIDs: Set<String> {
+        Set(actionGroupDefs.filter { !$0.memberActionIDs.isEmpty }.map(\.id))
     }
 }

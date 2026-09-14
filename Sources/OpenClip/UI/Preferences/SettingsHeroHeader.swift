@@ -32,36 +32,36 @@ struct SettingsHeroHeader: View {
         VStack(spacing: 12) {
             tile
 
-            VStack(spacing: 5) {
+            VStack(spacing: 4) {
                 Text(title)
-                    .font(.system(size: 26, weight: .bold))
+                    .font(.system(size: 22, weight: .bold))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.system(size: 15))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
-                        .lineLimit(3)
+                        .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let footnote, !footnote.isEmpty {
                     Text(footnote)
-                        .font(.callout)
+                        .font(.caption)
                         .foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
                         .padding(.top, 1)
                 }
             }
-            .frame(maxWidth: 460)
+            .frame(maxWidth: 440)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 24)
-        .padding(.top, 28)
-        .padding(.bottom, 22)
+        .padding(.top, 4)
+        .padding(.bottom, 6)
         .accessibilityElement(children: .combine)
     }
 

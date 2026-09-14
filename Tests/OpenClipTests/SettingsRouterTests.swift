@@ -402,6 +402,33 @@ final class SettingsRouterTests: XCTestCase {
                        "a refresh already running must not be startable again")
     }
 
+    // MARK: - Toolbar's + menu
+
+    func testTheActionsListOfferNewGroupCustomActionAndInstall() {
+        let items = PreferencesPlusMenu.items(for: .customize)
+        XCTAssertEqual(items.map(\.action), [.newGroup, .openCustomActions, .installExtensionFile])
+        XCTAssertEqual(items.filter(\.startsGroup).count, 1, "the second pair is set off from the group item")
+        XCTAssertEqual(items.first { $0.startsGroup }?.action, .openCustomActions)
+    }
+
+    func testASingleActionPageKeepsAWordlessPlus() {
+        for (page, action): (SettingsPage, PreferencesToolbarAction) in [
+            (.customActions, .addCustomAction),
+            (.appRules, .addApplication),
+            (.ai, .addAIAction),
+        ] {
+            let items = PreferencesPlusMenu.items(for: page)
+            XCTAssertEqual(items.map(\.action), [action], "\(page) adds exactly one thing")
+            XCTAssertFalse(items.contains { $0.startsGroup })
+        }
+    }
+
+    func testPagesThatAddNothingShowNoMenu() {
+        for page in [SettingsPage.general, .appearance, .shortcuts, .store, .about] {
+            XCTAssertTrue(PreferencesPlusMenu.items(for: page).isEmpty, "\(page) has no + menu")
+        }
+    }
+
     func testActionMenuMatchesWhatTheActionAllows() {
         let builtin = SettingsToolbarAccessories.actionMenuItems(.init(canDuplicate: false, canDelete: false))
         XCTAssertTrue(builtin.isEmpty, "a built-in has no page-level actions, so no ellipsis at all")
@@ -493,16 +520,19 @@ final class SettingsRouterTests: XCTestCase {
     }
 
     func testTheSidebarsThreeKindsOfRowAreThreeColours() {
+        // Extensions hash to their own stable colour, which the settings rows never borrow — the
+        // settings group is chrome and reads as its own palette (blue/black/grey).
+        let generated = SettingsPage.extensionPackage(id: "com.openclip.jwt").tint
         for page in SettingsPage.systemPages {
-            XCTAssertEqual(page.tint, SettingsTint.system, "\(page.id) is the app's own settings, so grey")
+            XCTAssertNotEqual(page.tint, generated,
+                              "\(page.id) must not wear an extension's generated colour")
         }
+
         XCTAssertEqual(SettingsPage.ai.tint, SettingsTint.openClip)
         XCTAssertEqual(SettingsPage.customActions.tint, SettingsTint.openClip)
         XCTAssertEqual(SettingsPage.builtinAction(id: "builtin.copy").tint, SettingsTint.openClip)
 
-        let installed = SettingsPage.extensionPackage(id: "com.openclip.jwt").tint
-        XCTAssertNotEqual(installed, SettingsTint.openClip, "an extension never wears the brand colour")
-        XCTAssertNotEqual(installed, SettingsTint.system)
+        XCTAssertNotEqual(generated, SettingsPage.extensionPackage(id: "com.openclip.urlquery").tint)
     }
 
     // MARK: - Naming a group made by dropping
