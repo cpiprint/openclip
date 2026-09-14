@@ -208,6 +208,7 @@ struct ScriptJSONOutput: Decodable {
 /// does not decode as a `ScriptJSONOutput`, so callers fall through to plain-text handling; a
 /// decoded but unknown `type` maps to `.success` (the current default path).
 public enum ShellResultMapper {
+    /// Decodes structured script output, returning `nil` when stdout is not recognized JSON.
     public static func actionResult(from stdout: String, actionID: String) -> ActionResult? {
         guard let data = stdout.data(using: .utf8),
               let decoded = try? JSONDecoder().decode(ScriptJSONOutput.self, from: data) else {
@@ -231,6 +232,7 @@ public enum ShellResultMapper {
         return .file(FileOutputPayload(url: url, filename: url.lastPathComponent, isTemporary: false))
     }
 
+    /// Converts an absolute, tilde-prefixed, or file-URL path into a local file URL.
     public static func parseFileURL(from rawPath: String) -> URL? {
         let trimmed = rawPath.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -256,6 +258,7 @@ public enum ShellResultMapper {
         return url
     }
 
+    /// Writes decoded action data to the output cache using a safe generated or supplied filename.
     public static func writeTemporaryOutput(data: Data, filename: String?, mimeType: String?) -> URL? {
         let dir = Constants.outputsDirectory
         do {
@@ -288,6 +291,7 @@ public enum ShellResultMapper {
         }
     }
 
+    /// Returns the preferred filename extension for a supported MIME type.
     private static func extensionForMimeType(_ mime: String?) -> String? {
         guard let mime = mime?.lowercased() else { return nil }
         switch mime {
@@ -306,6 +310,7 @@ public enum ShellResultMapper {
         }
     }
 
+    /// Resolves either embedded base64 data or a referenced file from structured output.
     private static func resolveFileURL(from output: ScriptJSONOutput) -> URL? {
         if let base64String = output.data, let data = Data(base64Encoded: base64String) {
             return writeTemporaryOutput(data: data, filename: output.filename, mimeType: output.mimeType)
@@ -317,6 +322,7 @@ public enum ShellResultMapper {
         return parseExistingFileURL(from: rawPath)
     }
 
+    /// Maps structured file output to preview, copy, or save semantics.
     private static func mapFileOutput(_ output: ScriptJSONOutput) -> ActionResult {
         guard let targetURL = resolveFileURL(from: output) else {
             return .toast(StatusFeedback(message: String(localized: "File not found"), style: .error))
@@ -354,6 +360,7 @@ public enum ShellResultMapper {
         }
     }
 
+    /// Converts a decoded script result into the corresponding domain action result.
     private static func map(_ output: ScriptJSONOutput, actionID: String) -> ActionResult {
         switch output.type {
         case Constants.actionTypePaste:

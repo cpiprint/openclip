@@ -17,6 +17,7 @@ struct SettingsRowLabel: View {
     var subtitleText: Text?
     var systemImage: String?
 
+    /// Creates a settings label with an optional localized subtitle.
     init(title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil, systemImage: String? = nil) {
         self.title = title
         self.subtitle = subtitle
@@ -24,6 +25,7 @@ struct SettingsRowLabel: View {
         self.systemImage = systemImage
     }
 
+    /// Creates a settings label with an optional prebuilt subtitle view.
     init(title: LocalizedStringKey, subtitleText: Text?, systemImage: String? = nil) {
         self.title = title
         self.subtitle = nil
@@ -67,6 +69,7 @@ struct SettingsRow<Trailing: View>: View {
     var systemImage: String?
     @ViewBuilder var trailing: () -> Trailing
 
+    /// Creates a settings row with a localized subtitle and trailing control.
     init(
         title: LocalizedStringKey,
         subtitle: LocalizedStringKey? = nil,
@@ -80,6 +83,7 @@ struct SettingsRow<Trailing: View>: View {
         self.trailing = trailing
     }
 
+    /// Creates a settings row with a prebuilt subtitle and trailing control.
     init(
         title: LocalizedStringKey,
         subtitleText: Text?,

@@ -248,6 +248,7 @@ public final class OpenClipJSHost: @unchecked Sendable {
         return makeActionResult(evaluation, request: request)
     }
 
+    /// Evaluates JavaScript with the OpenClip bridge and captures its return value and effects.
     private static func evaluate(
         _ request: Request,
         session: URLSession,
@@ -895,6 +896,7 @@ public final class OpenClipJSHost: @unchecked Sendable {
 
     // MARK: - Effect → ActionResult
 
+    /// Converts one completed JavaScript evaluation into the result delivered by the action.
     private static func makeActionResult(_ evaluation: EvaluationResult, request: Request) -> ActionResult {
         let collected = evaluation.collected
 
@@ -935,6 +937,7 @@ public final class OpenClipJSHost: @unchecked Sendable {
         return raw
     }
 
+    /// Converts a collected JavaScript bridge effect into a domain action result.
     private static func effectResult(_ effect: Effect, input: String) -> ActionResult {
         switch effect {
         case .paste(let text): return .paste(text)
@@ -1101,6 +1104,7 @@ public final class OpenClipJSHost: @unchecked Sendable {
         return ConfigurationRequest(actionID: actionID, reason: reason, missingOptionIDs: missing)
     }
 
+    /// Extracts an existing local file URL from a JavaScript string or object.
     private static func parseURLFromJS(_ value: JSValue?) -> URL? {
         guard let value else { return nil }
         if value.isString, let str = stringValue(value) {
@@ -1117,6 +1121,7 @@ public final class OpenClipJSHost: @unchecked Sendable {
         return nil
     }
 
+    /// Builds a file payload from JavaScript path or base64 data and optional metadata.
     private static func parseFilePayload(_ value: JSValue, options: JSValue?) -> FileOutputPayload? {
         var pathStr: String?
         var dataStr: String?
@@ -1155,6 +1160,7 @@ public final class OpenClipJSHost: @unchecked Sendable {
         return nil
     }
 
+    /// Reads the optional normalized file action from JavaScript input or options.
     private static func parseFileAction(_ value: JSValue, options: JSValue?) -> String? {
         if value.isObject, let act = stringValue(value.objectForKeyedSubscript("action")) {
             return act.lowercased()

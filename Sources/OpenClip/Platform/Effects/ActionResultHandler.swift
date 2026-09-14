@@ -499,6 +499,7 @@ public final class DefaultActionResultHandler: ActionResultHandler, Sendable {
         return nil
     }
 
+    /// Resolves the configured file-output directory, falling back to Downloads.
     public func resolveSaveLocation() -> URL {
         let savedPath = settingsStore.get(.fileSaveLocation).trimmingCharacters(in: .whitespacesAndNewlines)
         if !savedPath.isEmpty {
@@ -509,6 +510,7 @@ public final class DefaultActionResultHandler: ActionResultHandler, Sendable {
             ?? FileManager.default.homeDirectoryForCurrentUser
     }
 
+    /// Returns an available destination URL by appending a numeric suffix when needed.
     public nonisolated static func uniqueFileURL(for filename: String, in directory: URL) -> URL {
         let fileManager = FileManager.default
         var targetURL = directory.appendingPathComponent(filename)

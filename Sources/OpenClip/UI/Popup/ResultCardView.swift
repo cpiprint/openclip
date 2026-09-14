@@ -930,6 +930,7 @@ public struct ResultCardView: View {
         .onHover { isSaveHovered = $0 }
     }
 
+    /// Renders the image preview or generic metadata card for a file result.
     @ViewBuilder
     private func filePreviewContent(_ file: FileOutputPayload) -> some View {
         VStack(spacing: 0) {
@@ -1045,6 +1046,7 @@ public struct ResultCardView: View {
         }
     }
 
+    /// Loads file preview data and metadata without blocking the result-card UI.
     private func loadFileMetadata(for file: FileOutputPayload) async {
         let url = file.url
         let isImg = file.isImage
@@ -1158,4 +1160,3 @@ public struct ResultCardView: View {
         }
     }
 }
-

@@ -44,6 +44,7 @@ public struct ScriptAction: ConfigurableAction {
         return rules.resolveVisibility(for: context).match
     }
     
+    /// Runs the extension script and converts its standard output into an action result.
     @MainActor
     public func perform(_ context: ActionContext) async throws -> ActionResult {
         let text = context.selection.text

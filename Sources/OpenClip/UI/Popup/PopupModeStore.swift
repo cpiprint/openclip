@@ -85,6 +85,7 @@ public struct ResultCardPayload: Sendable, Equatable {
     /// Native file output payload when the result is a file.
     public let file: FileOutputPayload?
 
+    /// Creates the content presented by a result card, including an optional native file.
     public init(text: String, isError: Bool, title: String = String(localized: "AI Tools"), icon: ActionIcon? = nil, isStreaming: Bool = false, original: String? = nil, isRefining: Bool = false, canFollowUp: Bool = true, file: FileOutputPayload? = nil) {
         self.text = text
         self.isError = isError

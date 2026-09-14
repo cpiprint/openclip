@@ -24,6 +24,7 @@ struct GeneralTab: View {
     @ObservedObject private var launchManager = LaunchAtLoginManager.shared
     @ObservedObject private var permissionManager = PermissionManager.shared
 
+    /// Initializes preference state from the shared settings store.
     init() {
         _isAppEnabled = State(initialValue: DefaultSettingsStore.shared.get(.isAppEnabled))
         _showMenuBarIcon = State(initialValue: DefaultSettingsStore.shared.get(.showMenuBarIcon))
@@ -195,6 +196,7 @@ struct GeneralTab: View {
         return Text(verbatim: (fileSaveLocation as NSString).abbreviatingWithTildeInPath)
     }
 
+    /// Presents a directory picker and persists the selected file-output location.
     private func chooseSaveLocation() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false

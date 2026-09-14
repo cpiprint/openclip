@@ -86,6 +86,7 @@ public struct FileOutputPayload: Sendable, Equatable {
     public let mimeType: String?
     public let isTemporary: Bool
 
+    /// Creates a file payload and sanitizes any caller-provided display filename.
     public init(url: URL, filename: String? = nil, mimeType: String? = nil, isTemporary: Bool = false) {
         self.url = url
         if let raw = filename {

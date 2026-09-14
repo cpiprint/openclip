@@ -118,6 +118,7 @@ public struct CustomAction: ConfigurableAction, Codable, Sendable, Equatable {
         return rules.resolveVisibility(for: context).match
     }
     
+    /// Executes the configured action and maps its output to the requested delivery behavior.
     @MainActor
     public func perform(_ context: ActionContext) async throws -> ActionResult {
         let text = context.selection.text
@@ -183,4 +184,3 @@ public struct CustomAction: ConfigurableAction, Codable, Sendable, Equatable {
         return raw
     }
 }
-
