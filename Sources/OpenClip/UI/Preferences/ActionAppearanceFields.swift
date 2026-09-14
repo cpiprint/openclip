@@ -143,17 +143,17 @@ struct ActionAppearanceFields: View {
                     .textFieldStyle(.roundedBorder)
 
                 HStack(spacing: 8) {
-                    Text("Popup Bar:")
+                    Text("Show as:")
                         .font(.caption)
                         .foregroundColor(.secondary)
 
                     Picker("", selection: $displayMode) {
-                        Text("Show Icon").tag(0)
-                        Text("Show Text").tag(1)
+                        Text("Icon").tag(0)
+                        Text("Text").tag(1)
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .frame(width: 160)
+                    .frame(width: 140)
                 }
             }
         }

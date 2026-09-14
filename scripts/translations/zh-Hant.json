@@ -524,7 +524,7 @@
   "Remove Extension…": "移除擴充功能…",
   "Remove this extension?": "要移除此擴充功能嗎？",
   "Rename the group or change the icon its actions sit behind.": "重新命名群組，或更改其操作所在的圖示。",
-  "Rewrite, summarize, translate or ask about the selected text, using the engine below.": "使用下方的引擎對選取的文字進行改寫、摘要、翻譯或提問。",
+  "Rewrite, summarize, translate or ask about the selected text.": "對選取的文字進行改寫、摘要、翻譯或提問。",
   "Search settings": "搜尋設定",
   "Search shortcuts": "搜尋快捷鍵",
   "Select actions in the Actions list first to start the group with them.": "請先在「操作」列表中選取操作，以便用它們建立群組。",
@@ -570,5 +570,11 @@
   "Downloads": "下載量",
   "Recently Added": "最近新增",
   "Built-in action": "內建操作",
-  "Added %@": "新增於 %@"
+  "Added %@": "新增於 %@",
+  "Show as": "顯示為",
+  "Show as:": "顯示為：",
+  "Icon": "圖示",
+  "Text": "文字",
+  "Uninstall?": "解除安裝？",
+  "Delete?": "刪除？"
 }

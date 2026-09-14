@@ -22,6 +22,7 @@ struct CustomizePage: View {
 
     @State private var query = ""
     @State private var aliasError: String?
+    @State private var isShowingHelp = false
 
     init(
         selectedRowIDs: Binding<Set<String>>,
@@ -104,8 +105,39 @@ struct CustomizePage: View {
                 }
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            footerHint
+        .overlay(alignment: .bottomTrailing) {
+            helpButton
+        }
+    }
+
+    /// The page's instructions, behind the floating help button the pane keeps in its corner —
+    /// the same affordance System Settings uses, so the list itself stays uncluttered.
+    private var helpButton: some View {
+        Button {
+            isShowingHelp.toggle()
+        } label: {
+            Image(systemName: "questionmark")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(.quaternary))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(String(localized: "About the Customize list"))
+        .accessibilityLabel(String(localized: "About the Customize list"))
+        .padding(16)
+        .popover(isPresented: $isShowingHelp, arrowEdge: .bottom) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "hand.draw")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+                Text("Drag to reorder the popup bar or group actions. Turn off an action to hide it. An alias or hotkey triggers an action anywhere.")
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(width: 300, alignment: .leading)
+            .padding(16)
         }
     }
 
@@ -125,21 +157,6 @@ struct CustomizePage: View {
         .padding(.horizontal, 16)
         .padding(.top, 10)
         .padding(.bottom, 6)
-    }
-
-    private var footerHint: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "hand.draw")
-                .foregroundStyle(.tertiary)
-            Text("Drag to reorder the popup bar or group actions. Turn off an action to hide it. An alias or hotkey triggers an action anywhere.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
-        .background(.bar)
     }
 }
 
@@ -263,13 +280,11 @@ struct ActionRowView: View {
     }
 
     private func confirmDelete() {
-        let title = presentationModel.title
-
         // 1. Custom Group
         if coordinator.actionGroupDefs.contains(where: { $0.id == action.id }) {
             SettingsRouter.shared.confirmDestructive(
-                title: String(localized: "Delete Group \(title)?"),
-                message: String(localized: "Actions inside this group will return to the top level."),
+                title: String(localized: "Delete?"),
+                message: "",
                 confirmTitle: String(localized: "Delete")
             ) {
                 coordinator.ungroup(groupID: action.id)
@@ -281,8 +296,8 @@ struct ActionRowView: View {
         if ActionIdentity.isAIPreset(action),
            let preset = AIServiceManager.shared.preset(forActionID: action.id) {
             SettingsRouter.shared.confirmDestructive(
-                title: String(localized: "Delete \(title)?"),
-                message: String(localized: "This AI action will be permanently removed."),
+                title: String(localized: "Delete?"),
+                message: "",
                 confirmTitle: String(localized: "Delete")
             ) {
                 var list = AIServiceManager.shared.presets
@@ -295,8 +310,8 @@ struct ActionRowView: View {
         // 3. Custom Action
         if case .custom = action.chrome.source {
             SettingsRouter.shared.confirmDestructive(
-                title: String(localized: "Delete \(title)?"),
-                message: String(localized: "The action is removed from the popup bar and the palette."),
+                title: String(localized: "Delete?"),
+                message: "",
                 confirmTitle: String(localized: "Delete")
             ) {
                 coordinator.deleteCustomAction(actionID: action.id)
@@ -308,11 +323,10 @@ struct ActionRowView: View {
         // 4. Installed Extension
         if let packageID = ActionIdentity.extensionPackageID(of: action) {
             let info = InstalledExtensionInfo.info(for: packageID, in: coordinator.actions)
-            let extName = info?.name ?? title
             let uninstallID = info?.uninstallActionID ?? action.id
             SettingsRouter.shared.confirmDestructive(
-                title: String(localized: "Uninstall \(extName)?"),
-                message: String(localized: "Its files and settings are deleted from this Mac."),
+                title: String(localized: "Uninstall?"),
+                message: "",
                 confirmTitle: String(localized: "Uninstall")
             ) {
                 Task {
@@ -320,11 +334,6 @@ struct ActionRowView: View {
                         try await ExtensionManager.shared.uninstallExtension(actionID: uninstallID)
                         customizationManager.resetOverride(for: action.id)
                         NotificationCenter.default.post(name: .openClipExtensionsDidChange, object: nil)
-                        SettingsRouter.shared.notify(SettingsNotice(
-                            title: String(localized: "Extension Removed"),
-                            message: String(localized: "\(extName) was removed from this Mac."),
-                            style: .info
-                        ))
                     } catch {
                         SettingsRouter.shared.notifyError(
                             title: String(localized: "Remove Failed"),
@@ -413,8 +422,8 @@ struct PackageHeaderRowView: View {
 
     private func confirmUninstall() {
         SettingsRouter.shared.confirmDestructive(
-            title: String(localized: "Uninstall \(title)?"),
-            message: String(localized: "Its files and settings are deleted from this Mac."),
+            title: String(localized: "Uninstall?"),
+            message: "",
             confirmTitle: String(localized: "Uninstall")
         ) {
             Task {
@@ -422,11 +431,6 @@ struct PackageHeaderRowView: View {
                     let actionID = InstalledExtensionInfo.info(for: packageID, in: ActionCoordinator.shared.actions)?.uninstallActionID ?? packageID
                     try await ExtensionManager.shared.uninstallExtension(actionID: actionID)
                     NotificationCenter.default.post(name: .openClipExtensionsDidChange, object: nil)
-                    SettingsRouter.shared.notify(SettingsNotice(
-                        title: String(localized: "Extension Removed"),
-                        message: String(localized: "\(title) was removed from this Mac."),
-                        style: .info
-                    ))
                 } catch {
                     SettingsRouter.shared.notifyError(
                         title: String(localized: "Remove Failed"),

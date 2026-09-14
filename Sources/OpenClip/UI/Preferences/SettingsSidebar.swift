@@ -16,6 +16,7 @@ struct SettingsSidebarRow: Identifiable {
     enum Tile {
         case symbol(String, tint: Color)
         case icon(ActionIcon, tint: Color)
+        case bare(ActionIcon)
     }
 
     let page: SettingsPage
@@ -110,26 +111,35 @@ enum SettingsSidebarFilter {
     }
 }
 
-/// What colour a settings tile is, in three rules.
+/// What colour a sidebar tile is.
 ///
-/// The sidebar is read by colour before it is read by name: grey is the app's own settings, blue
-/// is OpenClip itself — its built-in actions, AI, your custom actions — and everything else is a
-/// third-party extension wearing a colour derived from its identifier. Blue is *reserved*: a
-/// generated tint never lands in it, so nothing installed can pass for something OpenClip ships.
+/// The app's own settings are drawn the way System Settings draws its rows: a vivid, recognisable
+/// colour each — grey for General, black for Appearance, purple for Customize, orange for App
+/// Rules, blue for Store. Everything below that group is an action or an extension, and those rows
+/// carry no tile at all: they are plain glyphs, the way Finder, Mail and Xcode list their items.
 enum SettingsTint {
-    /// The settings sections themselves. They are chrome, not content, so they recede.
-    static let system = Color(nsColor: .systemGray)
+    /// The settings sections themselves: vivid and distinct, mirroring the reference sidebar.
+    static let general = Color(nsColor: .systemGray)
+    static let appearance = Color(white: 0.15)
+    static let customize = Color.purple
+    static let shortcuts = Color.purple
+    static let appRules = Color.orange
+    static let store = Color.blue
+    static let about = Color(nsColor: .systemGray)
 
-    /// Everything OpenClip ships.
-    static let openClip = Color.openClipBrand
+    /// Everything OpenClip ships, tracking the system accent color so it matches macOS settings.
+    static var openClip: Color {
+        Color.accentColor
+    }
 
     /// Hues that read as blue, from cyan through indigo. Reserved.
     static let reservedBlueHues: Range<Int> = 190..<270
 
     /// A stable colour for an extension's tile, so the same package always gets the same tint —
-    /// and never a blue one.
+    /// and never a blue one. Saturated and bright, so an installed package's hero tile reads as
+    /// vivid as the system tiles next to it instead of turning muddy.
     static func extensionTint(for packageID: String) -> Color {
-        Color(hue: Double(hue(for: packageID)) / 360.0, saturation: 0.58, brightness: 0.70)
+        Color(hue: Double(hue(for: packageID)) / 360.0, saturation: 0.74, brightness: 0.88)
     }
 
     /// The hue an identifier maps to, in degrees, with the reserved band skipped rather than
@@ -162,7 +172,7 @@ struct SettingsIconTile: View {
         SettingsTileBackground(tint: tint, size: size)
             .overlay {
                 Image(systemName: systemImage)
-                    .font(.system(size: size * 0.54, weight: .semibold))
+                    .font(.system(size: size * 0.58, weight: .semibold))
                     .foregroundStyle(.white)
                     .shadow(color: .black.opacity(0.18), radius: 0.5, y: 0.5)
             }
@@ -184,14 +194,14 @@ struct ExtensionIconTile: View {
                 switch icon {
                 case .text(let text):
                     Text(String(text.trimmingCharacters(in: .whitespaces).prefix(2)))
-                        .font(.system(size: size * 0.46, weight: .bold, design: .rounded))
+                        .font(.system(size: size * 0.48, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
                 default:
-                    ActionIconView(icon: icon, size: size * 0.56)
+                    ActionIconView(icon: icon, size: size * 0.58)
                         .foregroundStyle(.white)
-                        .frame(width: size * 0.7, height: size * 0.7)
+                        .frame(width: size * 0.72, height: size * 0.72)
                         .clipped()
                 }
             }
@@ -218,7 +228,6 @@ private struct SettingsTileBackground: View {
                 )
             )
             .overlay {
-                // The specular highlight the system tiles carry: brighter along the top edge.
                 shape.fill(
                     LinearGradient(
                         colors: [Color.white.opacity(0.28), Color.white.opacity(0.0)],
@@ -281,7 +290,7 @@ struct SettingsSidebar: View {
                 let (bundled, installed) = SettingsSidebarOrder.split(filteredExtensionRows)
 
                 if !bundled.isEmpty {
-                    Section {
+                    Section("Actions") {
                         ForEach(bundled) { row in
                             rowView(row)
                         }
@@ -317,9 +326,13 @@ struct SettingsSidebar: View {
         HStack(spacing: 9) {
             switch row.tile {
             case .symbol(let name, let tint):
-                SettingsIconTile(systemImage: name, tint: tint)
+                SettingsIconTile(systemImage: name, tint: tint, size: 20)
             case .icon(let icon, let tint):
-                ExtensionIconTile(icon: icon, tint: tint)
+                ExtensionIconTile(icon: icon, tint: tint, size: 20)
+            case .bare(let icon):
+                ActionIconView(icon: icon, size: 14)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20, height: 20, alignment: .center)
             }
             Text(row.title)
                 .lineLimit(1)

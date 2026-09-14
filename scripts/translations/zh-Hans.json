@@ -524,7 +524,7 @@
   "Remove Extension…": "移除扩展…",
   "Remove this extension?": "要移除此扩展吗？",
   "Rename the group or change the icon its actions sit behind.": "重命名分组，或更改其操作所在的图标。",
-  "Rewrite, summarize, translate or ask about the selected text, using the engine below.": "使用下方的引擎对选中的文本进行改写、总结、翻译或提问。",
+  "Rewrite, summarize, translate or ask about the selected text.": "对选中的文本进行改写、总结、翻译或提问。",
   "Search settings": "搜索设置",
   "Search shortcuts": "搜索快捷键",
   "Select actions in the Actions list first to start the group with them.": "请先在“操作”列表中选择操作，以便用它们创建分组。",
@@ -570,5 +570,11 @@
   "Downloads": "下载量",
   "Recently Added": "最近添加",
   "Built-in action": "内置操作",
-  "Added %@": "添加于 %@"
+  "Added %@": "添加于 %@",
+  "Show as": "显示为",
+  "Show as:": "显示为：",
+  "Icon": "图标",
+  "Text": "文本",
+  "Uninstall?": "卸载？",
+  "Delete?": "删除？"
 }

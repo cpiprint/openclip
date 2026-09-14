@@ -493,16 +493,19 @@ final class SettingsRouterTests: XCTestCase {
     }
 
     func testTheSidebarsThreeKindsOfRowAreThreeColours() {
+        // Extensions hash to their own stable colour, which the settings rows never borrow — the
+        // settings group is chrome and reads as its own palette (blue/black/grey).
+        let generated = SettingsPage.extensionPackage(id: "com.openclip.jwt").tint
         for page in SettingsPage.systemPages {
-            XCTAssertEqual(page.tint, SettingsTint.system, "\(page.id) is the app's own settings, so grey")
+            XCTAssertNotEqual(page.tint, generated,
+                              "\(page.id) must not wear an extension's generated colour")
         }
+
         XCTAssertEqual(SettingsPage.ai.tint, SettingsTint.openClip)
         XCTAssertEqual(SettingsPage.customActions.tint, SettingsTint.openClip)
         XCTAssertEqual(SettingsPage.builtinAction(id: "builtin.copy").tint, SettingsTint.openClip)
 
-        let installed = SettingsPage.extensionPackage(id: "com.openclip.jwt").tint
-        XCTAssertNotEqual(installed, SettingsTint.openClip, "an extension never wears the brand colour")
-        XCTAssertNotEqual(installed, SettingsTint.system)
+        XCTAssertNotEqual(generated, SettingsPage.extensionPackage(id: "com.openclip.urlquery").tint)
     }
 
     // MARK: - Naming a group made by dropping

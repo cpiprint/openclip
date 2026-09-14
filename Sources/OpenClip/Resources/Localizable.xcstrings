@@ -4649,6 +4649,34 @@
         }
       }
     },
+    "Delete?": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除？"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除しますか？"
+          }
+        }
+      }
+    },
     "Disable in this app": {
       "localizations": {
         "zh-Hans": {
@@ -7081,6 +7109,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "ホットキーのみ"
+          }
+        }
+      }
+    },
+    "Icon": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图标"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圖示"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icône"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイコン"
           }
         }
       }
@@ -12097,30 +12153,30 @@
         }
       }
     },
-    "Rewrite, summarize, translate or ask about the selected text, using the engine below.": {
+    "Rewrite, summarize, translate or ask about the selected text.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "使用下方的引擎对选中的文本进行改写、总结、翻译或提问。"
+            "value": "对选中的文本进行改写、总结、翻译或提问。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "使用下方的引擎對選取的文字進行改寫、摘要、翻譯或提問。"
+            "value": "對選取的文字進行改寫、摘要、翻譯或提問。"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Réécrivez, résumez, traduisez ou interrogez le texte sélectionné avec le moteur ci-dessous."
+            "value": "Réécrivez, résumez, traduisez ou interrogez le texte sélectionné."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "以下のエンジンを使って、選択したテキストを書き換え、要約、翻訳、または質問します。"
+            "value": "選択したテキストを書き換え、要約、翻訳、または質問します。"
           }
         }
       }
@@ -13189,6 +13245,62 @@
         }
       }
     },
+    "Show as": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示为"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示為"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher sous forme de"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示形式"
+          }
+        }
+      }
+    },
+    "Show as:": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示为："
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示為："
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher sous forme de :"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示形式:"
+          }
+        }
+      }
+    },
     "Show completions": {
       "localizations": {
         "zh-Hans": {
@@ -13773,6 +13885,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "翻訳先言語："
+          }
+        }
+      }
+    },
+    "Text": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文本"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texte"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テキスト"
           }
         }
       }
@@ -14837,6 +14977,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "拡張機能をアンインストール"
+          }
+        }
+      }
+    },
+    "Uninstall?": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卸载？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解除安裝？"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désinstaller ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストールしますか？"
           }
         }
       }

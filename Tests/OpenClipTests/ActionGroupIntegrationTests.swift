@@ -326,15 +326,12 @@ final class ActionGroupIntegrationTests: XCTestCase {
             return results
         }
 
-        // The Customize list is the popup bar's layout and nothing else: every row type (an
-        // extension group and its sub-action, a custom group and its members, a package header and
-        // its actions) renders a cell, and none of them carries a switch or any other control —
-        // enabling, configuring and removing all live on the action's own page.
+        // Each row hosts an enable switch, matching the unified customize list design.
         var renderedRows = 0
         for r in 0..<outlineView.numberOfRows {
             guard let rowView = outlineView.view(atColumn: 0, row: r, makeIfNecessary: true) else { continue }
             renderedRows += 1
-            XCTAssertTrue(findSwitches(in: rowView).isEmpty, "Row \(r) must not carry a switch; the action's page owns it")
+            XCTAssertFalse(findSwitches(in: rowView).isEmpty, "Row \(r) should carry an enable switch")
         }
         XCTAssertGreaterThanOrEqual(renderedRows, 7, "Must render cells across every row type")
     }

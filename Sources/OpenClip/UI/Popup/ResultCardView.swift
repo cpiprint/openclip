@@ -355,26 +355,12 @@ public struct ResultCardView: View {
                 closeButton
             }
         }
+        // No bar behind the header: it sits on the card itself, so the card reads as one surface
+        // with the title on it rather than a chrome bar stuck to the top.
         .padding(.horizontal, 8)
         .frame(height: Self.headerHeight)
-        .background(headerCapsuleBackground)
         .padding(.horizontal, 12)
         .padding(.top, Self.headerTopPadding)
-    }
-
-    private var headerCapsuleBackground: some View {
-        let capsule = Capsule(style: .continuous)
-        let strokeColor = colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.10)
-        let tintOpacity: Double = colorScheme == .dark ? 0.08 : 0.05
-        let shadow1 = Color.black.opacity(colorScheme == .dark ? 0.26 : 0.14)
-        let shadow2 = Color.black.opacity(colorScheme == .dark ? 0.12 : 0.06)
-
-        return capsule
-            .fill(.ultraThinMaterial)
-            .overlay(capsule.fill(Color.primary.opacity(tintOpacity)))
-            .overlay(capsule.stroke(strokeColor, lineWidth: 0.5))
-            .shadow(color: shadow1, radius: 6, x: 0, y: 2.5)
-            .shadow(color: shadow2, radius: 1, x: 0, y: 0.5)
     }
 
     // MARK: - Blur Overlays
@@ -467,7 +453,7 @@ public struct ResultCardView: View {
                 .frame(width: 22, height: 22)
                 .background(
                     showsDiff
-                        ? (isDiffHovered ? Color.accentColor.opacity(0.28) : Color.accentColor.opacity(0.20))
+                        ? (isDiffHovered ? Color.accentColor : Color.accentColor.opacity(0.85))
                         : (isDiffHovered ? Color.primary.opacity(0.08) : Color.clear),
                     in: Circle()
                 )
@@ -489,7 +475,7 @@ public struct ResultCardView: View {
                 .frame(width: 22, height: 22)
                 .background(
                     isPinned
-                        ? (isPinHovered ? Color.accentColor.opacity(0.28) : Color.accentColor.opacity(0.20))
+                        ? (isPinHovered ? Color.accentColor : Color.accentColor.opacity(0.85))
                         : (isPinHovered ? Color.primary.opacity(0.08) : Color.clear),
                     in: Circle()
                 )
@@ -573,7 +559,7 @@ public struct ResultCardView: View {
     }
 
     private static let headerHeight: CGFloat = 32.0
-    private static let headerTopPadding: CGFloat = 14.0
+    private static let headerTopPadding: CGFloat = 8.0
     private static let gapAfterHeader: CGFloat = 14.0
     private static let topInset: CGFloat = headerTopPadding + headerHeight + gapAfterHeader
     private static let baseBottomInset: CGFloat = 46.0

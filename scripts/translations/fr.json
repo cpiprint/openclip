@@ -523,7 +523,7 @@
   "Remove Extension…": "Supprimer l'extension…",
   "Remove this extension?": "Supprimer cette extension ?",
   "Rename the group or change the icon its actions sit behind.": "Renommez le groupe ou changez l'icône derrière laquelle se trouvent ses actions.",
-  "Rewrite, summarize, translate or ask about the selected text, using the engine below.": "Réécrivez, résumez, traduisez ou interrogez le texte sélectionné avec le moteur ci-dessous.",
+  "Rewrite, summarize, translate or ask about the selected text.": "Réécrivez, résumez, traduisez ou interrogez le texte sélectionné.",
   "Search settings": "Rechercher dans les réglages",
   "Search shortcuts": "Rechercher des raccourcis",
   "Select actions in the Actions list first to start the group with them.": "Sélectionnez d'abord des actions dans la liste Actions pour créer le groupe avec elles.",
@@ -569,5 +569,11 @@
   "Downloads": "Téléchargements",
   "Recently Added": "Ajoutées récemment",
   "Built-in action": "Action intégrée",
-  "Added %@": "Ajoutée le %@"
+  "Added %@": "Ajoutée le %@",
+  "Show as": "Afficher sous forme de",
+  "Show as:": "Afficher sous forme de :",
+  "Icon": "Icône",
+  "Text": "Texte",
+  "Uninstall?": "Désinstaller ?",
+  "Delete?": "Supprimer ?"
 }

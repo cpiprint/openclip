@@ -452,22 +452,7 @@ public struct PopupSearchView: View {
         .padding(.leading, 10)
         .padding(.trailing, 6)
         .frame(height: 34)
-        .background(searchFieldBackground)
-    }
-
-    private var searchFieldBackground: some View {
-        let shape = RoundedRectangle(cornerRadius: 10, style: .continuous)
-        let strokeColor = colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.12)
-        let darkTint = Color.black.opacity(colorScheme == .dark ? 0.28 : 0.06)
-        let shadow1 = Color.black.opacity(colorScheme == .dark ? 0.28 : 0.14)
-        let shadow2 = Color.black.opacity(colorScheme == .dark ? 0.12 : 0.06)
-
-        return shape
-            .fill(.ultraThinMaterial)
-            .overlay(shape.fill(darkTint))
-            .overlay(shape.stroke(strokeColor, lineWidth: 0.5))
-            .shadow(color: shadow1, radius: 6, x: 0, y: 2.5)
-            .shadow(color: shadow2, radius: 1, x: 0, y: 0.5)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     /// Closes the palette by dropping the scope back to the full list (Esc with an empty scoped

@@ -524,7 +524,7 @@
   "Remove Extension…": "拡張機能を削除…",
   "Remove this extension?": "この拡張機能を削除しますか?",
   "Rename the group or change the icon its actions sit behind.": "グループの名前を変更するか、アクションをまとめるアイコンを変更します。",
-  "Rewrite, summarize, translate or ask about the selected text, using the engine below.": "以下のエンジンを使って、選択したテキストを書き換え、要約、翻訳、または質問します。",
+  "Rewrite, summarize, translate or ask about the selected text.": "選択したテキストを書き換え、要約、翻訳、または質問します。",
   "Search settings": "設定を検索",
   "Search shortcuts": "ショートカットを検索",
   "Select actions in the Actions list first to start the group with them.": "先にアクションリストでアクションを選択すると、それらでグループを開始できます。",
@@ -570,5 +570,11 @@
   "Downloads": "ダウンロード数",
   "Recently Added": "最近追加",
   "Built-in action": "組み込みアクション",
-  "Added %@": "追加日 %@"
+  "Added %@": "追加日 %@",
+  "Show as": "表示形式",
+  "Show as:": "表示形式:",
+  "Icon": "アイコン",
+  "Text": "テキスト",
+  "Uninstall?": "アンインストールしますか？",
+  "Delete?": "削除しますか？"
 }
