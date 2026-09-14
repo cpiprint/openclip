@@ -5,8 +5,8 @@ import Core
 @testable import OpenClip
 
 /// The search palette's AI fallback: a query that matches no action is offered as an AI
-/// instruction — "Ask AI" runs it once, "Save as AI tool" keeps it as a custom preset and runs
-/// it. Covers the pure rules (`PaletteAIPrompt`, the preset factory) and the palette wiring
+/// instruction — "Rewrite Selection" runs it once, "Save as AI Tool" keeps it as a custom preset
+/// and runs it. Covers the pure rules (`PaletteAIPrompt`, the preset factory) and the palette wiring
 /// (typing a non-matching query, then ⌘1 / ⌘2 / Return).
 @MainActor
 final class PaletteAIPromptTests: XCTestCase {
@@ -78,15 +78,15 @@ final class PaletteAIPromptTests: XCTestCase {
     }
 
     func testRowTitles() {
-        XCTAssertEqual(PaletteAIPrompt.rowTitle(.apply), "Apply to Selection")
-        XCTAssertEqual(PaletteAIPrompt.rowTitle(.ask), "Ask AI")
-        XCTAssertEqual(PaletteAIPrompt.rowTitle(.save), "Save and Ask AI")
+        XCTAssertEqual(PaletteAIPrompt.rowTitle(.apply), "Rewrite Selection")
+        XCTAssertEqual(PaletteAIPrompt.rowTitle(.ask), "Ask a Question")
+        XCTAssertEqual(PaletteAIPrompt.rowTitle(.save), "Save as AI Tool")
     }
 
     func testRowSymbols() {
-        XCTAssertEqual(PaletteAIPrompt.rowSymbol(.apply), "sparkles")
-        XCTAssertEqual(PaletteAIPrompt.rowSymbol(.ask), "questionmark.bubble")
-        XCTAssertEqual(PaletteAIPrompt.rowSymbol(.save), "plus.circle")
+        XCTAssertEqual(PaletteAIPrompt.rowSymbol(.apply), "sparkle")
+        XCTAssertEqual(PaletteAIPrompt.rowSymbol(.ask), "sparkle")
+        XCTAssertEqual(PaletteAIPrompt.rowSymbol(.save), "sparkle")
     }
 
     // MARK: - Preset factory

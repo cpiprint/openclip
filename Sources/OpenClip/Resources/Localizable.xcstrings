@@ -2045,62 +2045,6 @@
         }
       }
     },
-    "Apply to Selection": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "应用到所选内容"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "套用到選取內容"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appliquer à la sélection"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選択範囲に適用"
-          }
-        }
-      }
-    },
-    "Ask AI": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "询问 AI"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "詢問 AI"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Demander à l’IA"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AIに依頼"
-          }
-        }
-      }
-    },
     "Ask AI: “%@”": {
       "localizations": {
         "zh-Hans": {
@@ -2125,6 +2069,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "AIに依頼: 「%@」"
+          }
+        }
+      }
+    },
+    "Ask a Question": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提问"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提出問題"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poser une question"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "質問する"
           }
         }
       }
@@ -12713,6 +12685,34 @@
         }
       }
     },
+    "Rewrite Selection": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重写所选内容"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重寫選取內容"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réécrire la sélection"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択範囲を書き換え"
+          }
+        }
+      }
+    },
     "Rewrite this text in a polished, professional, and formal tone. Keep the original meaning, language, and formatting; replace slang, contractions, and casual phrasing with formal equivalents": {
       "localizations": {
         "zh-Hans": {
@@ -12965,30 +12965,30 @@
         }
       }
     },
-    "Save and Ask AI": {
+    "Save as AI Tool": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存并询问 AI"
+            "value": "保存为 AI 工具"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "儲存並詢問 AI"
+            "value": "儲存為 AI 工具"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enregistrer et demander à l’IA"
+            "value": "Enregistrer comme outil IA"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存してAIに依頼"
+            "value": "AIツールとして保存"
           }
         }
       }
