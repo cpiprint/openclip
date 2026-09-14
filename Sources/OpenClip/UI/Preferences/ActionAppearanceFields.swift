@@ -214,8 +214,7 @@ struct IconPickerPage: View {
                     router.pop()
                 }
                 .padding(20)
-                .frame(maxWidth: 640)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .settingsPaneWidth()
 
                 Divider()
 

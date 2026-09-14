@@ -34,7 +34,7 @@ public struct GroupEditorPage: View {
 
     private var saveDisabled: Bool {
         title.trimmingCharacters(in: .whitespaces).isEmpty
-            || (isCustomGroup ? memberIDs.count < 2 : memberIDs.isEmpty)
+            || (!isCustomGroup && memberIDs.isEmpty)
     }
 
     public var body: some View {
@@ -127,8 +127,8 @@ public struct GroupEditorPage: View {
                     }
 
                     Text(isCustomGroup
-                         ? "Drag to reorder. Drag actions onto the group on Customize to add more."
-                         : "Drag to reorder the actions behind this extension's icon.")
+                         ? String(localized: "Drag to reorder. Drag actions onto the group in the Actions list to add more.")
+                         : String(localized: "Drag to reorder the actions behind this extension's icon."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.leading, 4)

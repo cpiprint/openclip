@@ -113,25 +113,35 @@ public struct NewGroupPage: View {
                 Button("Cancel") { router.pop() }
                     .keyboardShortcut(.cancelAction)
                 Button("Create") {
+                    let trimmed = title.trimmingCharacters(in: .whitespaces)
                     ActionCoordinator.shared.createGroup(
-                        title: title.trimmingCharacters(in: .whitespaces),
+                        title: trimmed.isEmpty ? defaultTitle : trimmed,
                         iconName: iconName,
                         memberActionIDs: memberActionIDs
                     )
                     router.pop()
                 }
                 .buttonStyle(.borderedProminent)
-                // A group with nothing in it is a row in the popup bar that opens onto nothing,
-                // and it would be dropped the moment anything else touched the groups.
-                .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || memberActionIDs.isEmpty)
                 .keyboardShortcut(.defaultAction)
             }
         }
+        .onAppear {
+            if title.isEmpty { title = defaultTitle }
+        }
+    }
+
+    /// A name for a group created without one, kept distinct from the groups that already exist.
+    private var defaultTitle: String {
+        ActionsOutlineCoordinator.uniqueGroupTitle(
+            base: String(localized: "New Group"),
+            numbered: { String(localized: "New Group \($0)") },
+            existing: coordinator.actionGroupDefs.map(\.title)
+        )
     }
 
     private var memberCountText: String {
         switch memberActionIDs.count {
-        case 0: return String(localized: "Select the actions on Customize first, or drag one action onto another to group them.")
+        case 0: return String(localized: "No actions yet. Drag actions into this group in the Actions list.")
         case 1: return String(localized: "1 action will be grouped.")
         default: return String(localized: "\(memberActionIDs.count) actions will be grouped.")
         }

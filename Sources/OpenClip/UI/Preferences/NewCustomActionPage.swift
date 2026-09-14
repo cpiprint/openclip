@@ -24,6 +24,9 @@ public struct NewCustomActionPage: View {
         case shellScript
     }
     @State private var actionKind: ActionKind
+    /// True when the page was opened from one of the quick-create cards, which already picked the
+    /// kind: the Type picker is hidden so the chosen kind is never shown back to the user.
+    @State private var locksKind: Bool
     @State private var customURLTemplate: String = "https://google.com/search?q={text}"
     @State private var customSnippetTemplate: String = "**{text}**"
     @State private var customShellScript: String = "echo \"$OPENCLIP_TEXT\" | tr '[:lower:]' '[:upper:]'"
@@ -36,6 +39,7 @@ public struct NewCustomActionPage: View {
         default: .openURL
         }
         _actionKind = State(initialValue: kind)
+        _locksKind = State(initialValue: initialKind != nil)
         let icon: String = switch kind {
         case .openURL: "safari.fill"
         case .textSnippet: "text.quote"
@@ -71,24 +75,26 @@ public struct NewCustomActionPage: View {
 
                     InsetGroupCard {
                         VStack(spacing: 0) {
-                            HStack {
-                                Text("Type")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                Picker("", selection: $actionKind) {
-                                    Text("Open URL").tag(ActionKind.openURL)
-                                    Text("Text Snippet").tag(ActionKind.textSnippet)
-                                    Text("Shell Script").tag(ActionKind.shellScript)
+                            if !locksKind {
+                                HStack {
+                                    Text("Type")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    Picker("", selection: $actionKind) {
+                                        Text("Open URL").tag(ActionKind.openURL)
+                                        Text("Text Snippet").tag(ActionKind.textSnippet)
+                                        Text("Shell Script").tag(ActionKind.shellScript)
+                                    }
+                                    .pickerStyle(.segmented)
+                                    .labelsHidden()
                                 }
-                                .pickerStyle(.segmented)
-                                .labelsHidden()
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-
-                            Divider()
                                 .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+
+                                Divider()
+                                    .padding(.horizontal, 12)
+                            }
 
                             Group {
                                 switch actionKind {

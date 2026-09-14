@@ -124,8 +124,8 @@ struct CustomizePage: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .help(String(localized: "About the Customize list"))
-        .accessibilityLabel(String(localized: "About the Customize list"))
+        .help(String(localized: "About the Actions list"))
+        .accessibilityLabel(String(localized: "About the Actions list"))
         .padding(16)
         .popover(isPresented: $isShowingHelp, arrowEdge: .bottom) {
             HStack(alignment: .top, spacing: 10) {
@@ -194,12 +194,8 @@ struct ActionRowView: View {
         if SettingsDestination.isCustomAction(action) {
             return true
         }
-        // Top-level extension action or extension group parent
-        if let packageID = ActionIdentity.extensionPackageID(of: action),
-           !InstalledExtensionInfo.isCustomPackage(packageID) {
-            let isSubAction = action.id.contains(".") && action.chrome.popupBehavior != .showSubActions
-            return !isSubAction
-        }
+        // Everything else — built-ins and extensions alike — is managed from its own page's
+        // toolbar menu rather than by a trash on the row.
         return false
     }
 
@@ -256,9 +252,6 @@ struct ActionRowView: View {
                 }
                 .buttonStyle(.plain)
                 .help(String(localized: "Delete / Uninstall"))
-            } else {
-                Color.clear
-                    .frame(width: 20, height: 20)
             }
 
             Button {
@@ -316,31 +309,6 @@ struct ActionRowView: View {
             ) {
                 coordinator.deleteCustomAction(actionID: action.id)
                 customizationManager.resetOverride(for: action.id)
-            }
-            return
-        }
-
-        // 4. Installed Extension
-        if let packageID = ActionIdentity.extensionPackageID(of: action) {
-            let info = InstalledExtensionInfo.info(for: packageID, in: coordinator.actions)
-            let uninstallID = info?.uninstallActionID ?? action.id
-            SettingsRouter.shared.confirmDestructive(
-                title: String(localized: "Uninstall?"),
-                message: "",
-                confirmTitle: String(localized: "Uninstall")
-            ) {
-                Task {
-                    do {
-                        try await ExtensionManager.shared.uninstallExtension(actionID: uninstallID)
-                        customizationManager.resetOverride(for: action.id)
-                        NotificationCenter.default.post(name: .openClipExtensionsDidChange, object: nil)
-                    } catch {
-                        SettingsRouter.shared.notifyError(
-                            title: String(localized: "Remove Failed"),
-                            message: String(localized: "OpenClip could not remove extension: \(error.localizedDescription)")
-                        )
-                    }
-                }
             }
             return
         }

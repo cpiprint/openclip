@@ -170,23 +170,24 @@ final class ActionGroupIntegrationTests: XCTestCase {
         XCTAssertEqual(decoded.first?.memberActionIDs, ["action.1", "action.2", "action.3"])
     }
 
-    /// A group with nothing in it is not kept, so the old "make an empty group, then drag actions
-    /// in" flow is gone: a group is made *from* actions, and it lasts as long as it holds one.
+    /// A group made with nothing in it is a folder awaiting actions and is kept; a group that loses
+    /// its last member through a removal is not.
     func testAGroupLastsExactlyAsLongAsItHoldsSomething() throws {
         let a1 = DummyAction(id: "action.1", title: "Action 1")
         let a2 = DummyAction(id: "action.2", title: "Action 2")
         coordinator.register(action: a1)
         coordinator.register(action: a2)
 
-        XCTAssertNil(coordinator.createGroup(title: "Empty Group", iconName: "folder", memberActionIDs: []))
-        XCTAssertTrue(coordinator.actionGroupDefs.isEmpty)
-        XCTAssertFalse(coordinator.actions.contains { $0.id.hasPrefix("vgroup.") })
+        let emptyID = try XCTUnwrap(coordinator.createGroup(title: "Empty Group", iconName: "folder", memberActionIDs: []))
+        XCTAssertEqual(coordinator.actionGroupDefs.count, 1, "an explicitly created empty group is kept")
+        XCTAssertEqual(coordinator.actionGroupDefs[0].memberActionIDs, [])
+        XCTAssertTrue(coordinator.actions.contains { $0.id == emptyID }, "and its row is on the bar")
 
         // Made from two actions — which is what dropping one onto the other does — it is real.
         let groupID = try XCTUnwrap(
             coordinator.createGroup(title: "Pair", iconName: "folder", memberActionIDs: ["action.1", "action.2"])
         )
-        XCTAssertEqual(coordinator.actionGroupDefs.count, 1)
+        XCTAssertEqual(coordinator.actionGroupDefs.count, 2)
         XCTAssertTrue(coordinator.actions.contains { $0.id == groupID })
 
         let context = ActionContext(
@@ -203,12 +204,13 @@ final class ActionGroupIntegrationTests: XCTestCase {
 
         // Drag one out: the group holds the other, so it stays.
         coordinator.removeFromGroup(actionID: "action.1", groupID: groupID)
-        XCTAssertEqual(coordinator.actionGroupDefs.count, 1)
-        XCTAssertEqual(coordinator.actionGroupDefs[0].memberActionIDs, ["action.2"])
+        XCTAssertEqual(coordinator.actionGroupDefs.count, 2)
+        XCTAssertEqual(coordinator.actionGroupDefs.first { $0.id == groupID }?.memberActionIDs, ["action.2"])
 
         // Drag the last one out: the group goes with it, and so does its row on the bar.
         coordinator.removeFromGroup(actionID: "action.2", groupID: groupID)
-        XCTAssertTrue(coordinator.actionGroupDefs.isEmpty)
+        XCTAssertFalse(coordinator.actionGroupDefs.contains { $0.id == groupID })
+        XCTAssertEqual(coordinator.actionGroupDefs.count, 1, "the deliberately empty group is untouched")
         XCTAssertFalse(coordinator.actions.contains { $0.id == groupID })
 
         available = coordinator.resolveActions(for: context)

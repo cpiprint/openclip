@@ -376,33 +376,23 @@ public struct ResultCardView: View {
     }
 
     private var topBlurOverlay: some View {
-        let bg = cardBackgroundColor
-        return LinearGradient(
-            stops: [
-                .init(color: bg, location: 0.0),
-                .init(color: bg.opacity(0.85), location: 0.60),
-                .init(color: bg.opacity(0.0), location: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
+        PopupEdgeFade(
+            edge: .top,
+            effectiveTheme: effectiveTheme,
+            colorScheme: colorScheme,
+            height: Self.topInset,
+            cardColor: cardBackgroundColor
         )
-        .frame(height: Self.topInset)
-        .allowsHitTesting(false)
     }
 
     private var bottomBlurOverlay: some View {
-        let bg = cardBackgroundColor
-        return LinearGradient(
-            stops: [
-                .init(color: bg.opacity(0.0), location: 0.0),
-                .init(color: bg.opacity(0.85), location: 0.45),
-                .init(color: bg, location: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
+        PopupEdgeFade(
+            edge: .bottom,
+            effectiveTheme: effectiveTheme,
+            colorScheme: colorScheme,
+            height: bottomInset + 2,
+            cardColor: cardBackgroundColor
         )
-        .frame(height: bottomInset + 2)
-        .allowsHitTesting(false)
     }
 
     private var closeButton: some View {

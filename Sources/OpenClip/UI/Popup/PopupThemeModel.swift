@@ -79,6 +79,85 @@ enum PopupThemeModel {
     }
 }
 
+// MARK: - Edge Fade
+
+/// The fading layer that keeps the popup's fixed chrome — the search field, a card's header and
+/// footer — legible over the rows scrolling beneath it.
+///
+/// A glass popup blurs and tints what scrolls under as a fading extension of the card material, so
+/// the rows dissolve into a frosted edge instead of showing through a translucent band. A classic
+/// popup fades its opaque card colour instead, since there is nothing behind it to blur.
+struct PopupEdgeFade: View {
+    enum Edge {
+        case top
+        case bottom
+    }
+
+    let edge: Edge
+    let effectiveTheme: String
+    let colorScheme: ColorScheme
+    let height: CGFloat
+    /// The card's own colour: the tint blended over the blur for glass, the fill faded for classic.
+    let cardColor: Color
+
+    var body: some View {
+        Group {
+            if effectiveTheme == "glass" {
+                LayeredGlassBackground(cornerRadius: 0, colorScheme: colorScheme)
+                    .mask(fadeMask)
+            } else {
+                LinearGradient(stops: solidStops, startPoint: .top, endPoint: .bottom)
+            }
+        }
+        .frame(height: height)
+        .allowsHitTesting(false)
+    }
+
+    /// Opacity ramp: opaque at the pane's edge, clear away from it, so the blur dissolves rather
+    /// than ending in a hard line.
+    private var fadeMask: LinearGradient {
+        switch edge {
+        case .top:
+            return LinearGradient(
+                stops: [
+                    .init(color: .black, location: 0.0),
+                    .init(color: .black.opacity(0.9), location: 0.5),
+                    .init(color: .clear, location: 1.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .bottom:
+            return LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0.0),
+                    .init(color: .black.opacity(0.9), location: 0.5),
+                    .init(color: .black, location: 1.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+
+    private var solidStops: [Gradient.Stop] {
+        switch edge {
+        case .top:
+            return [
+                .init(color: cardColor, location: 0.0),
+                .init(color: cardColor.opacity(0.85), location: 0.55),
+                .init(color: cardColor.opacity(0.0), location: 1.0)
+            ]
+        case .bottom:
+            return [
+                .init(color: cardColor.opacity(0.0), location: 0.0),
+                .init(color: cardColor.opacity(0.85), location: 0.45),
+                .init(color: cardColor, location: 1.0)
+            ]
+        }
+    }
+}
+
 // MARK: - Effective Theme Environment Key
 
 /// Empty by default — "not set" — so a view hosted outside `PopupView` (previews, tests) falls

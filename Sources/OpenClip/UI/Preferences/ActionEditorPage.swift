@@ -522,6 +522,9 @@ public struct ActionEditorPage: View {
             }
         }
         .formStyle(.grouped)
+        // Centre the form at the shared measure while its scroll view runs the full width of the
+        // detail column, so the scroll indicator stays at the window edge.
+        .settingsPaneWidth()
         .onAppear {
             loadInitialState()
             DispatchQueue.main.async {

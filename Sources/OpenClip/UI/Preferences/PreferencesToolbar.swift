@@ -35,12 +35,14 @@ import AppKit
 import Combine
 import Core
 
-public enum PreferencesToolbarAction: Sendable {
+public enum PreferencesToolbarAction: Sendable, Equatable {
     case newGroup
     case addCustomAction
     case addApplication
     case addAIAction
     case installExtensionFile
+    /// Leaves the Actions list for the Custom Actions page.
+    case openCustomActions
     case refreshStore
     /// The Store's list order was picked from the sort menu.
     case setStoreSort(StoreSort)
@@ -48,6 +50,64 @@ public enum PreferencesToolbarAction: Sendable {
     case setPageToggle(Bool)
     /// A pick from the trailing ellipsis menu, by `SettingsToolbarMenuItem.id`.
     case pageMenuItem(String)
+}
+
+/// One row of the toolbar's **+** menu. A plain value so the menu's contents can be decided and
+/// asserted away from AppKit — see `PreferencesPlusMenu.items(for:)`.
+struct PreferencesPlusMenuItem: Equatable {
+    let title: String
+    let symbol: String
+    let action: PreferencesToolbarAction
+    /// A divider is drawn above this row.
+    var startsGroup: Bool = false
+}
+
+/// What the toolbar's **+** offers, per page. Only the pages listed here put a menu on the button;
+/// any other page hides it.
+enum PreferencesPlusMenu {
+    static func items(for page: SettingsPage) -> [PreferencesPlusMenuItem] {
+        switch page {
+        case .customize:
+            return [
+                PreferencesPlusMenuItem(
+                    title: String(localized: "New Group"),
+                    symbol: "folder.badge.plus",
+                    action: .newGroup
+                ),
+                PreferencesPlusMenuItem(
+                    title: String(localized: "Custom Action"),
+                    symbol: "plus",
+                    action: .openCustomActions,
+                    startsGroup: true
+                ),
+                PreferencesPlusMenuItem(
+                    title: String(localized: "Install Extension"),
+                    symbol: "puzzlepiece.extension",
+                    action: .installExtensionFile
+                ),
+            ]
+        case .customActions:
+            return [PreferencesPlusMenuItem(
+                title: String(localized: "New Custom Action"),
+                symbol: "plus",
+                action: .addCustomAction
+            )]
+        case .appRules:
+            return [PreferencesPlusMenuItem(
+                title: String(localized: "Add Application"),
+                symbol: "plus",
+                action: .addApplication
+            )]
+        case .ai:
+            return [PreferencesPlusMenuItem(
+                title: String(localized: "New AI Action"),
+                symbol: "plus",
+                action: .addAIAction
+            )]
+        default:
+            return []
+        }
+    }
 }
 
 /// The bridge between the SwiftUI panes and the AppKit toolbar.
@@ -117,6 +177,7 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
     private weak var titleLabel: NSTextField?
     private weak var searchItem: NSToolbarItem?
     private weak var actionItem: NSToolbarItem?
+    private var actionMenuItems: [PreferencesPlusMenuItem] = []
     private weak var searchField: NSSearchField?
     private weak var sortItem: NSMenuToolbarItem?
     private weak var storeInstallItem: NSToolbarItem?
@@ -212,6 +273,10 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
         default:
             setHidden(actionItem, true)
         }
+
+        // A page with more than one thing to add — the Actions list — turns the button into a menu;
+        // everywhere else a single press does the one thing the tooltip names.
+        actionMenuItems = PreferencesPlusMenu.items(for: page)
     }
 
     /// Puts the switch in the title bar, to the right of the toolbar's own items.
@@ -364,18 +429,41 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
     }
 
     @objc private func actionButtonPressed(_ sender: NSButton) {
-        switch model.page {
-        case .customize:
-            model.actions.send(.newGroup)
-        case .customActions:
-            model.actions.send(.addCustomAction)
-        case .appRules:
-            model.actions.send(.addApplication)
-        case .ai:
-            model.actions.send(.addAIAction)
-        default:
-            break
+        // A page that offers several things shows them as a menu anchored to the button; a page
+        // that offers one sends it straight through, so the button behaves as it always has.
+        guard actionMenuItems.count > 1 else {
+            if let only = actionMenuItems.first {
+                model.actions.send(only.action)
+            }
+            return
         }
+        let menu = makeActionMenu()
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height + 4), in: sender)
+    }
+
+    private func makeActionMenu() -> NSMenu {
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        for entry in actionMenuItems {
+            if entry.startsGroup, !menu.items.isEmpty {
+                menu.addItem(.separator())
+            }
+            let item = NSMenuItem(
+                title: entry.title,
+                action: #selector(actionMenuItemPressed(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.representedObject = entry.action
+            item.image = NSImage(systemSymbolName: entry.symbol, accessibilityDescription: nil)
+            menu.addItem(item)
+        }
+        return menu
+    }
+
+    @objc private func actionMenuItemPressed(_ sender: NSMenuItem) {
+        guard let action = sender.representedObject as? PreferencesToolbarAction else { return }
+        model.actions.send(action)
     }
 
     public func controlTextDidChange(_ notification: Notification) {

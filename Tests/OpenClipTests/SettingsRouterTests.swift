@@ -402,6 +402,33 @@ final class SettingsRouterTests: XCTestCase {
                        "a refresh already running must not be startable again")
     }
 
+    // MARK: - Toolbar's + menu
+
+    func testTheActionsListOfferNewGroupCustomActionAndInstall() {
+        let items = PreferencesPlusMenu.items(for: .customize)
+        XCTAssertEqual(items.map(\.action), [.newGroup, .openCustomActions, .installExtensionFile])
+        XCTAssertEqual(items.filter(\.startsGroup).count, 1, "the second pair is set off from the group item")
+        XCTAssertEqual(items.first { $0.startsGroup }?.action, .openCustomActions)
+    }
+
+    func testASingleActionPageKeepsAWordlessPlus() {
+        for (page, action): (SettingsPage, PreferencesToolbarAction) in [
+            (.customActions, .addCustomAction),
+            (.appRules, .addApplication),
+            (.ai, .addAIAction),
+        ] {
+            let items = PreferencesPlusMenu.items(for: page)
+            XCTAssertEqual(items.map(\.action), [action], "\(page) adds exactly one thing")
+            XCTAssertFalse(items.contains { $0.startsGroup })
+        }
+    }
+
+    func testPagesThatAddNothingShowNoMenu() {
+        for page in [SettingsPage.general, .appearance, .shortcuts, .store, .about] {
+            XCTAssertTrue(PreferencesPlusMenu.items(for: page).isEmpty, "\(page) has no + menu")
+        }
+    }
+
     func testActionMenuMatchesWhatTheActionAllows() {
         let builtin = SettingsToolbarAccessories.actionMenuItems(.init(canDuplicate: false, canDelete: false))
         XCTAssertTrue(builtin.isEmpty, "a built-in has no page-level actions, so no ellipsis at all")

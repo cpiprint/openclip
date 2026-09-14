@@ -68,7 +68,7 @@ struct CustomActionsPage: View {
                             SettingsInlineError(message: aliasError)
                         }
 
-                        Text("Open an action to change its name, icon, shortcut or what it does, or to delete it. Use Customize to place it in the popup bar.")
+                        Text("Open an action to change its name, icon, shortcut or what it does, or to delete it. Use Actions to place it in the popup bar.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

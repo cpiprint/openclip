@@ -52,7 +52,7 @@ public enum PreferenceTab: String, CaseIterable, Hashable, Sendable {
 
 @MainActor
 public struct PreferencesView: View {
-    /// Widest the Customize list grows; the grouped `Form` pages set their own width.
+    /// Widest the Customize list grows; every other pane is capped by `SettingsLayout`.
     private static let customizeListMaxWidth: CGFloat = 880
 
     @State private var disabledActionIDs: Set<String> = []
@@ -148,6 +148,7 @@ public struct PreferencesView: View {
                     memberIDs: CustomizePage.groupCandidates(selectedRowIDs: selectedRowIDs, coordinator: coordinator)
                 ))
             case .addCustomAction: router.push(.newCustomAction())
+            case .openCustomActions: router.select(.customActions)
             case .addApplication: router.push(.addApplication)
             case .addAIAction: router.push(.aiNewPreset)
             case .installExtensionFile: presentInstallExtensionPanel()
@@ -519,8 +520,10 @@ public struct PreferencesView: View {
         switch page {
         case .general:
             GeneralTab()
+                .settingsPaneWidth()
         case .appearance:
             AppearanceTab()
+                .settingsPaneWidth()
         case .customize, .shortcuts:
             CustomizePage(
                 selectedRowIDs: $selectedRowIDs,
@@ -531,12 +534,16 @@ public struct PreferencesView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .appRules:
             AppRulesTab()
+                .settingsPaneWidth()
         case .store:
             ExtensionStoreView(viewModel: storeViewModel)
+                .settingsPaneWidth(SettingsLayout.storeMaxWidth)
         case .about:
             AboutTab()
+                .settingsPaneWidth()
         case .ai:
             AIPage()
+                .settingsPaneWidth()
         case .extensionPackage(let id):
             if let info = InstalledExtensionInfo.info(for: id, in: coordinator.actions),
                info.commands.count == 1,
@@ -550,6 +557,7 @@ public struct PreferencesView: View {
                     disabledActionIDs: $disabledActionIDs,
                     disabledPackages: $disabledPackages
                 )
+                .settingsPaneWidth()
             }
         case .builtinAction(let id):
             if let action = coordinator.actions.first(where: { $0.id == id }) {
@@ -562,6 +570,7 @@ public struct PreferencesView: View {
                 disabledActionIDs: $disabledActionIDs,
                 disabledPackages: $disabledPackages
             )
+            .settingsPaneWidth()
         case .action(let id):
             actionEditor(for: id)
         case .newCustomAction(let kind):

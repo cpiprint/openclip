@@ -99,7 +99,7 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
         switch self {
         case .general: return String(localized: "General")
         case .appearance: return String(localized: "Appearance")
-        case .customize: return String(localized: "Customize")
+        case .customize: return String(localized: "Actions")
         case .shortcuts: return String(localized: "Shortcuts")
         case .appRules: return String(localized: "App Rules")
         case .store: return String(localized: "Store")
@@ -269,9 +269,10 @@ public final class SettingsRouter: ObservableObject {
 
     // MARK: - Navigation
 
-    /// Shows a sidebar page, dropping whatever was drilled into from the previous one.
+    /// Shows a sidebar page, dropping whatever was drilled into from the previous one. Switching
+    /// sidebar tabs is instant — a cross-fade between two panes reads as lag, not navigation.
     public func select(_ page: SettingsPage) {
-        show(path: [page])
+        show(path: [page], animated: false)
     }
 
     /// Drills into `page` from the current one. Drilling into a page that is already in the path
@@ -296,9 +297,13 @@ public final class SettingsRouter: ObservableObject {
     }
 
     /// Shows `newPath` and records it. Nothing happens when it is the current path already.
-    public func show(path newPath: [SettingsPage]) {
+    public func show(path newPath: [SettingsPage], animated: Bool = true) {
         guard !newPath.isEmpty, newPath != path else { return }
-        withAnimation(Self.transition) {
+        if animated {
+            withAnimation(Self.transition) {
+                path = newPath
+            }
+        } else {
             path = newPath
         }
         if historyIndex < history.count - 1 {

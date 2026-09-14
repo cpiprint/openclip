@@ -19,15 +19,20 @@ final class ActionCoordinatorGroupTests: XCTestCase {
         coordinator.register(action: DummyAction(id: "action.5", title: "Action 5"))
     }
 
-    /// A group is a container for actions, so an empty one is a row in the popup bar that opens
-    /// onto nothing. It is not kept, whichever way it came to be empty.
-    func testAGroupWithNoMembersIsNotKept() {
-        XCTAssertNil(coordinator.createGroup(title: "Empty", iconName: "folder", memberActionIDs: []))
-        XCTAssertTrue(coordinator.actionGroupDefs.isEmpty)
+    /// A group made with nothing in it is a folder awaiting actions, so it is kept; only a group
+    /// that an action was *taken out of* to the point of emptiness is removed (see the removal
+    /// tests below).
+    func testAGroupWithNoMembersIsKept() {
+        let id = coordinator.createGroup(title: "Empty", iconName: "folder", memberActionIDs: [])
+        XCTAssertEqual(coordinator.actionGroupDefs.count, 1)
+        XCTAssertEqual(id, coordinator.actionGroupDefs.first?.id)
+        XCTAssertEqual(coordinator.actionGroupDefs.first?.memberActionIDs, [])
 
         // Same when every id handed over turns out to be ineligible.
-        XCTAssertNil(coordinator.createGroup(title: "Junk", iconName: "folder", memberActionIDs: ["", " ", "nope"]))
-        XCTAssertTrue(coordinator.actionGroupDefs.isEmpty)
+        let junkID = coordinator.createGroup(title: "Junk", iconName: "folder", memberActionIDs: ["", " ", "nope"])
+        XCTAssertEqual(coordinator.actionGroupDefs.count, 2)
+        XCTAssertEqual(junkID, coordinator.actionGroupDefs.last?.id)
+        XCTAssertEqual(coordinator.actionGroupDefs.last?.memberActionIDs, [])
     }
 
     func testCreateGroupWithSingleMember() {

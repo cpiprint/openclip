@@ -298,7 +298,7 @@ struct SettingsSidebar: View {
                 }
 
                 if !installed.isEmpty {
-                    Section {
+                    Section("Installed") {
                         ForEach(installed) { row in
                             rowView(row)
                         }
