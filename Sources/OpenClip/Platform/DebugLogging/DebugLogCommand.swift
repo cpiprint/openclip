@@ -20,6 +20,7 @@ enum DebugLogCommand {
     enum Mode: Equatable {
         case none
         case dumpLogs(DumpOptions)
+        case dumpSettings
         case showHelp
         case showVersion
         case usageError(String)
@@ -27,6 +28,7 @@ enum DebugLogCommand {
 
     static func parse(_ arguments: [String]) -> Mode {
         var sawDump = false
+        var sawSettingsDump = false
         var options = DumpOptions()
         let args = Array(arguments.dropFirst()) // drop executable path
         var index = 0
@@ -34,6 +36,8 @@ enum DebugLogCommand {
             let arg = args[index]
             if arg == "--dump-logs" {
                 sawDump = true
+            } else if arg == "--dump-settings" {
+                sawSettingsDump = true
             } else if arg == "--help" || arg == "-h" {
                 return .showHelp
             } else if arg == "--version" || arg == "-v" {
@@ -66,6 +70,7 @@ enum DebugLogCommand {
             // `-NSTreatUnknownArgumentsAsOpen`) must not abort a normal app launch.
             index += 1
         }
+        if sawSettingsDump { return .dumpSettings }
         return sawDump ? .dumpLogs(options) : .none
     }
 
@@ -92,11 +97,11 @@ enum DebugLogCommand {
 
     static var usage: String {
         """
-        Usage: OpenClip [--version | --help] [--dump-logs [options]]
+        Usage: OpenClip [--version | --help] [--dump-logs [options] | --dump-settings]
 
-        Prints the OpenClip version, shows help, or dumps recent OpenClip log entries
-        (subsystem com.openclip) from this process and exits. Run the app binary
-        directly (not via dev_run.sh).
+        Prints the OpenClip version, shows help, dumps recent OpenClip log entries
+        (subsystem com.openclip), or prints a JSON snapshot of every known setting, then
+        exits. Run the app binary directly (not via dev_run.sh).
 
         Logs are also persistently written to ~/Library/Logs/OpenClip/openclip.log.
 
@@ -104,6 +109,7 @@ enum DebugLogCommand {
           --version, -v          Print the OpenClip version and exit
           --help, -h             Show this help
           --dump-logs            Dump recent log entries and exit
+          --dump-settings        Print a JSON snapshot of all known settings and exit
           --category=<name>      Only entries from this Log category (e.g. extensions)
           --level=<level>        Only entries at this severity: debug, info, notice, warning, error, fault
           --count=<N>            Max number of lines (default 500)
@@ -113,6 +119,7 @@ enum DebugLogCommand {
           OpenClip --version
           OpenClip --dump-logs --category=extensions --level=error
           OpenClip --dump-logs --count=20 --collect=0
+          OpenClip --dump-settings
         """
     }
 

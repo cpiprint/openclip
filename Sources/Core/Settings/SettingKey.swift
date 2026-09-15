@@ -7,10 +7,14 @@ import Foundation
 public struct SettingKey<Value: Sendable>: Sendable {
     public let name: String
     public let defaultValue: Value
+    /// Bumped when the meaning or shape of this setting's stored value changes, so a future
+    /// migration can tell old data from new. Brand-new keys start at 1.
+    public let schemaVersion: Int
 
-    public init(_ name: String, defaultValue: Value) {
+    public init(_ name: String, defaultValue: Value, schemaVersion: Int = 1) {
         self.name = name
         self.defaultValue = defaultValue
+        self.schemaVersion = schemaVersion
     }
 }
 

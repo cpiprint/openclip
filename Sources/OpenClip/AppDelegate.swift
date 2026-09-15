@@ -61,6 +61,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         case .dumpLogs(let options):
             runDumpLogsCommand(options)
             return
+        case .dumpSettings:
+            runDumpSettingsCommand()
+            return
         case .none:
             break
         }
@@ -309,6 +312,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             print("OpenClip log dump (\(entries.count) entr\(entries.count == 1 ? "y" : "ies"))")
             for entry in entries {
                 print(DebugLogCommand.formattedLine(entry))
+            }
+            exit(0)
+        }
+    }
+
+    /// Runs the app in `--dump-settings` mode: loads the normal startup state (so extension and
+    /// per-action hotkeys are known), captures a JSON snapshot of every known setting, prints it,
+    /// and exits.
+    private func runDumpSettingsCommand() {
+        Task {
+            let optionStore = SecretActionOptionStore()
+            ExtensionManager.shared.actionFactory = DefaultActionFactory(optionStore: optionStore)
+            ExtensionManager.shared.optionWriter = optionStore
+            ExtensionManager.shared.optionReader = optionStore
+            ExtensionManager.shared.settingsStore = DefaultSettingsStore.shared
+            await ActionCoordinator.shared.loadInitialState(
+                dictionaryLookup: DictionaryLookupFactory.systemLookup
+            )
+            let actionIDs = ActionCoordinator.shared.actions
+                .filter { ActionIdentity.isBindable($0) }
+                .map(\.id)
+            let snapshot = SettingsSnapshotter.capture(
+                store: DefaultSettingsStore.shared,
+                keys: SettingsCatalog.all(actionIDs: actionIDs),
+                appVersion: DebugLogCommand.version
+            )
+            if let data = try? snapshot.encoded(), let text = String(data: data, encoding: .utf8) {
+                print(text)
             }
             exit(0)
         }

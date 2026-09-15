@@ -84,8 +84,8 @@ public struct PopupSearchView: View {
     @ObservedObject private var modeStore: PopupModeStore
 
     @Environment(\.popupEffectiveTheme) private var environmentEffectiveTheme
-    @AppStorage(SettingKey.popupTheme.name) private var selectedTheme: String = SettingKey.popupTheme.defaultValue
-    @AppStorage(SettingKey.popupThemeColor.name) private var themeColor: String = SettingKey.popupThemeColor.defaultValue
+    @Setting(SettingKey.popupTheme) private var selectedTheme
+    @Setting(SettingKey.popupThemeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
 
     /// Hover follows the same mechanism as the bar: the AX global-mouse location hit-tested

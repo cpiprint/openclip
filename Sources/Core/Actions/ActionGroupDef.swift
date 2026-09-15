@@ -18,12 +18,14 @@ public struct ActionGroupDef: Codable, Sendable, Equatable, Hashable {
     }
 
     public static func encode(_ groups: [ActionGroupDef]) throws -> Data {
-        try JSONEncoder().encode(groups)
+        try SettingsDocument(payload: groups).encoded()
     }
 
     public static func decode(from data: Data) throws -> [ActionGroupDef] {
-        guard !data.isEmpty else { return [] }
-        return try JSONDecoder().decode([ActionGroupDef].self, from: data)
+        guard let document = try SettingsDocument<[ActionGroupDef]>.decode(from: data) else {
+            return []
+        }
+        return document.payload
     }
 
     public static func decodeOrEmpty(from data: Data?) -> [ActionGroupDef] {

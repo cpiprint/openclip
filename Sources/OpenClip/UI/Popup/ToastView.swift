@@ -13,9 +13,9 @@ struct ToastView: View {
 
     @State private var isHovered = false
 
-    @AppStorage(SettingKey.popupTheme.name) private var selectedTheme: String = SettingKey.popupTheme.defaultValue
-    @AppStorage(SettingKey.popupThemeColor.name) private var themeColor: String = SettingKey.popupThemeColor.defaultValue
-    @AppStorage(SettingKey.popupScale.name) private var popupScale: Int = SettingKey.popupScale.defaultValue
+    @Setting(SettingKey.popupTheme) private var selectedTheme
+    @Setting(SettingKey.popupThemeColor) private var themeColor
+    @Setting(SettingKey.popupScale) private var popupScale
     @Environment(\.colorScheme) private var colorScheme
 
     /// Visual multiplier derived from the user's Popup Scale level (1...5) so the toast keeps pace

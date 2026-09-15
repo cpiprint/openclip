@@ -11,6 +11,7 @@ import Combine
 final class MemorySettingsStore: SettingsStore, @unchecked Sendable {
     private let lock = NSLock()
     private var values: [String: Any] = [:]
+    private var metadataByKey: [String: SettingMetadata] = [:]
     private let subject = PassthroughSubject<String, Never>()
     /// Serializes each value write with its notification, so a concurrent setter can never publish a
     /// value it didn't write. Distinct from `lock` (which guards the values dictionary): notifications
@@ -29,6 +30,7 @@ final class MemorySettingsStore: SettingsStore, @unchecked Sendable {
     func set<T>(_ key: SettingKey<T>, value: T) {
         lock.lock()
         values[key.name] = value
+        metadataByKey[key.name] = SettingMetadata(version: key.schemaVersion, lastModified: Date())
         lock.unlock()
         notificationLock.lock()
         pendingNotifications.append(key.name)
@@ -61,5 +63,27 @@ final class MemorySettingsStore: SettingsStore, @unchecked Sendable {
             .filter { $0 == key.name }
             .map { [weak self] _ in self?.get(key) ?? key.defaultValue }
             .eraseToAnyPublisher()
+    }
+
+    func metadata<T>(for key: SettingKey<T>) -> SettingMetadata? {
+        lock.lock()
+        defer { lock.unlock() }
+        return metadataByKey[key.name]
+    }
+
+    func rawObject(forKey name: String) -> Any? {
+        lock.lock()
+        defer { lock.unlock() }
+        return values[name]
+    }
+
+    func setRawObject(_ value: Any?, forKey name: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        if let value {
+            values[name] = value
+        } else {
+            values.removeValue(forKey: name)
+        }
     }
 }

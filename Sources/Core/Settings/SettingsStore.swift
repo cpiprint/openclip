@@ -9,20 +9,33 @@ public protocol SettingsStore: AnyObject, Sendable {
     func get<T>(_ key: SettingKey<T>) -> T
     func set<T>(_ key: SettingKey<T>, value: T)
     func publisher<T>(for key: SettingKey<T>) -> AnyPublisher<T, Never>
+    /// Change-tracking info for a key, or `nil` if it was never written through this store
+    /// (e.g. data written before metadata existed).
+    func metadata<T>(for key: SettingKey<T>) -> SettingMetadata?
+    /// Raw stored value, bypassing typed decoding. Escape hatch for storage owned by a third-party
+    /// component (e.g. a keyboard-shortcut library that mixes String and Bool encodings under one
+    /// key); prefer typed `get`/`set` for everything else.
+    func rawObject(forKey name: String) -> Any?
+    /// Writes a raw value (or removes the key when `nil`). Counterpart to `rawObject(forKey:)`.
+    func setRawObject(_ value: Any?, forKey name: String)
 }
 
 public final class DefaultSettingsStore: SettingsStore, @unchecked Sendable {
-    public static let shared = DefaultSettingsStore()
-    private let userDefaults: UserDefaults
+    public static let shared = DefaultSettingsStore(backend: UserDefaultsBackend())
+    private let backend: SettingsBackend
     // Combine's PassthroughSubject is not thread-safe: `set` may be called from any thread, so all
-    // sends are serialized under `lock`. UserDefaults itself is thread-safe, so `get`/`set` reads
+    // sends are serialized under `lock`. The backend is thread-safe, so `get`/`set` reads
     // and writes stay unlocked. Using a recursive lock allows subscribers to call `set` during
     // notification dispatch without deadlocking.
     private let lock = NSRecursiveLock()
     private let subject = PassthroughSubject<String, Never>()
 
-    public init(userDefaults: UserDefaults = .standard) {
-        self.userDefaults = userDefaults
+    public init(backend: SettingsBackend) {
+        self.backend = backend
+    }
+
+    public convenience init(userDefaults: UserDefaults = .standard) {
+        self.init(backend: UserDefaultsBackend(userDefaults: userDefaults))
     }
 
     public func get<T>(_ key: SettingKey<T>) -> T {
@@ -30,24 +43,55 @@ public final class DefaultSettingsStore: SettingsStore, @unchecked Sendable {
         // preferences can be missing, corrupted, or hold an unexpected type, and setting
         // retrieval must never crash the host process.
         if T.self == Set<String>.self {
-            let array = userDefaults.stringArray(forKey: key.name) ?? []
+            let array = backend.stringArray(forKey: key.name) ?? []
             return (Set(array) as? T) ?? key.defaultValue
         }
         if T.self == Data?.self {
-            return (userDefaults.data(forKey: key.name) as? T) ?? key.defaultValue
+            return (backend.data(forKey: key.name) as? T) ?? key.defaultValue
         }
-        return (userDefaults.object(forKey: key.name) as? T) ?? key.defaultValue
+        return (backend.object(forKey: key.name) as? T) ?? key.defaultValue
     }
 
     public func set<T>(_ key: SettingKey<T>, value: T) {
-        if let setVal = value as? Set<String> {
-            userDefaults.set(Array(setVal), forKey: key.name)
-        } else {
-            userDefaults.set(value, forKey: key.name)
-        }
         lock.lock()
+        defer { lock.unlock() }
+        if let setVal = value as? Set<String> {
+            backend.set(Array(setVal), forKey: key.name)
+        } else {
+            backend.set(value, forKey: key.name)
+        }
+        var metadata = loadMetadataLocked()
+        metadata[key.name] = SettingMetadata(version: key.schemaVersion, lastModified: Date())
+        saveMetadataLocked(metadata)
         subject.send(key.name)
-        lock.unlock()
+    }
+
+    public func metadata<T>(for key: SettingKey<T>) -> SettingMetadata? {
+        lock.lock()
+        defer { lock.unlock() }
+        return loadMetadataLocked()[key.name]
+    }
+
+    public func rawObject(forKey name: String) -> Any? {
+        lock.lock()
+        defer { lock.unlock() }
+        return backend.object(forKey: name)
+    }
+
+    public func setRawObject(_ value: Any?, forKey name: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        backend.set(value, forKey: name)
+    }
+
+    private func loadMetadataLocked() -> [String: SettingMetadata] {
+        guard let data = backend.data(forKey: SettingMetadata.storageKey) else { return [:] }
+        return (try? JSONDecoder().decode([String: SettingMetadata].self, from: data)) ?? [:]
+    }
+
+    private func saveMetadataLocked(_ metadata: [String: SettingMetadata]) {
+        guard let data = try? JSONEncoder().encode(metadata) else { return }
+        backend.set(data, forKey: SettingMetadata.storageKey)
     }
 
     public func publisher<T>(for key: SettingKey<T>) -> AnyPublisher<T, Never> {

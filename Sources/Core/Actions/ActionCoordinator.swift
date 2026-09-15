@@ -146,8 +146,8 @@ public final class ActionCoordinator: ObservableObject, Sendable {
 
     public func loadCustomActions() {
         if let data = settingsStore.get(.customActions),
-           let decoded = try? JSONDecoder().decode([CustomAction].self, from: data) {
-            self.customActions = decoded
+           let document = try? SettingsDocument<[CustomAction]>.decode(from: data) {
+            self.customActions = document.payload
         } else {
             self.customActions = []
         }
@@ -235,7 +235,7 @@ public final class ActionCoordinator: ObservableObject, Sendable {
 
     private func persistCustomActions(_ actions: [CustomAction]) {
         self.customActions = actions
-        if let encoded = try? JSONEncoder().encode(actions) {
+        if let encoded = try? SettingsDocument(payload: actions).encoded() {
             settingsStore.set(.customActions, value: encoded)
         }
     }

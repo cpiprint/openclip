@@ -54,8 +54,8 @@ public final class ActionCustomizationManager: ObservableObject, ActionPresentin
     
     public func loadOverrides() {
         if let data = settingsStore.get(.actionCustomizations),
-           let decoded = try? JSONDecoder().decode([String: ActionOverride].self, from: data) {
-            self.overrides = decoded
+           let document = try? SettingsDocument<[String: ActionOverride]>.decode(from: data) {
+            self.overrides = document.payload
         } else {
             self.overrides = [:]
         }
@@ -192,7 +192,7 @@ public final class ActionCustomizationManager: ObservableObject, ActionPresentin
     }
 
     private func saveOverrides() {
-        if let encoded = try? JSONEncoder().encode(overrides) {
+        if let encoded = try? SettingsDocument(payload: overrides).encoded() {
             settingsStore.set(.actionCustomizations, value: encoded)
         }
     }

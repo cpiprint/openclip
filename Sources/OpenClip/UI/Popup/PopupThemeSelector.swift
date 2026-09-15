@@ -17,12 +17,12 @@ import Core
 
 @MainActor
 struct PopupThemeSelector: View {
-    @AppStorage(SettingKey.popupTheme.name) private var theme: String = SettingKey.popupTheme.defaultValue
-    @AppStorage(SettingKey.popupThemeColor.name) private var themeColor: String = SettingKey.popupThemeColor.defaultValue
-    @AppStorage(SettingKey.popupScale.name) private var popupScale: Int = SettingKey.popupScale.defaultValue
-    @AppStorage(SettingKey.popupBarWidth.name) private var barWidthLevel: Int = SettingKey.popupBarWidth.defaultValue
-    @AppStorage(SettingKey.popupAlignment.name) private var popupAlignment: String = SettingKey.popupAlignment.defaultValue
-    @AppStorage(SettingKey.popupVerticalPosition.name) private var popupVerticalPosition: String = SettingKey.popupVerticalPosition.defaultValue
+    @Setting(SettingKey.popupTheme) private var theme
+    @Setting(SettingKey.popupThemeColor) private var themeColor
+    @Setting(SettingKey.popupScale) private var popupScale
+    @Setting(SettingKey.popupBarWidth) private var barWidthLevel
+    @Setting(SettingKey.popupAlignment) private var popupAlignment
+    @Setting(SettingKey.popupVerticalPosition) private var popupVerticalPosition
 
     private struct AppearanceOption: Identifiable {
         let label: String

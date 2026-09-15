@@ -39,8 +39,8 @@ struct PopupPreview: View {
         return ActionContext(selection: context, modifiers: [])
     }
 
-    @AppStorage(SettingKey.popupScale.name) private var popupScale: Int = SettingKey.popupScale.defaultValue
-    @AppStorage(SettingKey.popupVerticalPosition.name) private var popupVerticalPosition: String = SettingKey.popupVerticalPosition.defaultValue
+    @Setting(SettingKey.popupScale) private var popupScale
+    @Setting(SettingKey.popupVerticalPosition) private var popupVerticalPosition
 
     private var previewModeStore: PopupModeStore {
         let store = PopupModeStore()

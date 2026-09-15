@@ -27,7 +27,7 @@ public struct GroupSubActionBarView: View {
     @Binding public var currentPage: Int
     private let hoverState: SubBarHoverState
 
-    @AppStorage(SettingKey.popupBarWidth.name) private var barWidthLevel: Int = SettingKey.popupBarWidth.defaultValue
+    @Setting(SettingKey.popupBarWidth) private var barWidthLevel
 
     private var buttonWidth: CGFloat { PopupMetrics.actionButtonWidth * scale }
     private var barButtonHeight: CGFloat { PopupMetrics.barButtonHeight * scale }

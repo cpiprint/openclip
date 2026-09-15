@@ -18,13 +18,18 @@ extension Notification.Name {
 public final class AIServiceManager: ObservableObject {
     public static let shared = AIServiceManager()
 
-    // `@AppStorage` does not automatically publish `objectWillChange`; forward manually
-    // so Preferences (and any other observers) refresh when settings change.
-    @AppStorage("aiEnabled") public var isAIEnabled: Bool = true {
-        willSet { objectWillChange.send() }
+    private let settingsStore = DefaultSettingsStore.shared
+
+    // Settings-backed properties route through SettingsStore (the single settings door) and
+    // manually forward `objectWillChange` so Preferences (and any other observers) refresh when
+    // a value changes. Key names and defaults are unchanged from the former @AppStorage surface.
+    public var isAIEnabled: Bool {
+        get { settingsStore.get(.isAIEnabled) }
+        set { objectWillChange.send(); settingsStore.set(.isAIEnabled, value: newValue) }
     }
-    @AppStorage("aiActiveProvider") public var activeProviderRaw: String = AIProviderType.apple.rawValue {
-        willSet { objectWillChange.send() }
+    public var activeProviderRaw: String {
+        get { settingsStore.get(.aiActiveProvider) }
+        set { objectWillChange.send(); settingsStore.set(.aiActiveProvider, value: newValue) }
     }
     // API key is stored in ~/.openclip/secrets.json via SecretStore.
     @Published public var cloudAPIKey: String {
@@ -40,44 +45,57 @@ public final class AIServiceManager: ObservableObject {
             }
         }
     }
-    @AppStorage("aiCloudService") public var cloudServiceRaw: String = "openai" {
-        willSet { objectWillChange.send() }
+    public var cloudServiceRaw: String {
+        get { settingsStore.get(.aiCloudService) }
+        set { objectWillChange.send(); settingsStore.set(.aiCloudService, value: newValue) }
     }
-    @AppStorage("aiCloudCustomURL") public var cloudCustomURL: String = "" {
-        willSet { objectWillChange.send() }
+    public var cloudCustomURL: String {
+        get { settingsStore.get(.aiCloudCustomURL) }
+        set { objectWillChange.send(); settingsStore.set(.aiCloudCustomURL, value: newValue) }
     }
-    @AppStorage("aiCloudModel") public var cloudModel: String = "gpt-4o-mini" {
-        willSet { objectWillChange.send() }
+    public var cloudModel: String {
+        get { settingsStore.get(.aiCloudModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiCloudModel, value: newValue) }
     }
-    @AppStorage("aiLocalPreset") public var localPresetRaw: String = LocalLLMPreset.lmstudio.rawValue {
-        willSet { objectWillChange.send() }
+    public var localPresetRaw: String {
+        get { settingsStore.get(.aiLocalPreset) }
+        set { objectWillChange.send(); settingsStore.set(.aiLocalPreset, value: newValue) }
     }
-    @AppStorage("aiLocalURL") public var localURL: String = "http://localhost:1234/v1" {
-        willSet { objectWillChange.send() }
+    public var localURL: String {
+        get { settingsStore.get(.aiLocalURL) }
+        set { objectWillChange.send(); settingsStore.set(.aiLocalURL, value: newValue) }
     }
-    @AppStorage("aiLocalModel") public var localModel: String = "default" {
-        willSet { objectWillChange.send() }
+    public var localModel: String {
+        get { settingsStore.get(.aiLocalModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiLocalModel, value: newValue) }
     }
-    @AppStorage("aiCLIPreset") public var cliPresetRaw: String = CLIPreset.claude.rawValue {
-        willSet { objectWillChange.send() }
+    public var cliPresetRaw: String {
+        get { settingsStore.get(.aiCLIPreset) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLIPreset, value: newValue) }
     }
-    @AppStorage("aiCLICustomCommand") public var cliCustomCommand: String = "" {
-        willSet { objectWillChange.send() }
+    public var cliCustomCommand: String {
+        get { settingsStore.get(.aiCLICustomCommand) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLICustomCommand, value: newValue) }
     }
-    @AppStorage("aiCLIModel") public var cliModel: String = "default" {
-        willSet { objectWillChange.send() }
+    public var cliModel: String {
+        get { settingsStore.get(.aiCLIModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLIModel, value: newValue) }
     }
-    @AppStorage("aiCLICustomModel") public var cliCustomModel: String = "" {
-        willSet { objectWillChange.send() }
+    public var cliCustomModel: String {
+        get { settingsStore.get(.aiCLICustomModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLICustomModel, value: newValue) }
     }
-    @AppStorage("aiCLICustomAuthCommand") public var cliCustomAuthCommand: String = "" {
-        willSet { objectWillChange.send() }
+    public var cliCustomAuthCommand: String {
+        get { settingsStore.get(.aiCLICustomAuthCommand) }
+        set { objectWillChange.send(); settingsStore.set(.aiCLICustomAuthCommand, value: newValue) }
     }
-    @AppStorage("aiLocalCustomModel") public var localCustomModel: String = "" {
-        willSet { objectWillChange.send() }
+    public var localCustomModel: String {
+        get { settingsStore.get(.aiLocalCustomModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiLocalCustomModel, value: newValue) }
     }
-    @AppStorage("aiCloudCustomModel") public var cloudCustomModel: String = "" {
-        willSet { objectWillChange.send() }
+    public var cloudCustomModel: String {
+        get { settingsStore.get(.aiCloudCustomModel) }
+        set { objectWillChange.send(); settingsStore.set(.aiCloudCustomModel, value: newValue) }
     }
 
     public var effectiveCLIModel: String {
@@ -132,8 +150,9 @@ public final class AIServiceManager: ObservableObject {
         get { localModel }
         set { localModel = newValue }
     }
-    @AppStorage("aiActionPresetsJSON") public var actionPresetsJSON: String = "" {
-        willSet { objectWillChange.send() }
+    public var actionPresetsJSON: String {
+        get { settingsStore.get(.aiActionPresetsJSON) }
+        set { objectWillChange.send(); settingsStore.set(.aiActionPresetsJSON, value: newValue) }
     }
 
     public static let defaultPresets: [AIActionPreset] = [

@@ -135,4 +135,29 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(ResultDeliveryPreference(rawValue: "copy"), .copy)
         XCTAssertNil(ResultDeliveryPreference(rawValue: "bogus"))
     }
+
+    // MARK: - Change-tracking metadata
+
+    @MainActor
+    func testMetadataAbsentUntilWrittenAndRecordsTimestamp() {
+        XCTAssertNil(store.metadata(for: .popupScale))
+
+        let before = Date()
+        store.set(.popupScale, value: 4)
+        let metadata = store.metadata(for: .popupScale)
+
+        XCTAssertEqual(metadata?.version, 1)
+        if let lastModified = metadata?.lastModified {
+            XCTAssertGreaterThanOrEqual(lastModified, before)
+        } else {
+            XCTFail("Expected metadata lastModified to be set after a write")
+        }
+    }
+
+    @MainActor
+    func testMetadataRecordsKeySchemaVersion() {
+        let key = SettingKey<String>("test.versioned", defaultValue: "", schemaVersion: 3)
+        store.set(key, value: "value")
+        XCTAssertEqual(store.metadata(for: key)?.version, 3)
+    }
 }

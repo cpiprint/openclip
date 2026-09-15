@@ -93,10 +93,10 @@ public struct PopupView: View {
     /// preview never reacts to (or leaks into) the real popup's shared hover state.
     private let isStatic: Bool
 
-    @AppStorage(SettingKey.popupTheme.name) private var selectedTheme: String = SettingKey.popupTheme.defaultValue
-    @AppStorage(SettingKey.popupThemeColor.name) private var themeColor: String = SettingKey.popupThemeColor.defaultValue
-    @AppStorage(SettingKey.popupScale.name) private var popupScale: Int = SettingKey.popupScale.defaultValue
-    @AppStorage(SettingKey.popupBarWidth.name) private var barWidthLevel: Int = SettingKey.popupBarWidth.defaultValue
+    @Setting(SettingKey.popupTheme) private var selectedTheme
+    @Setting(SettingKey.popupThemeColor) private var themeColor
+    @Setting(SettingKey.popupScale) private var popupScale
+    @Setting(SettingKey.popupBarWidth) private var barWidthLevel
     @Environment(\.colorScheme) private var colorScheme
 
     private var themeCategory: PopupThemeModel.Category {
@@ -115,7 +115,7 @@ public struct PopupView: View {
         return PopupThemeModel.classicToken(appearance: themeColor, systemIsDark: colorScheme == .dark)
     }
     
-    @AppStorage(SettingKey.completionCopyToClipboard.name) private var completionCopyToClipboard: Bool = SettingKey.completionCopyToClipboard.defaultValue
+    @Setting(SettingKey.completionCopyToClipboard) private var completionCopyToClipboard
     
     @State private var currentPage = 0
     /// The hover state this bar reads. Deliberately *not* `@ObservedObject`: `location` publishes at
