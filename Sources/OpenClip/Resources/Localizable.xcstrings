@@ -5181,6 +5181,34 @@
         }
       }
     },
+    "Drag": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖曳"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glisser"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ドラッグ"
+          }
+        }
+      }
+    },
     "Drag icon to add to a group": {
       "localizations": {
         "zh-Hans": {
@@ -5205,6 +5233,34 @@
           "stringUnit": {
             "state": "translated",
             "value": "アイコンをドラッグしてグループに追加"
+          }
+        }
+      }
+    },
+    "Drag image to export or share": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动图像以导出或分享"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖曳影像以匯出或分享"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser l'image pour l'exporter ou la partager"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像をドラッグして書き出しまたは共有"
           }
         }
       }

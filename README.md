@@ -15,11 +15,8 @@
 [![Product Hunt](https://img.shields.io/badge/Product%20Hunt-OpenClip-DA552F?style=flat-square&logo=producthunt&logoColor=white)](https://www.producthunt.com/products/openclip)
 <br />
 
-<a href="https://github.com/sponsors/ganeshmshetty" target="_blank">
-  <img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?style=for-the-badge&logo=github-sponsors&logoColor=white" height="32" alt="Sponsor on GitHub" />
-</a>
-<a href="https://buymeacoffee.com/ganeshmshetty" target="_blank">
-  <img src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black" height="32" alt="Buy Me A Coffee" />
+<a href="https://getopenclip.app/support" target="_blank">
+  <img src="https://img.shields.io/badge/Sponsor%20OpenClip-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" height="32" alt="Sponsor OpenClip" />
 </a>
 
 <br />
@@ -191,6 +188,7 @@ The full technical documentation lives in the [`docs/`](docs/index.md) hub:
 
 ## Community & Support
 
+- ❤️ **Sponsor OpenClip**: [Support the project](https://getopenclip.app/support) via GitHub Sponsors, Buy Me a Coffee, or Ko-fi.
 - 💬 **Discord**: [Join our Discord community](https://discord.gg/sy4MeFxf8) to share custom extensions, request features, and get support.
 - ⭐️ **AlternativeTo**: Find and support OpenClip on [AlternativeTo](https://alternativeto.net/software/openclip/about/?utm_source=badge&utm_medium=referral).
 - 🚀 **Product Hunt**: Check out our launch on [Product Hunt](https://www.producthunt.com/products) - still in progress.
