@@ -559,10 +559,77 @@ public struct ResultCardView: View {
         return ceil(rect.width) + 2 * Self.horizontalTextInset + 1
     }
 
+    /// Content-driven sizing for image results: balances width and height based on the image's
+    /// aspect ratio (so tall screenshots don't become thin slivers and wide banners don't letterbox).
+    /// Once the user manually drags the resize handles, the dragged size is honored verbatim.
+    public static func imageCardSize(
+        imageSize: CGSize?,
+        userSize: CGSize?,
+        isUserSized: Bool
+    ) -> CGSize {
+        if isUserSized, let userSize {
+            return userSize
+        }
+
+        let defaultWidth: CGFloat = 370.0
+        let defaultHeight: CGFloat = 290.0
+
+        guard let imageSize, imageSize.width > 0, imageSize.height > 0 else {
+            if let userWidth = userSize?.width {
+                return CGSize(width: max(userWidth, 340.0), height: defaultHeight)
+            }
+            return CGSize(width: defaultWidth, height: defaultHeight)
+        }
+
+        let w = imageSize.width
+        let h = imageSize.height
+
+        // Small image / icon (<= 160 pt in both dimensions): compact card
+        if w <= 160 && h <= 160 {
+            let smallWidth: CGFloat = userSize?.width != nil ? max(userSize!.width, 320.0) : 320.0
+            return CGSize(width: smallWidth, height: 240.0)
+        }
+
+        let ratio = w / h
+        let maxAllowedWidth: CGFloat = userSize?.width != nil ? max(userSize!.width, 460.0) : 460.0
+        let maxAllowedHeight: CGFloat = userSize?.height != nil ? max(userSize!.height, 380.0) : 380.0
+
+        let targetWidth: CGFloat
+        let targetHeight: CGFloat
+
+        if ratio < 0.85 {
+            // Portrait / tall (e.g. mobile mockups, vertical screenshots)
+            targetHeight = min(380.0, maxAllowedHeight)
+            let neededImageWidth = (targetHeight - 142.0) * ratio
+            let idealWidth = neededImageWidth + 2 * horizontalTextInset + 32.0
+            targetWidth = bounded(idealWidth, min: 320.0, max: 370.0)
+        } else if ratio > 1.35 {
+            // Landscape / wide (e.g. 16:9, widescreen banners)
+            let baseHeight: CGFloat = ratio > 2.0 ? 250.0 : 275.0
+            targetHeight = min(baseHeight, maxAllowedHeight)
+            let neededImageWidth = (targetHeight - 142.0) * ratio
+            let idealWidth = neededImageWidth + 2 * horizontalTextInset + 24.0
+            targetWidth = bounded(idealWidth, min: 370.0, max: maxAllowedWidth)
+        } else {
+            // Square / near-square
+            targetWidth = bounded(350.0, min: 340.0, max: maxAllowedWidth)
+            targetHeight = bounded(330.0, min: 290.0, max: maxAllowedHeight)
+        }
+
+        return CGSize(width: ceil(targetWidth), height: ceil(targetHeight))
+    }
+
     /// The card is as wide as its text needs, never narrower than the minimum and never wider
     /// than the maximum; once user-sized it is exactly the dragged size.
     private var dynamicCardWidth: CGFloat {
-        if payload.file != nil {
+        if let file = payload.file {
+            if file.isImage {
+                return Self.imageCardSize(
+                    imageSize: previewImage?.size,
+                    userSize: maxSize,
+                    isUserSized: isUserSized
+                ).width
+            }
             if let userWidth = maxSize?.width {
                 return max(userWidth, 340)
             }
@@ -609,7 +676,14 @@ public struct ResultCardView: View {
     private var dynamicCardHeight: CGFloat {
         if isUserSized, let maxSize { return maxSize.height }
         if let file = payload.file {
-            return file.isImage ? 290.0 : 225.0
+            if file.isImage {
+                return Self.imageCardSize(
+                    imageSize: previewImage?.size,
+                    userSize: maxSize,
+                    isUserSized: isUserSized
+                ).height
+            }
+            return 225.0
         }
         return Self.bounded(naturalContentHeight, min: PopupMetrics.aiCardMinHeight, max: maxCardHeight)
     }
@@ -914,16 +988,42 @@ public struct ResultCardView: View {
             if file.isImage && (previewImage != nil || !hasAttemptedImageLoad) {
                 if let nsImage = previewImage {
                     VStack(spacing: 8) {
-                        Image(nsImage: nsImage)
-                            .resizable()
-                            .scaledToFit()
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .stroke(Color.primary.opacity(colorScheme == .dark ? 0.16 : 0.08), lineWidth: 1)
-                            )
-                            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.28 : 0.12), radius: 6, x: 0, y: 3)
-                            .frame(maxHeight: max(100, dynamicCardHeight - Self.topInset - bottomInset - 42))
+                        let maxAllowedH = max(80, dynamicCardHeight - Self.topInset - bottomInset - 42)
+                        let maxAllowedW = max(100, dynamicCardWidth - 2 * Self.horizontalTextInset)
+                        let isSmall = nsImage.size.width <= 160 && nsImage.size.height <= 160
+
+                        if isSmall {
+                            let imgW = min(nsImage.size.width, maxAllowedW)
+                            let imgH = min(nsImage.size.height, maxAllowedH)
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color.primary.opacity(colorScheme == .dark ? 0.06 : 0.04))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .stroke(Color.primary.opacity(colorScheme == .dark ? 0.12 : 0.07), lineWidth: 1)
+                                    )
+                                    .frame(width: max(imgW + 36, 110), height: max(imgH + 28, 86))
+
+                                Image(nsImage: nsImage)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: imgW, height: imgH)
+                            }
+                        } else {
+                            let imgMaxH = min(nsImage.size.height, maxAllowedH)
+                            let imgMaxW = min(nsImage.size.width, maxAllowedW)
+
+                            Image(nsImage: nsImage)
+                                .resizable()
+                                .scaledToFit()
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.primary.opacity(colorScheme == .dark ? 0.16 : 0.08), lineWidth: 1)
+                                )
+                                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.28 : 0.12), radius: 6, x: 0, y: 3)
+                                .frame(maxWidth: imgMaxW, maxHeight: imgMaxH)
+                        }
 
                         HStack(spacing: 6) {
                             Text(file.displayName)

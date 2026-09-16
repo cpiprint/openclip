@@ -8,6 +8,7 @@ import AppKit
 @preconcurrency import UserNotifications
 import CoreServices
 import Core
+import SDWebImageSVGCoder
 
 public protocol ActionResultHandler: Sendable {
     @MainActor
@@ -237,7 +238,24 @@ public final class DefaultActionResultHandler: ActionResultHandler, Sendable {
             pendingRestoreTask = nil
             let pasteboard = self.pasteboard
             pasteboard.clearContents()
-            pasteboard.writeObjects([url as NSURL])
+            var objects: [NSPasteboardWriting] = [url as NSURL]
+            if FileOutputPayload(url: url).isImage {
+                if let data = try? Data(contentsOf: url), !data.isEmpty {
+                    let image = NSImage(data: data) ?? SDImageSVGCoder.shared.decodedImage(with: data, options: nil)
+                    if let image, image.isValid, image.cgImage(forProposedRect: nil, context: nil, hints: nil) != nil {
+                        let item = NSPasteboardItem()
+                        if let tiff = image.tiffRepresentation {
+                            item.setData(tiff, forType: .tiff)
+                            if let rep = NSBitmapImageRep(data: tiff),
+                               let pngData = rep.representation(using: .png, properties: [:]) {
+                                item.setData(pngData, forType: .png)
+                            }
+                        }
+                        objects.append(item)
+                    }
+                }
+            }
+            pasteboard.writeObjects(objects)
 
         case .saveFile(let url):
             guard FileManager.default.fileExists(atPath: url.path) else {

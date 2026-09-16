@@ -458,4 +458,74 @@ final class FileOutputTests: XCTestCase {
         XCTAssertEqual(feedback.message, "File not found")
         XCTAssertEqual(feedback.style.rawValue, "error")
     }
+
+    // MARK: - Image Output UX & Sizing Tests
+
+    /// Verifies that copying a real image file writes both NSURL and rich image representations (PNG and TIFF).
+    @MainActor
+    func testActionResultHandlerCopyImageFileWritesDualFormatPasteboard() async throws {
+        let isolatedPasteboard = NSPasteboard(name: NSPasteboard.Name("OpenClipTest-DualImage-\(UUID().uuidString)"))
+        let handler = DefaultActionResultHandler(settingsStore: isolatedSettings, pasteboard: isolatedPasteboard)
+
+        let testFile = tempDir.appendingPathComponent("image_copy_test.png")
+        let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: 16,
+            pixelsHigh: 16,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        )!
+        let pngData = rep.representation(using: .png, properties: [:])!
+        try pngData.write(to: testFile)
+
+        try await handler.handle(ActionResult.copyFile(testFile), in: nil)
+
+        // Verify URL is present on pasteboard
+        let fileURLType = NSPasteboard.PasteboardType("public.file-url")
+        let urlString = isolatedPasteboard.string(forType: fileURLType)
+        XCTAssertNotNil(urlString)
+        XCTAssertTrue(urlString?.contains("image_copy_test.png") == true)
+
+        // Verify PNG and TIFF are also available on pasteboard for web/rich-text paste destinations
+        let pasteboardPNG = isolatedPasteboard.data(forType: .png)
+        let pasteboardTIFF = isolatedPasteboard.data(forType: .tiff)
+        XCTAssertNotNil(pasteboardPNG, "Pasteboard should have PNG data for image file copy")
+        XCTAssertNotNil(pasteboardTIFF, "Pasteboard should have TIFF data for image file copy")
+    }
+
+    /// Verifies that imageCardSize computes balanced dimensions for small, portrait, landscape, and square images.
+    func testResultCardImageCardSizeAspectRatios() {
+        // Fallback for nil image
+        let fallback = ResultCardView.imageCardSize(imageSize: nil, userSize: nil, isUserSized: false)
+        XCTAssertEqual(fallback, CGSize(width: 370.0, height: 290.0))
+
+        // Small icon (48x48) -> compact card
+        let smallIcon = ResultCardView.imageCardSize(imageSize: CGSize(width: 48, height: 48), userSize: nil, isUserSized: false)
+        XCTAssertEqual(smallIcon, CGSize(width: 320.0, height: 240.0))
+
+        // Portrait image (9:16 ratio, e.g. 1080x1920) -> tall card
+        let portrait = ResultCardView.imageCardSize(imageSize: CGSize(width: 1080, height: 1920), userSize: nil, isUserSized: false)
+        XCTAssertEqual(portrait.height, 380.0)
+        XCTAssertEqual(portrait.width, 320.0)
+
+        // Landscape image (16:9 ratio, e.g. 1920x1080) -> wider card
+        let landscape = ResultCardView.imageCardSize(imageSize: CGSize(width: 1920, height: 1080), userSize: nil, isUserSized: false)
+        XCTAssertEqual(landscape.height, 275.0)
+        XCTAssertEqual(landscape.width, 370.0)
+
+        // Square image (1:1 ratio, e.g. 1024x1024) -> balanced card
+        let square = ResultCardView.imageCardSize(imageSize: CGSize(width: 1024, height: 1024), userSize: nil, isUserSized: false)
+        XCTAssertEqual(square.width, 350.0)
+        XCTAssertEqual(square.height, 330.0)
+
+        // Manually resized by user -> preserves verbatim size
+        let customUser = CGSize(width: 500, height: 450)
+        let userSized = ResultCardView.imageCardSize(imageSize: CGSize(width: 1080, height: 1920), userSize: customUser, isUserSized: true)
+        XCTAssertEqual(userSized, customUser)
+    }
 }
