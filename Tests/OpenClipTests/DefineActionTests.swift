@@ -16,9 +16,15 @@ final class DefineActionTests: XCTestCase {
         }
     }
 
+    /// Isolated store so a developer's real `openInDictionaryApp` preference can't leak into these
+    /// tests (which assert the default in-process lookup behaviour).
+    private func makeStore() -> MemorySettingsStore {
+        MemorySettingsStore()
+    }
+
     @MainActor
     func testDefineActionSmartTrigger() async throws {
-        let action = DefineAction(lookup: makeMockLookup())
+        let action = DefineAction(lookup: makeMockLookup(), settingsStore: makeStore())
         let app = AppIdentity(NSRunningApplication.current)
         
         // Single word with definition -> Enabled
@@ -62,7 +68,7 @@ final class DefineActionTests: XCTestCase {
             modifiers: []
         )
         let emptyLookup: @Sendable (String) -> String? = { _ in "" }
-        let emptyAction = DefineAction(lookup: emptyLookup)
+        let emptyAction = DefineAction(lookup: emptyLookup, settingsStore: makeStore())
         XCTAssertFalse(emptyAction.isEnabled(for: emptyDefContext), "DefineAction should be disabled when lookup returns an empty definition")
         
         // Long paragraph (>40 chars or >3 words) -> Disabled
@@ -75,7 +81,7 @@ final class DefineActionTests: XCTestCase {
     
     @MainActor
     func testDefineActionExecution() async throws {
-        let action = DefineAction(lookup: makeMockLookup())
+        let action = DefineAction(lookup: makeMockLookup(), settingsStore: makeStore())
         let app = AppIdentity(NSRunningApplication.current)
         let context = ActionContext(
             selection: SelectionContext(text: "epiphany", sourceApp: app, cursorPosition: .zero, selectionBounds: nil, timestamp: Date(), appPolicy: .default),
@@ -92,7 +98,7 @@ final class DefineActionTests: XCTestCase {
 
     @MainActor
     func testDefineActionSecondaryClickReturnsText() async throws {
-        let action = DefineAction(lookup: makeMockLookup())
+        let action = DefineAction(lookup: makeMockLookup(), settingsStore: makeStore())
         let app = AppIdentity(NSRunningApplication.current)
         let context = ActionContext(
             selection: SelectionContext(text: "epiphany", sourceApp: app, cursorPosition: .zero, selectionBounds: nil, timestamp: Date(), appPolicy: .default),
@@ -106,5 +112,26 @@ final class DefineActionTests: XCTestCase {
         } else {
             XCTFail("Expected text result for secondary click on DefineAction, got \(result)")
         }
+    }
+
+    @MainActor
+    func testDefineActionOpensInDictionaryAppWhenConfigured() async throws {
+        let store = MemorySettingsStore()
+        store.set(SettingKey.actionOption(actionID: "builtin.define", optionID: "openInDictionaryApp"), value: "true")
+        let action = DefineAction(lookup: { _ in nil }, settingsStore: store)
+        let app = AppIdentity(NSRunningApplication.current)
+        let context = ActionContext(
+            selection: SelectionContext(text: "serendipity", sourceApp: app, cursorPosition: .zero, selectionBounds: nil, timestamp: Date(), appPolicy: .default),
+            modifiers: []
+        )
+
+        XCTAssertTrue(action.isEnabled(for: context), "Dictionary mode enables a single word even without an in-process definition")
+
+        let result = try await action.perform(context)
+        guard case .openURL(let url) = result else {
+            return XCTFail("Expected an openURL result in Dictionary mode, got \(result)")
+        }
+        XCTAssertEqual(url.scheme, "x-dictionary")
+        XCTAssertTrue(url.absoluteString.contains("word=serendipity"))
     }
 }

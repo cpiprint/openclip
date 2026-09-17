@@ -632,5 +632,6 @@
   "Apple Intelligence is unavailable right now. Configure another provider in Preferences → AI.": "Apple Intelligenceは現在利用できません。環境設定 → AI で別のプロバイダを設定してください。",
   "Apple Intelligence models are still preparing. Try again shortly.": "Apple Intelligenceのモデルを準備中です。しばらくして再試行してください。",
   "Drag": "ドラッグ",
-  "Drag image to export or share": "画像をドラッグして書き出しまたは共有"
+  "Drag image to export or share": "画像をドラッグして書き出しまたは共有",
+  "Open in Dictionary app": "辞書.appで開く"
 }

@@ -18,7 +18,7 @@ public enum BuiltinRegistry {
             CutAction(),
             PasteAction(),
             CalculateAction(),
-            DefineAction(lookup: dictionaryLookup),
+            DefineAction(lookup: dictionaryLookup, settingsStore: settingsStore),
             CalendarAction(settingsStore: settingsStore)
         ]
         return actions

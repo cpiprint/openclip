@@ -10389,6 +10389,34 @@
         }
       }
     },
+    "Open in Dictionary app": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“词典”App 中打开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在「辭典」App 中開啟"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir dans l’app Dictionnaire"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辞書.appで開く"
+          }
+        }
+      }
+    },
     "Open source under MIT License": {
       "localizations": {
         "zh-Hans": {

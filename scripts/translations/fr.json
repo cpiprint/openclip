@@ -632,5 +632,6 @@
   "Apple Intelligence is unavailable right now. Configure another provider in Preferences → AI.": "Apple Intelligence est indisponible pour le moment. Configurez un autre fournisseur dans Préférences → IA.",
   "Apple Intelligence models are still preparing. Try again shortly.": "Les modèles Apple Intelligence sont en cours de préparation. Réessayez bientôt.",
   "Drag": "Glisser",
-  "Drag image to export or share": "Faites glisser l'image pour l'exporter ou la partager"
+  "Drag image to export or share": "Faites glisser l'image pour l'exporter ou la partager",
+  "Open in Dictionary app": "Ouvrir dans l’app Dictionnaire"
 }

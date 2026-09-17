@@ -632,5 +632,6 @@
   "Apple Intelligence is unavailable right now. Configure another provider in Preferences → AI.": "Apple Intelligence 目前不可用。请在偏好设置 → AI 中配置其他提供方。",
   "Apple Intelligence models are still preparing. Try again shortly.": "Apple Intelligence 模型仍在准备中。请稍后重试。",
   "Drag": "拖动",
-  "Drag image to export or share": "拖动图像以导出或分享"
+  "Drag image to export or share": "拖动图像以导出或分享",
+  "Open in Dictionary app": "在“词典”App 中打开"
 }

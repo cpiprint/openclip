@@ -1,7 +1,9 @@
 // DefineAction.swift
 // OpenClip
 //
-// Implements the dictionary lookup action for single selected words.
+// Implements the dictionary lookup action for single selected words. By default it resolves the
+// definition in-process and returns it as text (rendered in the result card); an action option can
+// instead hand the word to the macOS Dictionary app via its `x-dictionary:` URL scheme.
 import Foundation
 
 public struct DefineAction: ConfigurableAction {
@@ -10,35 +12,68 @@ public struct DefineAction: ConfigurableAction {
     public let preferenceIconName = "character.book.closed"
     public let icon = ActionIcon.symbol("character.book.closed")
 
-    private let lookup: @Sendable (String) -> String?
+    /// Option id for "open the word in Dictionary.app" instead of showing the definition card.
+    static let openInDictionaryOptionID = "openInDictionaryApp"
 
-    public init(lookup: @escaping @Sendable (String) -> String? = { _ in nil }) {
-        self.lookup = lookup
+    public var actionOptions: [ExtensionOption] {
+        [
+            ExtensionOption(
+                identifier: Self.openInDictionaryOptionID,
+                label: String(localized: "Open in Dictionary app"),
+                type: .boolean,
+                defaultValue: "false"
+            )
+        ]
     }
-    
+
+    private let lookup: @Sendable (String) -> String?
+    private let settingsStore: any SettingsStore
+
+    public init(
+        lookup: @escaping @Sendable (String) -> String? = { _ in nil },
+        settingsStore: any SettingsStore = DefaultSettingsStore.shared
+    ) {
+        self.lookup = lookup
+        self.settingsStore = settingsStore
+    }
+
+    /// True when the user configured Define to hand the word to the macOS Dictionary app rather than
+    /// resolve a definition in-process.
+    private var opensInDictionaryApp: Bool {
+        let value = settingsStore.get(
+            SettingKey.actionOption(actionID: id, optionID: Self.openInDictionaryOptionID)
+        )
+        return value.caseInsensitiveCompare("true") == .orderedSame
+    }
+
     @MainActor
     public func isEnabled(for context: ActionContext) -> Bool {
         let text = context.selection.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         // Length check: 1 to 40 characters
         guard !text.isEmpty && text.count <= 40 else { return false }
-        
+
         // Word count check: strictly 1 word
         let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
         guard words.count == 1 else { return false }
-        
+
         // Must contain letters
         guard text.rangeOfCharacter(from: .letters) != nil else { return false }
 
         // For non-space-delimited scripts (Chinese, Japanese, Korean), verify single-word boundary
         guard isSingleLinguisticWord(text) else { return false }
-        
+
         // Exclude URLs, email addresses, and math symbols
         let isURL = text.lowercased().hasPrefix("http://") || text.lowercased().hasPrefix("https://") || text.contains("www.")
         let hasMathSymbol = text.contains("+") || text.contains("*") || text.contains("/") || text.contains("=") || text.contains("%")
-        
+
         guard !isURL && !hasMathSymbol else { return false }
-        
+
+        // Dictionary-app mode hands any single word to the app (which reports its own "no entry"),
+        // so it does not require an in-process definition — and skips the `DCSCopyTextDefinition`
+        // probe entirely.
+        if opensInDictionaryApp { return true }
+
         guard let definition = lookup(text), !definition.isEmpty else { return false }
         return true
     }
@@ -76,11 +111,26 @@ public struct DefineAction: ConfigurableAction {
         }
         return tokenCount <= 1
     }
-    
+
     @MainActor
     public func perform(_ context: ActionContext) async throws -> ActionResult {
         let text = context.selection.text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if opensInDictionaryApp {
+            guard let url = Self.dictionaryURL(for: text) else { return .none }
+            return .openURL(url)
+        }
+
         guard let definition = lookup(text), !definition.isEmpty else { return .none }
         return .text(definition)
+    }
+
+    /// Builds a Dictionary.app lookup URL (`x-dictionary:` is the scheme Dictionary.app registers).
+    /// Exposed for tests.
+    static func dictionaryURL(for word: String) -> URL? {
+        guard !word.isEmpty,
+              let encoded = word.addingPercentEncoding(withAllowedCharacters: Constants.queryValueAllowed)
+        else { return nil }
+        return URL(string: "x-dictionary://?word=\(encoded)")
     }
 }
