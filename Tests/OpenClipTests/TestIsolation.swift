@@ -1,5 +1,6 @@
 import XCTest
 @testable import Core
+@testable import OpenClip
 
 /// Shared test-isolation helper.
 ///
@@ -21,6 +22,10 @@ enum TestIsolation {
         ActionBindingStore.shared.reset()
         RuleEngine.shared.reset()
         ExtensionManager.shared.reset()
+        // The inline-result evaluator now retains its warm cache across popup sessions by design,
+        // so tests sharing the singleton must start from a clean cache or a prior test's preview
+        // leaks into the next and makes UI assertions order-dependent.
+        InlineResultEvaluator.shared.clearPrewarmed()
     }
 
     /// Serializes tests accessing shared process-wide gates/locks (e.g. `OpenClipJSHost.syncEvaluationGate`).

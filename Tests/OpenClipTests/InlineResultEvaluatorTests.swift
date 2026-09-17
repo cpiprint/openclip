@@ -181,4 +181,85 @@ final class InlineResultEvaluatorTests: XCTestCase {
         evaluator.clearPrewarmed()
         XCTAssertNil(evaluator.prewarmedResult(for: calculate.id, textHash: "50 * 2".hashValue))
     }
+
+    func testEndSessionRetainsWarmCache() {
+        let evaluator = InlineResultEvaluator()
+        let calculate = CalculateAction()
+        let context = ActionContext(selection: SelectionContext(text: "50 * 2"))
+
+        evaluator.prewarm(actions: [calculate], context: context)
+        XCTAssertEqual(evaluator.prewarmedResult(for: calculate.id, textHash: "50 * 2".hashValue), "100")
+
+        // Hiding the popup must keep the warm result so the next selection renders instantly.
+        evaluator.endSession(UUID())
+        XCTAssertEqual(evaluator.prewarmedResult(for: calculate.id, textHash: "50 * 2".hashValue), "100")
+
+        // Full invalidation still clears it.
+        evaluator.clearPrewarmed()
+        XCTAssertNil(evaluator.prewarmedResult(for: calculate.id, textHash: "50 * 2".hashValue))
+    }
+
+    func testStartEvaluationRetriesAfterTransientFailure() async {
+        let evaluator = InlineResultEvaluator()
+
+        final class FlakyInlineAction: Action, @unchecked Sendable {
+            let id = "test.flaky"
+            let title = "Flaky"
+            let icon = ActionIcon.symbol("bolt")
+            let chrome = ActionChrome(isInlineResult: true)
+            private var calls = 0
+
+            @MainActor func isEnabled(for context: ActionContext) -> Bool { true }
+            @MainActor func perform(_ context: ActionContext) async throws -> ActionResult {
+                calls += 1
+                return calls == 1 ? .success : .text("Recovered")
+            }
+        }
+
+        let action = FlakyInlineAction()
+        let context = ActionContext(selection: SelectionContext(text: "input"))
+        let done = expectation(description: "inline result published")
+        var published: String?
+
+        evaluator.startEvaluation(action: action, context: context, sessionID: UUID()) { result in
+            published = result
+            done.fulfill()
+        }
+
+        await fulfillment(of: [done], timeout: 3.0)
+        XCTAssertEqual(published, "Recovered", "A nil first result must trigger one retry")
+    }
+
+    func testOptionChangeInvalidatesWarmCache() async {
+        let evaluator = InlineResultEvaluator()
+        let optionStore = SettingsActionOptionStore(store: MemorySettingsStore())
+        let option = ExtensionOption(identifier: "suffix", label: "Suffix")
+
+        let action = JavaScriptAction(
+            id: "test.option-inline",
+            title: "Option Inline",
+            scriptCode: "function action(){ return openclip.option('suffix'); }",
+            options: [option],
+            chrome: ActionChrome(isInlineResult: true),
+            optionStore: optionStore
+        )
+        let context = ActionContext(selection: SelectionContext(text: "input"))
+        let hash = "input".hashValue
+
+        optionStore.setStringValue("A", actionID: action.id, option: option)
+        evaluator.prewarm(actions: [action], context: context)
+        await evaluator.awaitPrewarmed(timeout: 2.0)
+        XCTAssertEqual(evaluator.prewarmedResult(for: action, textHash: hash), "A")
+
+        // Changing the option must invalidate the warmed result, not serve the old "A".
+        optionStore.setStringValue("B", actionID: action.id, option: option)
+        evaluator.prewarm(actions: [action], context: context)
+        await evaluator.awaitPrewarmed(timeout: 2.0)
+        XCTAssertEqual(evaluator.prewarmedResult(for: action, textHash: hash), "B")
+
+        // Even a joined prewarm task must not replay the stale fingerprint's result.
+        var published: String?
+        evaluator.startEvaluation(action: action, context: context, sessionID: UUID()) { published = $0 }
+        XCTAssertEqual(published, "B")
+    }
 }

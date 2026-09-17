@@ -282,7 +282,7 @@ public class PopupWindowController {
         let textHash = context.text.hashValue
 
         for action in inlineActions {
-            if let prewarmed = evaluator.prewarmedResult(for: action.id, textHash: textHash) {
+            if let prewarmed = evaluator.prewarmedResult(for: action, textHash: textHash) {
                 modeStore.inlineResults[action.id] = prewarmed
             } else if let syncResult = evaluator.evaluateSynchronous(action: action, context: actionContext) {
                 modeStore.inlineResults[action.id] = syncResult
@@ -1023,8 +1023,9 @@ public class PopupWindowController {
         activeLoadingTask?.cancel()
         activeLoadingTask = nil
         activeLoadingID = nil
-        InlineResultEvaluator.shared.cancelSession(aiSessionID)
-        InlineResultEvaluator.shared.clearPrewarmed()
+        // End the session (cancel in-flight work) but keep the warm inline-result caches so the
+        // next selection renders its preview immediately instead of re-evaluating from cold.
+        InlineResultEvaluator.shared.endSession(aiSessionID)
         aiSessionID = UUID()
         refiningPrevious = nil
         cardConversation = nil
