@@ -51,7 +51,8 @@ extension SelectionRetrievalCoordinator {
         policy: Core.AppPolicyContext,
         cursor: Core.CursorClass,
         isSelectAll: Bool = false,
-        allowCopyFallback: Bool = true
+        allowCopyFallback: Bool = true,
+        requireCopyEvidence: Bool = true
     ) async -> (result: Core.TextResult?, isEditable: Bool) {
         let openSelectionApp = OpenSelection.AppIdentity(bundleIdentifier: app.bundleIdentifier, localizedName: app.localizedName)
         let openSelectionPolicy = OpenSelection.SelectionPolicy(
@@ -72,7 +73,8 @@ extension SelectionRetrievalCoordinator {
             policy: openSelectionPolicy,
             cursor: openSelectionCursor,
             isSelectAll: isSelectAll,
-            allowCopyFallback: allowCopyFallback
+            allowCopyFallback: allowCopyFallback,
+            requireCopyEvidence: requireCopyEvidence
         )
 
         // `formattedText` performs WebKit-backed HTML import, which is main-actor isolated.
@@ -100,14 +102,16 @@ extension SelectionRetrievalCoordinator {
         policy: Core.AppPolicyContext,
         cursor: Core.CursorClass,
         isSelectAll: Bool = false,
-        allowCopyFallback: Bool = true
+        allowCopyFallback: Bool = true,
+        requireCopyEvidence: Bool = true
     ) async -> Core.TextResult? {
         await retrieveDetails(
             for: app,
             policy: policy,
             cursor: cursor,
             isSelectAll: isSelectAll,
-            allowCopyFallback: allowCopyFallback
+            allowCopyFallback: allowCopyFallback,
+            requireCopyEvidence: requireCopyEvidence
         ).result
     }
 }

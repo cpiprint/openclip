@@ -426,10 +426,10 @@ internal final class MacSelectionMonitor: SelectionMonitoring {
             }
             if Task.isCancelled { return }
 
-            guard let app = NSWorkspace.shared.frontmostApplication else { return }
+            guard let app = self.frontmostAppProvider() else { return }
             guard !self.shouldSuppress(for: app.bundleIdentifier) else { return }
 
-            if let bundleID = app.bundleIdentifier, AppFilter.isExcluded(bundleID: bundleID) {
+            if self.isExcludedBundle(app.bundleIdentifier) {
                 return
             }
             
@@ -444,15 +444,16 @@ internal final class MacSelectionMonitor: SelectionMonitoring {
             let result = await retriever.retrieve(
                 for: appIdentity,
                 policy: policy,
-                cursor: CursorClassifier.current.asCore,
+                cursor: self.currentCursorProvider(),
                 isSelectAll: isSelectAll,
-                allowCopyFallback: !self.isOverlayPresent(NSEvent.mouseLocation)
+                allowCopyFallback: !self.isOverlayPresent(self.currentMouseLocation()),
+                requireCopyEvidence: false
             )
             if Task.isCancelled { return }
             let anchor = Self.keyboardAnchor(
                 bounds: result?.bounds,
                 isSelectAll: isSelectAll,
-                mouseLocation: NSEvent.mouseLocation
+                mouseLocation: self.currentMouseLocation()
             )
             await self.deliverSelection(
                 result: result,

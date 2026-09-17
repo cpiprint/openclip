@@ -149,7 +149,6 @@ public enum DefaultAppRules: Sendable {
         "im.riot.app",
         
         // Design & Productivity
-        "com.figma.Desktop",
         "com.linear",
         "com.linear.Linear",
         "com.postmanlabs.mac",

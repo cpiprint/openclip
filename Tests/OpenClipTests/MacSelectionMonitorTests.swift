@@ -277,6 +277,27 @@ final class MacSelectionMonitorTests: XCTestCase {
         )
     }
 
+    /// A target whose copy strategy is justified by a non-empty `AXSelectedTextRange` while no AX
+    /// strategy can read the text itself: the cursor-independent shape of "text is selected, but
+    /// only a copy can retrieve it".
+    nonisolated private static func copyEvidenceTarget(role: String) -> AXElementInspector.Target {
+        var cfRange = CFRange(location: 0, length: 4)
+        return AXElementInspector.Target(
+            focusedApp: nil,
+            focusedElement: nil,
+            role: role,
+            subRole: nil,
+            parentRoles: [],
+            containedInRoles: [],
+            webArea: nil,
+            selectedText: nil,
+            selectedTextMarkerRange: nil,
+            value: nil,
+            selectedTextRange: AXValueCreate(.cfRange, &cfRange),
+            bounds: nil
+        )
+    }
+
     @MainActor
     private func waitUntil(_ condition: () -> Bool, timeout: TimeInterval = 2) async throws {
         let deadline = Date().addingTimeInterval(timeout)
@@ -898,14 +919,15 @@ final class MacSelectionMonitorTests: XCTestCase {
     /// still monitor (so ⌥⌘C stays warm) but must never post the copy retrieval's synthetic ⌘C — it
     /// would land on the overlay's key window, fire its own Copy shortcut, and tear the capture down.
     func testOverlayWithholdsCopyRetrievalButKeepsMonitoring() async throws {
-        // A web area with no AX text forces the cascade past AX into the (suppressed) copy tier.
+        // A selected range the AX strategies cannot read forces the cascade past AX into the
+        // (suppressed) copy tier, without depending on the live cursor class for copy evidence.
         func makeMonitor(overlay: Bool) -> MacSelectionMonitor {
             let monitor = MacSelectionMonitor()
             monitor.isExcludedBundle = { _ in false }
             monitor.policyResolver = { _ in AppPolicyContext.default }
             monitor.isOverlayPresent = { _ in overlay }
             monitor.retriever = SelectionRetrievalCoordinator(
-                inspect: { Self.fixtureTarget(role: "AXWebArea", selectedText: nil) },
+                inspect: { Self.copyEvidenceTarget(role: "AXWebArea") },
                 copyCapture: { _ in SelectionResult(text: "from copy", strategy: .keyboardCopy) }
             )
             return monitor
@@ -927,6 +949,55 @@ final class MacSelectionMonitorTests: XCTestCase {
         ungated.handleMouseUp(app: app, cursor: CGPoint(x: 200, y: 100), clickCount: 1)
         await ungated.debounceTask?.value
         XCTAssertEqual(ungated.latestSelection?.context.text, "from copy")
+    }
+
+    /// Regression: keyboard selection gestures (⌘A / ⌘L / ⇧arrow) are explicit user actions and must
+    /// not be blocked by the mouse-oriented copy-evidence gate. The pointer can be an arrow over an
+    /// opaque canvas while the keyboard selection is real.
+    func testKeyboardSelectionIgnoresCopyEvidenceGate() async {
+        let monitor = makeKeyboardMonitor(overlay: false, bundleID: "com.figma.Desktop", role: "AXWebArea")
+
+        monitor.handleSelectionTrigger(isSelectAll: false)
+        await monitor.debounceTask?.value
+
+        XCTAssertEqual(monitor.latestSelection?.context.text, "from copy")
+    }
+
+    /// The foreign-overlay guard still stands on the keyboard path: a capture overlay must never
+    /// receive the synthetic ⌘C.
+    func testKeyboardSelectionWithholdsCopyUnderForeignOverlay() async {
+        let monitor = makeKeyboardMonitor(overlay: true, bundleID: "com.figma.Desktop", role: "AXWebArea")
+
+        monitor.handleSelectionTrigger(isSelectAll: false)
+        await monitor.debounceTask?.value
+
+        XCTAssertNil(monitor.latestSelection, "the synthetic copy must not run under a foreign overlay")
+    }
+
+    /// ⌘A/⌘L on a row/list container is still refused on the keyboard path: opting out of the
+    /// copy-evidence gate must not revive the Finder/Mail whole-container copy.
+    func testKeyboardSelectAllStillSkippedOnRowContainer() async {
+        let monitor = makeKeyboardMonitor(overlay: false, bundleID: "com.apple.finder", role: "AXOutline")
+
+        monitor.handleSelectionTrigger(isSelectAll: true)
+        await monitor.debounceTask?.value
+
+        XCTAssertNil(monitor.latestSelection, "⌘A on a row container must not post a synthetic copy")
+    }
+
+    private func makeKeyboardMonitor(overlay: Bool, bundleID: String, role: String) -> MacSelectionMonitor {
+        let monitor = MacSelectionMonitor()
+        monitor.isExcludedBundle = { _ in false }
+        monitor.policyResolver = { _ in AppPolicyContext(retrievalMode: .keyboardCopy) }
+        monitor.frontmostAppProvider = { MockTestApp(bundleID: bundleID) }
+        monitor.currentCursorProvider = { .arrow }
+        monitor.currentMouseLocation = { CGPoint(x: 300, y: 300) }
+        monitor.isOverlayPresent = { _ in overlay }
+        monitor.retriever = SelectionRetrievalCoordinator(
+            inspect: { Self.fixtureTarget(role: role, selectedText: nil) },
+            copyCapture: { _ in SelectionResult(text: "from copy", strategy: .keyboardCopy) }
+        )
+        return monitor
     }
 }
 

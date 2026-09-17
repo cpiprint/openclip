@@ -299,11 +299,34 @@ final class SelectionRetrievalCoordinatorTests: XCTestCase {
         )
         let policy = AppPolicyContext(retrievalMode: .keyboardCopy)
         let result = await coordinator.retrieve(
-            for: AppIdentity(bundleIdentifier: "com.microsoft.VSCode"),
+            for: AppIdentity(bundleIdentifier: "com.sublimetext.3"),
             policy: policy,
             cursor: .unknown
         )
         XCTAssertEqual(result?.text, "captured keyboard copy")
+    }
+
+    /// Electron/Chromium apps are copy-classified but now read AX first (non-destructively) before
+    /// posting ⌘C.
+    func testElectronKeyboardCopyPrefersAXTextOverCopy() async {
+        final class Counter: @unchecked Sendable { var calls = 0 }
+        let counter = Counter()
+        let coordinator = SelectionRetrievalCoordinator(
+            inspect: { Self.textFieldTarget(selectedText: "electron ax text") },
+            copyCapture: { _ in
+                counter.calls += 1
+                return TextResult(text: "captured keyboard copy")
+            }
+        )
+        let policy = AppPolicyContext(retrievalMode: .keyboardCopy)
+        let result = await coordinator.retrieve(
+            for: AppIdentity(bundleIdentifier: "com.microsoft.VSCode"),
+            policy: policy,
+            cursor: .unknown,
+            allowCopyFallback: false
+        )
+        XCTAssertEqual(result?.text, "electron ax text")
+        XCTAssertEqual(counter.calls, 0, "AX read must win over the synthetic copy")
     }
 
     func testKeyboardCopyHasNoFallbackBelowIt() async {
@@ -437,10 +460,48 @@ final class SelectionRetrievalCoordinatorTests: XCTestCase {
         let result = await coordinator.retrieve(
             for: AppIdentity(bundleIdentifier: "dev.zed.Zed"),
             policy: policy,
-            cursor: .unknown,
+            cursor: .beam,
             isSelectAll: true
         )
         XCTAssertEqual(result?.text, "captured select-all text")
+    }
+
+    /// A canvas drag (Figma): opaque AX role, arrow cursor, no selection signal. The copy strategy
+    /// must not fire — a synthetic ⌘C here mutates the app's selection/undo state instead of
+    /// reading text.
+    func testCopySkippedOnCanvasDragWithoutTextEvidence() async {
+        final class Counter: @unchecked Sendable { var calls = 0 }
+        let counter = Counter()
+        let coordinator = SelectionRetrievalCoordinator(
+            inspect: { Self.opaqueTarget(containedInRoles: ["AXWebArea"]) },
+            copyCapture: { _ in
+                counter.calls += 1
+                return TextResult(text: "copied object")
+            }
+        )
+        let policy = AppPolicyContext(retrievalMode: .keyboardCopy)
+        let result = await coordinator.retrieve(
+            for: AppIdentity(bundleIdentifier: "com.figma.Desktop"),
+            policy: policy,
+            cursor: .arrow
+        )
+        XCTAssertNil(result)
+        XCTAssertEqual(counter.calls, 0, "A canvas drag must never post a synthetic ⌘C")
+    }
+
+    func testCopyEvidenceGateDisabledForExplicitTriggers() async {
+        let coordinator = SelectionRetrievalCoordinator(
+            inspect: { Self.opaqueTarget(containedInRoles: ["AXWebArea"]) },
+            copyCapture: { _ in TextResult(text: "explicit hotkey capture") }
+        )
+        let policy = AppPolicyContext(retrievalMode: .keyboardCopy)
+        let result = await coordinator.retrieve(
+            for: AppIdentity(bundleIdentifier: "com.figma.Desktop"),
+            policy: policy,
+            cursor: .arrow,
+            requireCopyEvidence: false
+        )
+        XCTAssertEqual(result?.text, "explicit hotkey capture")
     }
 
     /// A row container nested above the focused element still refuses — the Finder/Mail case the
@@ -515,7 +576,7 @@ final class SelectionRetrievalCoordinatorTests: XCTestCase {
         let result = await coordinator.retrieve(
             for: AppIdentity(bundleIdentifier: "com.apple.Safari"),
             policy: policy,
-            cursor: .unknown
+            cursor: .beam
         )
         XCTAssertEqual(result?.text, "browser copy fallback")
     }

@@ -282,7 +282,8 @@ public final class HotkeyManager {
             for: appIdentity,
             policy: policy,
             cursor: CursorClassifier.current.asCore,
-            allowCopyFallback: !CopyTriggerGate.isForeignOverlayPresent(at: NSEvent.mouseLocation)
+            allowCopyFallback: !CopyTriggerGate.isForeignOverlayPresent(at: NSEvent.mouseLocation),
+            requireCopyEvidence: false
         ) {
             retrievedText = result.text
             selectionBounds = result.bounds
