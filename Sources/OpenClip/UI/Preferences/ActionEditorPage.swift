@@ -1146,6 +1146,7 @@ public struct ActionEditorPage: View {
             toast: meta.toast,
             secondaryToast: meta.secondaryToast,
             keywords: meta.keywords,
+            inline: meta.inline,
             localizedTitle: (finalTitle.isEmpty || finalTitle == meta.title || finalTitle == meta.localizedTitle?.resolve()) ? meta.localizedTitle : nil,
             localizedLoadingMessage: meta.localizedLoadingMessage
         )

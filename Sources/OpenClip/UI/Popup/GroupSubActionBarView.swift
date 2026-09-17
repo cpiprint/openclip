@@ -78,29 +78,32 @@ public struct GroupSubActionBarView: View {
 
     public static func estimatedButtonWidth(
         for action: any Action,
+        inlineResult: String? = nil,
         scale: CGFloat = 1.0,
         presenter: any ActionPresenting = ActionCustomizationManager.shared
     ) -> CGFloat {
-        PopupPageLayout.estimatedItemWidth(for: action, scale: scale, presenter: presenter)
+        PopupPageLayout.estimatedItemWidth(for: action, inlineResult: inlineResult, scale: scale, presenter: presenter)
     }
 
     public static func computePages(
         actions: [any Action],
+        inlineResults: [String: String] = [:],
         maxBudget: CGFloat,
         scale: CGFloat = 1.0,
         presenter: any ActionPresenting = ActionCustomizationManager.shared
     ) -> [[any Action]] {
-        PopupPageLayout.computePages(actions: actions, leadingWidth: 0, trailingWidth: 0, maxBudget: maxBudget, scale: scale, presenter: presenter)
+        PopupPageLayout.computePages(actions: actions, inlineResults: inlineResults, leadingWidth: 0, trailingWidth: 0, maxBudget: maxBudget, scale: scale, presenter: presenter)
     }
 
     public static func measuredPageWidth(
         actions: [any Action],
+        inlineResults: [String: String] = [:],
         hasLeftChevron: Bool,
         hasRightChevron: Bool,
         scale: CGFloat = 1.0,
         presenter: any ActionPresenting = ActionCustomizationManager.shared
     ) -> CGFloat {
-        PopupPageLayout.measuredBarWidth(actions: actions, hasLeftChevron: hasLeftChevron, hasRightChevron: hasRightChevron, leadingWidth: 0, trailingWidth: 0, scale: scale, presenter: presenter)
+        PopupPageLayout.measuredBarWidth(actions: actions, inlineResults: inlineResults, hasLeftChevron: hasLeftChevron, hasRightChevron: hasRightChevron, leadingWidth: 0, trailingWidth: 0, scale: scale, presenter: presenter)
     }
 
     public static func totalPages(actionCount: Int, pageSize: Int) -> Int {
@@ -120,7 +123,9 @@ public struct GroupSubActionBarView: View {
     }
 
     private var pages: [[any Action]] {
-        PopupPageLayout.computePages(actions: subActions, leadingWidth: 0, trailingWidth: 0, maxBudget: maxSubBarBudget, scale: scale, presenter: presenter)
+        // Inline children re-pack at their rendered text width once a preview lands, mirroring the
+        // main bar; reading `modeStore.inlineResults` is what makes the view re-evaluate.
+        PopupPageLayout.computePages(actions: subActions, inlineResults: modeStore.inlineResults, leadingWidth: 0, trailingWidth: 0, maxBudget: maxSubBarBudget, scale: scale, presenter: presenter)
     }
 
     private var totalPages: Int {
@@ -139,7 +144,10 @@ public struct GroupSubActionBarView: View {
 
     public var body: some View {
         HStack(spacing: 0) {
-            ForEach(Array(pagedSubActions.enumerated()), id: \.offset) { index, action in
+            // Identity by action id (not slot position): a page turn must replace rows rather than
+            // keep a slot's identity and animate it from one action to the next, which cross-faded
+            // the inline preview and resized the button mid-page-change. See PopupView for detail.
+            ForEach(Array(pagedSubActions.enumerated()), id: \.element.id) { index, action in
                 let isHovered = hoveredTarget == .subAction(index)
                 subActionButton(action: action, index: index, isHovered: isHovered)
             }
@@ -163,6 +171,10 @@ public struct GroupSubActionBarView: View {
         }
         .fixedSize()
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .onChange(of: totalPages) { _, count in
+            // A preview widening a child can shrink the page count; keep `currentPage` in range.
+            if currentPage > count - 1 { currentPage = max(0, count - 1) }
+        }
     }
 
     @ViewBuilder

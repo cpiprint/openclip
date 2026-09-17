@@ -17,6 +17,15 @@ final class PopupPageLayoutTests: XCTestCase {
         @MainActor func perform(_ context: ActionContext) async throws -> ActionResult { .none }
     }
 
+    private struct InlineStubAction: Action, Sendable {
+        let id: String
+        let title: String
+        let icon: ActionIcon = .symbol("wand.and.stars")
+        var chrome: ActionChrome { ActionChrome(badge: .none, rowStyle: .standard, popupBehavior: .perform, source: .builtin, isInlineResult: true) }
+        @MainActor func isEnabled(for context: ActionContext) -> Bool { true }
+        @MainActor func perform(_ context: ActionContext) async throws -> ActionResult { .none }
+    }
+
     func testBarWidthMetricsLevels() {
         XCTAssertEqual(PopupMetrics.barWidth(for: 1), 340.0)
         XCTAssertEqual(PopupMetrics.barWidth(for: 2), 440.0)
@@ -97,6 +106,23 @@ final class PopupPageLayoutTests: XCTestCase {
             )
             XCTAssertLessThanOrEqual(width, 260.0 + 58.0)
         }
+    }
+
+    func testInlinePreviewRepacksPagesAtRenderedWidth() {
+        let actions = (0..<6).map { InlineStubAction(id: "inline.\($0)", title: "Inline \($0)") }
+        let results = Dictionary(uniqueKeysWithValues: actions.map { ($0.id, "1,234,567.89 USD") })
+
+        // Six 34pt icon buttons fit the budget; the rendered preview text does not.
+        let iconPacked = PopupPageLayout.computePages(actions: actions, maxBudget: 260.0)
+        let previewPacked = PopupPageLayout.computePages(actions: actions, inlineResults: results, maxBudget: 260.0)
+
+        XCTAssertEqual(iconPacked.count, 1)
+        XCTAssertGreaterThan(previewPacked.count, 1, "Preview text must re-pack the page at its rendered width")
+        XCTAssertEqual(iconPacked.flatMap { $0.map(\.id) }, previewPacked.flatMap { $0.map(\.id) }, "No action may be lost across re-packing")
+
+        let width = PopupPageLayout.estimatedItemWidth(for: actions[0], inlineResult: "1,234,567.89 USD")
+        XCTAssertGreaterThan(width, PopupMetrics.actionButtonWidth)
+        XCTAssertLessThanOrEqual(width, PopupMetrics.inlineResultMaxWidth + 2 * PopupMetrics.inlineResultHorizontalPadding + 0.001)
     }
 
     func testMeasuredBarWidth() {

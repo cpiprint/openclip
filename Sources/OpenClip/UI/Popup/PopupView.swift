@@ -299,8 +299,11 @@ public struct PopupView: View {
     private var pages: [[any Action]] {
         let leadingWidth = hasCompletions ? (chevronWidth) : 0
         let trailingWidth = buttonWidth // search button
+        // Reads `inlineResults` so a preview arriving re-packs the page at the button's real width
+        // instead of overflowing the budget (the published dictionary already drives a re-render).
         return PopupPageLayout.computePages(
             actions: displayActions,
+            inlineResults: modeStore.inlineResults,
             leadingWidth: leadingWidth,
             trailingWidth: trailingWidth,
             maxBudget: maxBarBudget,
@@ -362,6 +365,12 @@ public struct PopupView: View {
             }
             .onChange(of: modeStore.isSubBarActive) { _, isActive in
                 onSubBarActiveChanged?(isActive)
+            }
+            .onChange(of: totalPages) { _, count in
+                // Re-packing (e.g. a preview landing and widening a button) can shrink the page
+                // count; without this a stale `currentPage` would sit past the last page with a
+                // dead chevron and an empty-looking page.
+                if currentPage > count - 1 { currentPage = max(0, count - 1) }
             }
             .onChange(of: isProcessingAI) { _, active in
                 onAIStateChange?(active, aiCardAboveBar)
@@ -711,7 +720,12 @@ public struct PopupView: View {
                 }
             }
 
-            ForEach(Array(pagedActions.enumerated()), id: \.offset) { index, action in
+            // Identity by action id, not slot position. With `id: \.offset` a page turn keeps the
+            // row identity while swapping in a different action, so the per-row inline animation
+            // (keyed on `inlineResults[action.id]`) fired on pagination — cross-fading the label and
+            // morphing the button width, which bumped every icon after it. Paging should replace
+            // rows; only a result actually landing on a row should animate it.
+            ForEach(Array(pagedActions.enumerated()), id: \.element.id) { index, action in
                 let isDirectlyHovered = hoveredTarget == .action(index)
                 let isActiveParent = modeStore.activeSubGroupID == action.id && !isDirectlyHovered
                 actionButton(action: action, index: index, isHovered: isDirectlyHovered, isActiveParent: isActiveParent)

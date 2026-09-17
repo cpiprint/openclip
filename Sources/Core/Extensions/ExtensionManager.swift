@@ -449,6 +449,7 @@ public final class ExtensionManager: Sendable {
                                 toast: oldMeta.toast,
                                 secondaryToast: oldMeta.secondaryToast,
                                 keywords: oldMeta.keywords,
+                                inline: oldMeta.inline,
                                 localizedTitle: nil,
                                 localizedLoadingMessage: oldMeta.localizedLoadingMessage
                             )
