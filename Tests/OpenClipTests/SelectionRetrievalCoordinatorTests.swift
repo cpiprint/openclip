@@ -654,7 +654,12 @@ final class SelectionRetrievalCoordinatorTests: XCTestCase {
             }
         )
         let policy = AppPolicyContext(retrievalMode: .axTextControl)
-        let nativeBundleID = try XCTUnwrap(DefaultAppRules.nativeApps.first)
+        // A strictly-native app that is *not* a rich document app (those now enrich from the pasteboard).
+        let richDocumentBundleIDs: Set<String> = [
+            "com.apple.Notes", "com.apple.TextEdit", "com.apple.iWork.Pages",
+            "com.apple.iWork.Numbers", "com.apple.iWork.Keynote", "com.apple.mail"
+        ]
+        let nativeBundleID = try XCTUnwrap(DefaultAppRules.nativeApps.first { !richDocumentBundleIDs.contains($0) })
         let result = await coordinator.retrieve(
             for: AppIdentity(bundleIdentifier: nativeBundleID),
             policy: policy,

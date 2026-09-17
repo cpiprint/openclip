@@ -75,8 +75,20 @@ extension SelectionRetrievalCoordinator {
             allowCopyFallback: allowCopyFallback
         )
 
-        let textResult = result.map {
-            Core.TextResult(text: $0.text, bounds: $0.bounds, html: $0.html, rtf: $0.rtf)
+        // `formattedText` performs WebKit-backed HTML import, which is main-actor isolated.
+        let textResult: Core.TextResult?
+        if let result {
+            textResult = await MainActor.run {
+                Core.TextResult(
+                    text: result.formattedText,
+                    bounds: result.bounds,
+                    html: result.html,
+                    rtf: result.rtf,
+                    flavors: result.flavors.map { Core.RichPasteboardFlavor($0) }
+                )
+            }
+        } else {
+            textResult = nil
         }
         return (textResult, isEditable)
     }
@@ -112,15 +124,35 @@ extension OpenSelection.CursorClass {
     }
 }
 
+extension Core.RichPasteboardFlavor {
+    public init(_ flavor: PasteboardFlavor) {
+        self.init(type: flavor.type, data: flavor.data)
+    }
+}
+
 extension Core.TextResult {
+    @MainActor
     public init(_ result: OpenSelection.SelectionResult) {
-        self.init(text: result.text, bounds: result.bounds, html: result.html, rtf: result.rtf)
+        self.init(
+            text: result.formattedText,
+            bounds: result.bounds,
+            html: result.html,
+            rtf: result.rtf,
+            flavors: result.flavors.map { Core.RichPasteboardFlavor($0) }
+        )
     }
 }
 
 extension OpenSelection.SelectionResult {
+    @MainActor
     public var asTextResult: Core.TextResult {
-        Core.TextResult(text: text, bounds: bounds, html: html, rtf: rtf)
+        Core.TextResult(
+            text: formattedText,
+            bounds: bounds,
+            html: html,
+            rtf: rtf,
+            flavors: flavors.map { Core.RichPasteboardFlavor($0) }
+        )
     }
 }
 
@@ -129,7 +161,11 @@ extension OpenSelection {
     @MainActor
     public static func replace(
         with text: String,
+        html: String? = nil,
+        rtf: String? = nil,
+        flavors: [PasteboardFlavor] = [],
         in app: NSRunningApplication? = nil,
+        matchStyle: Bool = false,
         pasteboard: NSPasteboard = .general,
         restoreDelay: TimeInterval = 0.25,
         restorePasteboard: Bool = true,
@@ -145,7 +181,15 @@ extension OpenSelection {
             directAXReplacer: { _, _ in false },
             keyPoster: keyPoster ?? { KeyboardEventPoster.postKey(keyCode: $0, flags: $1) }
         )
-        try await replacer.replace(with: text, in: app, restorePasteboard: restorePasteboard)
+        try await replacer.replace(
+            with: text,
+            html: html,
+            rtf: rtf,
+            flavors: flavors,
+            in: app,
+            matchStyle: matchStyle,
+            restorePasteboard: restorePasteboard
+        )
     }
 }
 

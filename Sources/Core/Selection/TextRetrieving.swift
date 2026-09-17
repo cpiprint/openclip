@@ -10,12 +10,21 @@ public struct TextResult: Sendable {
     public let bounds: CGRect?
     public let html: String?
     public let rtf: String?
-    
-    public init(text: String, bounds: CGRect? = nil, html: String? = nil, rtf: String? = nil) {
+    /// Raw pasteboard representations captured alongside the text, including app-private types.
+    public let flavors: [RichPasteboardFlavor]
+
+    public init(
+        text: String,
+        bounds: CGRect? = nil,
+        html: String? = nil,
+        rtf: String? = nil,
+        flavors: [RichPasteboardFlavor] = []
+    ) {
         self.text = text
         self.bounds = bounds
         self.html = html
         self.rtf = rtf
+        self.flavors = flavors
     }
 }
 

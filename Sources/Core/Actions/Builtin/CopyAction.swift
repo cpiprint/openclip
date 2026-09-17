@@ -26,11 +26,14 @@ public struct CopyAction: ConfigurableAction {
     
     @MainActor
     public func perform(_ context: ActionContext) async throws -> ActionResult {
-        if context.selection.html != nil || context.selection.rtf != nil {
+        // Preserve every captured representation (including app-private types such as Notes
+        // checklists) so a raw copy round-trips exactly; fall back to plain text otherwise.
+        if context.selection.html != nil || context.selection.rtf != nil || !context.selection.flavors.isEmpty {
             return .copyContent(RichPasteboardPayload(
                 plainText: context.selection.text,
                 rtf: context.selection.rtf,
-                html: context.selection.html
+                html: context.selection.html,
+                flavors: context.selection.flavors
             ))
         }
         return .copy(context.selection.text)

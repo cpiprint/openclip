@@ -260,6 +260,7 @@ internal final class MacSelectionMonitor: SelectionMonitoring {
             var selectionBounds: CGRect? = nil
             var selectionHTML: String?
             var selectionRTF: String?
+            var selectionFlavors: [RichPasteboardFlavor] = []
             var isClipboardFallback = false
 
             let cursor = self.currentCursorProvider()
@@ -274,6 +275,7 @@ internal final class MacSelectionMonitor: SelectionMonitoring {
                 selectionBounds = result.bounds
                 selectionHTML = result.html
                 selectionRTF = result.rtf
+                selectionFlavors = result.flavors
             }
 
             let canPaste = await probeTask?.value
@@ -306,7 +308,8 @@ internal final class MacSelectionMonitor: SelectionMonitoring {
                 appPolicy: policy,
                 isClipboardFallback: isClipboardFallback,
                 html: selectionHTML,
-                rtf: selectionRTF
+                rtf: selectionRTF,
+                flavors: selectionFlavors
             )
             guard !Task.isCancelled else { return }
             guard !self.shouldSuppress(for: appIdentity.bundleIdentifier) else { return }
@@ -494,7 +497,8 @@ internal final class MacSelectionMonitor: SelectionMonitoring {
             timestamp: now(),
             appPolicy: policy,
             html: result.html,
-            rtf: result.rtf
+            rtf: result.rtf,
+            flavors: result.flavors
         )
         prewarmInlineActions(for: context)
         let canPaste = await probeTask?.value

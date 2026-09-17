@@ -95,6 +95,24 @@ final class ActionResultHandlerTests: XCTestCase {
         XCTAssertEqual(isolatedPasteboard.string(forType: .rtf), "{\\rtf1 RTF copy}")
     }
 
+    func testCopyContentHandlerWritesRawFlavorsVerbatim() async throws {
+        let isolatedPasteboard = NSPasteboard(name: NSPasteboard.Name("OpenClipTest-\(UUID().uuidString)"))
+        let handler = DefaultActionResultHandler(pasteboard: isolatedPasteboard)
+        let proprietaryType = "com.apple.notes.richtext"
+        let proprietaryData = Data([0x00, 0x01, 0xFE, 0xFF])
+        let payload = RichPasteboardPayload(
+            plainText: "Checklist",
+            flavors: [
+                RichPasteboardFlavor(type: "public.utf8-plain-text", data: Data("Checklist".utf8)),
+                RichPasteboardFlavor(type: proprietaryType, data: proprietaryData)
+            ]
+        )
+        try await handler.handle(.copyContent(payload), in: nil)
+
+        XCTAssertEqual(isolatedPasteboard.data(forType: NSPasteboard.PasteboardType(proprietaryType)), proprietaryData)
+        XCTAssertEqual(isolatedPasteboard.string(forType: .string), "Checklist")
+    }
+
     func testPasteContentHandlerWritesMultiTypePasteboard() async throws {
         let isolatedPasteboard = NSPasteboard(name: NSPasteboard.Name("OpenClipTest-\(UUID().uuidString)"))
         let store = MemorySettingsStore()
