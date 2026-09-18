@@ -240,7 +240,8 @@ public final class DefaultActionResultHandler: ActionResultHandler, Sendable {
             pasteboard.clearContents()
             var objects: [NSPasteboardWriting] = [url as NSURL]
             if FileOutputPayload(url: url).isImage {
-                if let data = try? Data(contentsOf: url), !data.isEmpty {
+                let data = try? await Task.detached { try Data(contentsOf: url) }.value
+                if let data, !data.isEmpty {
                     let image = NSImage(data: data) ?? SDImageSVGCoder.shared.decodedImage(with: data, options: nil)
                     if let image, image.isValid, image.cgImage(forProposedRect: nil, context: nil, hints: nil) != nil {
                         let item = NSPasteboardItem()

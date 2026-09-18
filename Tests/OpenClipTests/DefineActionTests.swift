@@ -132,6 +132,6 @@ final class DefineActionTests: XCTestCase {
             return XCTFail("Expected an openURL result in Dictionary mode, got \(result)")
         }
         XCTAssertEqual(url.scheme, "x-dictionary")
-        XCTAssertTrue(url.absoluteString.contains("word=serendipity"))
+        XCTAssertTrue(url.absoluteString.contains("d:serendipity"))
     }
 }

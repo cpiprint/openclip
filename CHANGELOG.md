@@ -88,39 +88,6 @@ All notable user-facing changes, feature additions, and improvements to OpenClip
 
 ---
 
-## v1.5.0 - 2026-09-10
-
-### Highlights
-- **Resizable result cards and search palette**, remembered as an intelligent maximum size.
-- **Per-action global hotkeys and search aliases.**
-- **Extension group and member reordering** with custom member icons.
-- **Universal binaries** for Apple Silicon and Intel Macs.
-- **Redesigned DMG installer** and in-app updater release notes via Sparkle 2.9.
-
-### Features & Improvements
-- **Result card and palette resizing** from any edge or corner grip.
-- **Per-action hotkeys and aliases** to run actions without the floating bar.
-- **Extension reordering** (persisted in `extensionGroupMemberOrder`) and custom icons.
-- **Per-command extension settings** for API keys, endpoints, and parameters.
-- **Faster palette**: synchronous resolution with background prewarming.
-- **Store refresh** and palette/toast polish.
-
-### Security & Distribution
-- **Signed, hardened, and notarized builds**; Accessibility survives updates; minimal entitlements (Apple events only); Sigstore build provenance.
-
-### Fixes & Stability
-- Updater release notes render; universal binaries restored and verified.
-- Script output buffer draining and JavaScript fetch lifetime fixes.
-- Extension module containment hardened against symlink traversal.
-- Focus race and empty-selection toast; hold gestures and wide I-beam detection.
-
-### Contributors
-- **Matej Bačo ([@Meldiron](https://github.com/Meldiron))** — resizable cards and palette, per-command extension settings, DMG installer, universal binaries, build provenance.
-- **Md ([@md786-dotcom](https://github.com/md786-dotcom))** — pipe buffer draining, fetch lifetime safety, extension containment.
-- **Ganesh M ([@ganeshmshetty](https://github.com/ganeshmshetty))** — per-action hotkeys and aliases, extension reordering, custom icons, palette prewarming, selection fixes, store refresh.
-
----
-
 ## v1.4.0 - 2026-09-07
 
 ### Highlights

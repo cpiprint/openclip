@@ -227,6 +227,33 @@ public struct GroupSubActionBarView: View {
                 onResult(.text(resolved))
                 return
             }
+            // An in-flight inline evaluation (e.g. started before the popup re-opened) is joined
+            // rather than re-run, mirroring the main bar; an empty result falls back to perform.
+            if action.chrome.isInlineResult, let inFlight = InlineResultEvaluator.shared.runningTask(for: action.id) {
+                Task {
+                    onWillPerformAction(action)
+                    onActionPerformed(action.id)
+                    do {
+                        if let text = await inFlight.value, !text.isEmpty {
+                            onResult(.text(text))
+                            return
+                        }
+                        let match = action.matchInfo(for: context)
+                        let performContext = ActionContext(
+                            selection: context.selection,
+                            modifiers: context.modifiers,
+                            isSecondaryClick: onClickIntent() == .secondary,
+                            match: match
+                        )
+                        let result = try await action.perform(performContext)
+                        onResult(result)
+                    } catch {
+                        Log.presentation.error("Sub-bar action failed (id \(action.id, privacy: .public)): \(error.localizedDescription)")
+                        onResult(.toast(StatusFeedback(error: error)))
+                    }
+                }
+                return
+            }
             Task {
                 do {
                     onWillPerformAction(action)

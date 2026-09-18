@@ -125,12 +125,13 @@ public struct DefineAction: ConfigurableAction {
         return .text(definition)
     }
 
-    /// Builds a Dictionary.app lookup URL (`x-dictionary:` is the scheme Dictionary.app registers).
+    /// Builds a Dictionary.app lookup URL using the documented `x-dictionary:d:<key_text>`
+    /// definition form (`x-dictionary:` is the scheme Dictionary.app registers).
     /// Exposed for tests.
     static func dictionaryURL(for word: String) -> URL? {
         guard !word.isEmpty,
               let encoded = word.addingPercentEncoding(withAllowedCharacters: Constants.queryValueAllowed)
         else { return nil }
-        return URL(string: "x-dictionary://?word=\(encoded)")
+        return URL(string: "x-dictionary:d:\(encoded)")
     }
 }

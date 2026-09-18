@@ -843,12 +843,20 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
         guard let draggedID = info.draggingPasteboard.string(forType: actionPasteboardType) else {
             return []
         }
+        let draggedIDs = draggedActionIDs(from: info)
+        let extensionOwners = Set(draggedIDs.compactMap { extensionGroupID(ofSubActionWithID: $0) })
+        let dragIsAllExtensionCommands = !draggedIDs.isEmpty && extensionOwners.count > 0
+            && draggedIDs.allSatisfy { extensionGroupID(ofSubActionWithID: $0) != nil }
 
         // Case 0: A command of an extension belongs to its package — it can be reordered among
-        // its siblings and moved nowhere else, so every other drop is refused outright rather
-        // than falling through to the retarget and root-level cases below.
-        if let owningGroupID = extensionGroupID(ofSubActionWithID: draggedID) {
-            guard let targetNode = item as? OutlineNode,
+        // its siblings and moved nowhere else. When the whole drag is extension commands, every
+        // dragged id is judged, not just the first: they must all belong to the single package the
+        // drop target is, or the drop is refused. A mixed drag falls through to the cases below so
+        // its non-command members can still join a group or reorder.
+        if dragIsAllExtensionCommands {
+            guard extensionOwners.count == 1,
+                  let owningGroupID = extensionOwners.first,
+                  let targetNode = item as? OutlineNode,
                   case .extensionGroup(let groupAction) = targetNode.kind,
                   groupAction.id == owningGroupID,
                   index >= 0 else { return [] }
@@ -858,7 +866,7 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
         // Case 1: Hovering over or inside a custom group. A multi-row selection is judged by
         // whichever dragged actions could actually join, not just the first pasteboard item.
         if let targetNode = item as? OutlineNode, case .customGroup(let def, _) = targetNode.kind {
-            let candidates = draggedActionIDs(from: info).filter { couldJoinGroup($0, def: def) }
+            let candidates = draggedIDs.filter { couldJoinGroup($0, def: def) }
             guard !candidates.isEmpty else { return [] }
             if index == NSOutlineViewDropOnItemIndex || index >= 0 {
                 return .move
@@ -888,8 +896,10 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
             }
         }
 
-        // Case 4: Hovering at root level (reordering top-level actions)
-        if item == nil && index >= 0 {
+        // Case 4: Hovering at root level (reordering top-level actions). An extension command can
+        // never leave its package, so a drag carrying one is filtered down to its eligible members.
+        if item == nil && index >= 0,
+           draggedIDs.contains(where: { extensionGroupID(ofSubActionWithID: $0) == nil }) {
             return .move
         }
 
@@ -950,11 +960,19 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
             return perform(outcome, draggedID: draggedID, in: outlineView)
         }
 
-        // Dropped at root level
+        // Dropped at root level. A multi-row selection arrives as several pasteboard items, so
+        // every dragged action is ejected from whichever group held it and the whole run is
+        // moved together. Extension commands are filtered out here too: they can never leave
+        // their package, and `validateDrop` refuses a drag that consists only of them.
         if item == nil && index >= 0 {
-            // If dragging out of a group, eject it
-            if let sourceGroupID = parent.coordinator.actionGroupDefs.first(where: { $0.memberActionIDs.contains(draggedID) })?.id {
-                parent.coordinator.removeFromGroup(actionID: draggedID, groupID: sourceGroupID)
+            let draggedIDs = draggedActionIDs(from: info)
+                .filter { extensionGroupID(ofSubActionWithID: $0) == nil }
+            guard !draggedIDs.isEmpty else { return false }
+
+            for id in draggedIDs {
+                if let sourceGroupID = parent.coordinator.actionGroupDefs.first(where: { $0.memberActionIDs.contains(id) })?.id {
+                    parent.coordinator.removeFromGroup(actionID: id, groupID: sourceGroupID)
+                }
             }
 
             let roots = self.rootNodes
@@ -966,8 +984,17 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
                 destinationActionIndex = parent.coordinator.actions.count
             }
 
-            // Move all actions belonging to the dragged root node (header + members/subactions)
-            let movingIDs = [draggedID] + parent.coordinator.memberActionIDs(for: draggedID)
+            // Move each dragged root node together with everything that travels with it — a group
+            // header takes its members, an extension group its sub-actions.
+            var movingIDs: [String] = []
+            var seen = Set<String>()
+            for id in draggedIDs {
+                for movingID in [id] + parent.coordinator.memberActionIDs(for: id) {
+                    if seen.insert(movingID).inserted {
+                        movingIDs.append(movingID)
+                    }
+                }
+            }
 
             var sourceIndices = IndexSet()
             for id in movingIDs {
