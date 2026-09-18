@@ -217,6 +217,29 @@ jobs:
           generate_release_notes: false
           overwrite: true
 
+      # GitHub's `releases/latest` never resolves to a pre-release, so a beta build cannot be
+      # served from a version-specific tag: the app's fixed beta feed URL is
+      # releases/download/beta/appcast.xml. Mirroring the artifacts onto a rolling `beta`
+      # pre-release gives that URL one stable home that always holds the newest beta. Stable
+      # tags skip this entirely.
+      - name: Publish rolling beta channel
+        if: contains(github.ref, '-')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: beta
+          name: Beta
+          body: |
+            Latest beta build of OpenClip.
+
+            Install the stable app and choose **Settings › About › Update Channel › Beta** to
+            receive these automatically.
+          prerelease: true
+          files: |
+            build/release/*.zip
+            build/release/*.dmg
+            build/release/appcast.xml
+          overwrite_files: true
+
       - name: Update Homebrew Tap
         if: "!contains(github.ref, '-')"
         continue-on-error: true

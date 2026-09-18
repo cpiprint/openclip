@@ -40,6 +40,7 @@ public enum SettingsCatalog {
             SettingKey.automaticallyChecksForUpdates.erased,
             SettingKey.automaticallyDownloadsUpdates.erased,
             SettingKey.notifyOnUpdate.erased,
+            SettingKey.updateChannel.erased,
 
             // Popup presentation
             SettingKey.popupPageSize.erased,

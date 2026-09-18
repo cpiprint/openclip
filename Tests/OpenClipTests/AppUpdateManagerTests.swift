@@ -133,4 +133,21 @@ final class AppUpdateManagerTests: XCTestCase {
         manager.automaticallyDownloadsUpdates = originalDownload
         manager.notifyOnUpdate = originalNotify
     }
+
+    func testUpdateChannelPersistsAndSelectsFeed() {
+        let manager = AppUpdateManager.shared
+        let original = manager.updateChannel
+
+        manager.updateChannel = .beta
+        XCTAssertEqual(DefaultSettingsStore.shared.get(.updateChannel), UpdateChannel.beta.rawValue)
+        XCTAssertEqual(manager.currentFeedURL, AppUpdateManager.betaFeedURL)
+        XCTAssertEqual(manager.allowedChannelNames, ["beta"])
+
+        manager.updateChannel = .stable
+        XCTAssertEqual(DefaultSettingsStore.shared.get(.updateChannel), UpdateChannel.stable.rawValue)
+        XCTAssertTrue(manager.allowedChannelNames.isEmpty)
+        XCTAssertTrue(manager.currentFeedURL.contains("releases/latest"))
+
+        manager.updateChannel = original
+    }
 }
