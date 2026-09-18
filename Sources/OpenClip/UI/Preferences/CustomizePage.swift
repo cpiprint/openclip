@@ -1,37 +1,39 @@
 // CustomizePage.swift
 // OpenClip
 //
-// The Customize page: the popup bar's layout, action enablement, palette aliases, and hotkeys.
+// The Customize page: the popup bar's layout and action enablement.
 // One reorderable outline of everything the bar shows — drag to change the order, drag onto a group
-// to add to it, select several rows and make a group of them. Each row also hosts an enable toggle,
-// alias text field, and hotkey recorder.
+// to add to it, select several rows and make a group of them. Each row carries an enable toggle and a
+// chevron to its own page, where its alias, hotkey, and delete live. The search field lives in the
+// window toolbar, like the Store's, so the list itself is just the list.
 
 import SwiftUI
 import UniformTypeIdentifiers
 import Core
-import KeyboardShortcuts
 
 @MainActor
 struct CustomizePage: View {
     @Binding var selectedRowIDs: Set<String>
     @Binding var disabledActionIDs: Set<String>
     @Binding var disabledPackages: Set<String>
+    /// The toolbar's search field, routed here by the window while this page is on screen.
+    @Binding var query: String
 
     @ObservedObject private var coordinator = ActionCoordinator.shared
     @ObservedObject private var customizationManager = ActionCustomizationManager.shared
 
-    @State private var query = ""
-    @State private var aliasError: String?
     @State private var isShowingHelp = false
 
     init(
         selectedRowIDs: Binding<Set<String>>,
         disabledActionIDs: Binding<Set<String>>,
-        disabledPackages: Binding<Set<String>>
+        disabledPackages: Binding<Set<String>>,
+        query: Binding<String>
     ) {
         _selectedRowIDs = selectedRowIDs
         _disabledActionIDs = disabledActionIDs
         _disabledPackages = disabledPackages
+        _query = query
     }
 
     /// Eligible candidate action IDs for custom grouping. Only top-level standalone actions
@@ -62,47 +64,39 @@ struct CustomizePage: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            searchBar
-
-            ZStack {
-                ActionsOutlineView(
-                    coordinator: coordinator,
-                    customizationManager: customizationManager,
-                    searchQuery: query,
-                    disabledActionIDs: $disabledActionIDs,
-                    disabledPackages: $disabledPackages,
-                    selectedRowIDs: $selectedRowIDs,
-                    onAliasMessage: { message in
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            aliasError = message
-                        }
-                    },
-                    onEditGroup: { groupID in
-                        SettingsRouter.shared.push(.action(id: groupID))
-                    },
-                    onCreateGroupFromSelection: {
-                        SettingsRouter.shared.push(.newGroup(
-                            memberIDs: Self.groupCandidates(selectedRowIDs: selectedRowIDs, coordinator: coordinator)
-                        ))
-                    },
-                    onOpenNode: { node in
-                        switch node.kind {
-                        case .packageHeader(let packageID, _, _):
-                            SettingsRouter.shared.show(path: SettingsDestination.path(forPackage: packageID))
-                        default:
-                            if let action = node.action {
-                                SettingsDestination.open(action)
-                            }
+        ZStack {
+            ActionsOutlineView(
+                coordinator: coordinator,
+                customizationManager: customizationManager,
+                searchQuery: query,
+                disabledActionIDs: $disabledActionIDs,
+                disabledPackages: $disabledPackages,
+                selectedRowIDs: $selectedRowIDs,
+                onEditGroup: { groupID in
+                    SettingsRouter.shared.push(.action(id: groupID))
+                },
+                onCreateGroupFromSelection: {
+                    SettingsRouter.shared.push(.newGroup(
+                        memberIDs: Self.groupCandidates(selectedRowIDs: selectedRowIDs, coordinator: coordinator)
+                    ))
+                },
+                onOpenNode: { node in
+                    switch node.kind {
+                    case .packageHeader(let packageID, _, _):
+                        SettingsRouter.shared.show(path: SettingsDestination.path(forPackage: packageID))
+                    default:
+                        if let action = node.action {
+                            SettingsDestination.open(action)
                         }
                     }
-                )
-
-                if hasNoMatches {
-                    ContentUnavailableView.search(text: query)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(nsColor: .windowBackgroundColor))
                 }
+            )
+
+            if hasNoMatches {
+                // No background: the outline is empty, so the pane shows through and the empty
+                // state reads as part of the pane instead of a mismatched rectangle.
+                ContentUnavailableView.search(text: query)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .overlay(alignment: .bottomTrailing) {
@@ -140,64 +134,18 @@ struct CustomizePage: View {
             .padding(16)
         }
     }
-
-    private var searchBar: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            NativeSearchField(
-                text: $query,
-                placeholder: String(localized: "Search actions, shortcuts, or aliases"),
-                controlSize: .regular
-            )
-            .frame(height: 24)
-
-            if let aliasError {
-                SettingsInlineError(message: aliasError)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 6)
-    }
 }
 
 // MARK: - Rows
 
-/// One action in the Customize list: icon, title, alias, hotkey recorder, enable toggle, and delete.
+/// One action in the Actions list: icon, title, enable toggle, and the chevron that opens its page.
+/// Alias, hotkey, and delete live on the action's own settings page.
 @MainActor
 struct ActionRowView: View {
     let action: any Action
     let presentationModel: ActionPresentationModel
     @Binding var disabledActionIDs: Set<String>
     @Binding var disabledPackages: Set<String>
-    var onAliasMessage: (String?) -> Void
-
-    @ObservedObject private var coordinator = ActionCoordinator.shared
-    @ObservedObject private var customizationManager = ActionCustomizationManager.shared
-    @ObservedObject private var bindingStore = ActionBindingStore.shared
-    @State private var aliasDraft: String?
-
-    private static let aliasWidth: CGFloat = 88
-
-    private var isDeletable: Bool {
-        // Custom group
-        if coordinator.actionGroupDefs.contains(where: { $0.id == action.id }) {
-            return true
-        }
-        // Custom AI Preset
-        if ActionIdentity.isAIPreset(action) {
-            if let preset = AIServiceManager.shared.preset(forActionID: action.id) {
-                return preset.id.hasPrefix("custom_")
-            }
-            return false
-        }
-        // Custom action
-        if SettingsDestination.isCustomAction(action) {
-            return true
-        }
-        // Everything else — built-ins and extensions alike — is managed from its own page's
-        // toolbar menu rather than by a trash on the row.
-        return false
-    }
 
     var body: some View {
         let isEnabled = ActionEnablement.binding(
@@ -222,37 +170,11 @@ struct ActionRowView: View {
 
             Spacer(minLength: 8)
 
-            if ActionIdentity.isBindable(action) {
-                TextField("alias", text: aliasBinding, prompt: Text("alias"))
-                    .textFieldStyle(.roundedBorder)
-                    .controlSize(.small)
-                    .labelsHidden()
-                    .frame(width: Self.aliasWidth)
-                    .accessibilityLabel(String(localized: "Alias for \(presentationModel.title)"))
-
-                KeyboardShortcuts.Recorder(for: .actionHotkey(action.id))
-                    .controlSize(.small)
-            }
-
             Toggle("", isOn: isEnabled)
                 .labelsHidden()
                 .toggleStyle(.switch)
                 .controlSize(.small)
                 .accessibilityLabel(String(localized: "Enable \(presentationModel.title)"))
-
-            if isDeletable {
-                Button {
-                    confirmDelete()
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.system(size: 11.5, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 20, height: 20)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help(String(localized: "Delete / Uninstall"))
-            }
 
             Button {
                 SettingsDestination.open(action)
@@ -270,65 +192,6 @@ struct ActionRowView: View {
         .padding(.vertical, 2)
         .contentShape(Rectangle())
         .id(action.id)
-    }
-
-    private func confirmDelete() {
-        // 1. Custom Group
-        if coordinator.actionGroupDefs.contains(where: { $0.id == action.id }) {
-            SettingsRouter.shared.confirmDestructive(
-                title: String(localized: "Delete?"),
-                message: "",
-                confirmTitle: String(localized: "Delete")
-            ) {
-                coordinator.ungroup(groupID: action.id)
-            }
-            return
-        }
-
-        // 2. Custom AI Preset
-        if ActionIdentity.isAIPreset(action),
-           let preset = AIServiceManager.shared.preset(forActionID: action.id) {
-            SettingsRouter.shared.confirmDestructive(
-                title: String(localized: "Delete?"),
-                message: "",
-                confirmTitle: String(localized: "Delete")
-            ) {
-                var list = AIServiceManager.shared.presets
-                list.removeAll(where: { $0.id == preset.id })
-                AIServiceManager.shared.presets = list
-            }
-            return
-        }
-
-        // 3. Custom Action
-        if case .custom = action.chrome.source {
-            SettingsRouter.shared.confirmDestructive(
-                title: String(localized: "Delete?"),
-                message: "",
-                confirmTitle: String(localized: "Delete")
-            ) {
-                coordinator.deleteCustomAction(actionID: action.id)
-                customizationManager.resetOverride(for: action.id)
-            }
-            return
-        }
-    }
-
-    private var aliasBinding: Binding<String> {
-        Binding(
-            get: { aliasDraft ?? bindingStore.alias(for: action.id) ?? "" },
-            set: { newValue in
-                aliasDraft = newValue
-                switch bindingStore.setAlias(newValue, for: action.id) {
-                case .accepted, .cleared:
-                    onAliasMessage(nil)
-                case .invalid:
-                    onAliasMessage(String(localized: "Aliases can only contain letters and numbers."))
-                case .collision:
-                    onAliasMessage(String(localized: "That alias is already used."))
-                }
-            }
-        )
     }
 }
 

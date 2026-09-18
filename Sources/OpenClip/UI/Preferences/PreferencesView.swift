@@ -52,13 +52,15 @@ public enum PreferenceTab: String, CaseIterable, Hashable, Sendable {
 
 @MainActor
 public struct PreferencesView: View {
-    /// Widest the Customize list grows; every other pane is capped by `SettingsLayout`.
-    private static let customizeListMaxWidth: CGFloat = 880
+    /// The Actions list now reads at the same measure as every other pane.
+    private static let customizeListMaxWidth: CGFloat = SettingsLayout.contentMaxWidth
 
     @State private var disabledActionIDs: Set<String> = []
     @State private var disabledPackages: Set<String> = []
     /// The Customize list's selection, kept here so the toolbar's New Group can seed a group with it.
     @State private var selectedRowIDs: Set<String> = []
+    /// The Customize list's toolbar search text, kept here because the field lives in the toolbar.
+    @State private var customizeQuery = ""
     @State private var sidebarQuery = ""
     /// The folder, manifest and README of the extension whose page is on screen. Read once, off
     /// the main thread, and used by both the page's hero and the toolbar's ellipsis menu.
@@ -139,8 +141,9 @@ public struct PreferencesView: View {
         .onReceive(coordinator.objectWillChange.receive(on: RunLoop.main)) { _ in syncToolbar() }
         .onReceive(customizationManager.objectWillChange.receive(on: RunLoop.main)) { _ in syncToolbar() }
         .onReceive(aiManager.objectWillChange.receive(on: RunLoop.main)) { _ in syncToolbar() }
-        // Toolbar <-> panes. The toolbar owns the store's filter and search box,
-        // so those travel through the model in both directions.
+        // Toolbar <-> panes. The toolbar owns the Store's filter and the shared search box,
+        // so those travel through the model in both directions; the search routes to the
+        // pane that is on screen.
         .onReceive(toolbarModel.actions) { action in
             switch action {
             case .newGroup:
@@ -159,11 +162,23 @@ public struct PreferencesView: View {
             }
         }
         .onChange(of: toolbarModel.searchQuery) { _, query in
-            guard storeViewModel.searchQuery != query else { return }
-            storeViewModel.searchQuery = query
-            storeViewModel.queryDidChange()
+            switch toolbarModel.page {
+            case .store:
+                guard storeViewModel.searchQuery != query else { return }
+                storeViewModel.searchQuery = query
+                storeViewModel.queryDidChange()
+            case .customize, .shortcuts:
+                if customizeQuery != query { customizeQuery = query }
+            default:
+                break
+            }
         }
         .onChange(of: storeViewModel.searchQuery) { _, query in
+            guard toolbarModel.page == .store else { return }
+            toolbarModel.searchQuery = query
+        }
+        .onChange(of: customizeQuery) { _, query in
+            guard toolbarModel.page == .customize || toolbarModel.page == .shortcuts else { return }
             toolbarModel.searchQuery = query
         }
         .onChange(of: storeViewModel.selectedSort) { _, sort in
@@ -206,6 +221,18 @@ public struct PreferencesView: View {
         toolbarModel.title = title(for: router.currentPage)
         toolbarModel.pageToggle = pageToggle(for: router.currentPage)
         toolbarModel.pageMenuItems = pageMenuItems(for: router.currentPage)
+        // The shared search box shows the active page's query, so switching between the
+        // Store and the Actions list brings each pane's own search back with it.
+        toolbarModel.searchQuery = searchQuery(for: router.currentPage)
+    }
+
+    /// The search text the page on screen owns; empty for pages without a toolbar search.
+    private func searchQuery(for page: SettingsPage) -> String {
+        switch page {
+        case .store: return storeViewModel.searchQuery
+        case .customize, .shortcuts: return customizeQuery
+        default: return ""
+        }
     }
 
     /// The action a page is about, when it is about one: an action's editor, or a built-in's page.
@@ -528,7 +555,8 @@ public struct PreferencesView: View {
             CustomizePage(
                 selectedRowIDs: $selectedRowIDs,
                 disabledActionIDs: $disabledActionIDs,
-                disabledPackages: $disabledPackages
+                disabledPackages: $disabledPackages,
+                query: $customizeQuery
             )
             .frame(maxWidth: Self.customizeListMaxWidth)
             .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -172,48 +172,54 @@ private final class OutlineCellView: NSTableCellView {
     }
 }
 
-// MARK: - Outline Row View (Soft Selection, Zebra Tinting & Native Drop Target)
+// MARK: - Outline Row View (Soft Selection & Native Drop Target)
 
 @MainActor
 final class OutlineTableRowView: NSTableRowView {
-    var isAlternate: Bool = false
-
-    private var currentRowIndex: Int {
-        if let outline = (superview as? NSClipView)?.documentView as? NSOutlineView ?? (superview as? NSOutlineView) {
-            let r = outline.row(for: self)
-            if r >= 0 { return r }
+    /// Set by the outline view as the pointer moves, never tracked per row: a reused row would
+    /// otherwise keep a stale highlight and leave hover "residue" behind while scrolling.
+    var isHovered = false {
+        didSet {
+            guard isHovered != oldValue else { return }
+            needsDisplay = true
         }
-        return isAlternate ? 1 : 0
     }
 
+    /// Softly rounded corners, matching the sidebar's selection, so a highlighted row reads as a
+    /// rounded chip rather than a box.
+    private static let cornerRadius: CGFloat = 10
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        isHovered = false
+    }
+
+    /// Plain rows: no zebra, no separators. A soft rounded wash shows the row under the pointer;
+    /// the current selection draws the same rounded chip a little stronger.
     override func drawBackground(in dirtyRect: NSRect) {
-        guard !isSelected else { return }
-        if currentRowIndex % 2 == 1 {
-            let rowRect = bounds.insetBy(dx: 2, dy: 1)
-            let path = NSBezierPath(roundedRect: rowRect, xRadius: 6, yRadius: 6)
-            let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            let zebraColor = isDark
-                ? NSColor.white.withAlphaComponent(0.035)
-                : NSColor.black.withAlphaComponent(0.025)
-            zebraColor.setFill()
-            path.fill()
-        }
+        guard isHovered, !isSelected else { return }
+        fillRounded(NSColor.labelColor.withAlphaComponent(isDark ? 0.06 : 0.05))
     }
 
     override func drawSelection(in dirtyRect: NSRect) {
         guard isSelected else { return }
-        let selectionRect = bounds.insetBy(dx: 2, dy: 1)
-        let path = NSBezierPath(roundedRect: selectionRect, xRadius: 6, yRadius: 6)
+        fillRounded(NSColor.labelColor.withAlphaComponent(isDark ? 0.11 : 0.08))
+    }
 
-        let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        let fillColor = NSColor.labelColor.withAlphaComponent(isDark ? 0.09 : 0.06)
-        fillColor.setFill()
+    private var isDark: Bool {
+        effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+    }
+
+    private func fillRounded(_ color: NSColor) {
+        let rect = bounds.insetBy(dx: 4, dy: 2)
+        let path = NSBezierPath(roundedRect: rect, xRadius: Self.cornerRadius, yRadius: Self.cornerRadius)
+        color.setFill()
         path.fill()
     }
 
     override func drawDraggingDestinationFeedback(in dirtyRect: NSRect) {
-        let rect = bounds.insetBy(dx: 2, dy: 1)
-        let path = NSBezierPath(roundedRect: rect, xRadius: 6, yRadius: 6)
+        let rect = bounds.insetBy(dx: 4, dy: 2)
+        let path = NSBezierPath(roundedRect: rect, xRadius: Self.cornerRadius, yRadius: Self.cornerRadius)
         NSColor.controlAccentColor.withAlphaComponent(0.16).setFill()
         path.fill()
         NSColor.controlAccentColor.withAlphaComponent(0.75).setStroke()
@@ -231,10 +237,57 @@ final class OutlineTableRowView: NSTableRowView {
 
 @MainActor
 final class ActionsOutlineTableView: NSOutlineView {
+    /// The row currently under the pointer. Owned by the table, not by the row, so a row that is
+    /// recycled for different content can never keep someone else's hover.
+    private weak var hoveredRow: OutlineTableRowView?
+    private var hoverTrackingArea: NSTrackingArea?
+
     override func layout() {
         super.layout()
         autoresizesOutlineColumn = false
         sizeLastColumnToFit()
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let hoverTrackingArea { removeTrackingArea(hoverTrackingArea) }
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseMoved, .mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        hoverTrackingArea = area
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        updateHover(at: convert(event.locationInWindow, from: nil))
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        setHoveredRow(nil)
+    }
+
+    override func scrollWheel(with event: NSEvent) {
+        super.scrollWheel(with: event)
+        // Rows slide under a stationary pointer while scrolling, so recompute instead of leaving
+        // the highlight on whichever row the reused view now shows.
+        updateHover(at: convert(event.locationInWindow, from: nil))
+    }
+
+    private func updateHover(at point: NSPoint) {
+        guard window != nil else { return }
+        let row = self.row(at: point)
+        let view = row >= 0 ? rowView(atRow: row, makeIfNecessary: false) as? OutlineTableRowView : nil
+        setHoveredRow(view)
+    }
+
+    private func setHoveredRow(_ rowView: OutlineTableRowView?) {
+        guard hoveredRow !== rowView else { return }
+        hoveredRow?.isHovered = false
+        rowView?.isHovered = true
+        hoveredRow = rowView
     }
 
     override func menu(for event: NSEvent) -> NSMenu? {
@@ -259,12 +312,17 @@ final class ActionsOutlineTableView: NSOutlineView {
 /// overlap is measured and applied here.
 @MainActor
 final class ActionsScrollView: NSScrollView {
+    /// Breathing room between the toolbar and the first row, so the list does not start flush
+    /// against the title bar now that the search field has moved into the toolbar.
+    private static let topPadding: CGFloat = 14
+
     override func layout() {
         super.layout()
         guard let window else { return }
         let overlap = max(0, convert(bounds, to: nil).maxY - window.contentLayoutRect.maxY)
-        if abs(contentInsets.top - overlap) > 0.5 {
-            contentInsets = NSEdgeInsets(top: overlap, left: 0, bottom: 0, right: 0)
+        let desiredTop = overlap + Self.topPadding
+        if abs(contentInsets.top - desiredTop) > 0.5 {
+            contentInsets = NSEdgeInsets(top: desiredTop, left: 0, bottom: 0, right: 0)
         }
         if let outline = documentView as? NSOutlineView {
             outline.autoresizesOutlineColumn = false
@@ -283,7 +341,6 @@ struct ActionsOutlineView: NSViewRepresentable {
     @Binding var disabledActionIDs: Set<String>
     @Binding var disabledPackages: Set<String>
     @Binding var selectedRowIDs: Set<String>
-    var onAliasMessage: (String?) -> Void = { _ in }
     let onEditGroup: (String) -> Void
     let onCreateGroupFromSelection: () -> Void
     /// Double-click on a row: opens that row's settings page.
@@ -297,7 +354,6 @@ struct ActionsOutlineView: NSViewRepresentable {
         disabledActionIDs: Binding<Set<String>> = .constant([]),
         disabledPackages: Binding<Set<String>> = .constant([]),
         selectedRowIDs: Binding<Set<String>> = .constant([]),
-        onAliasMessage: @escaping (String?) -> Void = { _ in },
         onEditGroup: @escaping (String) -> Void = { _ in },
         onCreateGroupFromSelection: @escaping () -> Void = { },
         onOpenNode: @escaping (OutlineNode) -> Void = { _ in }
@@ -308,7 +364,6 @@ struct ActionsOutlineView: NSViewRepresentable {
         self._disabledActionIDs = disabledActionIDs
         self._disabledPackages = disabledPackages
         self._selectedRowIDs = selectedRowIDs
-        self.onAliasMessage = onAliasMessage
         self.onEditGroup = onEditGroup
         self.onCreateGroupFromSelection = onCreateGroupFromSelection
         self.onOpenNode = onOpenNode
@@ -708,8 +763,7 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
                     action: action,
                     presentationModel: presentation,
                     disabledActionIDs: parent.$disabledActionIDs,
-                    disabledPackages: parent.$disabledPackages,
-                    onAliasMessage: parent.onAliasMessage
+                    disabledPackages: parent.$disabledPackages
                 )
             )
         }
@@ -726,8 +780,6 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
             rowView = OutlineTableRowView()
             rowView.identifier = identifier
         }
-        let rowIndex = outlineView.row(forItem: item)
-        rowView.isAlternate = (rowIndex >= 0 && rowIndex % 2 == 1)
         return rowView
     }
 
@@ -803,26 +855,12 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
             return .move
         }
 
-        // Case 1: Hovering over or inside a custom group
+        // Case 1: Hovering over or inside a custom group. A multi-row selection is judged by
+        // whichever dragged actions could actually join, not just the first pasteboard item.
         if let targetNode = item as? OutlineNode, case .customGroup(let def, _) = targetNode.kind {
-            // Cannot drop a group into another group
-            if draggedID.hasPrefix("vgroup.") || parent.coordinator.actionGroupDefs.contains(where: { $0.id == draggedID }) {
-                return []
-            }
-            // Cannot drop extension groups into a custom group
-            if let draggedAction = parent.coordinator.actions.first(where: { $0.id == draggedID }),
-               draggedAction.chrome.popupBehavior == .showSubActions {
-                return []
-            }
-            // Ineligible actions cannot be dropped into a group
-            guard parent.coordinator.isEligibleForGrouping(actionID: draggedID) else { return [] }
-
-            if index == NSOutlineViewDropOnItemIndex {
-                // Hovering ON the group folder: AppKit natively highlights the folder row!
-                if def.memberActionIDs.contains(draggedID) { return [] }
-                return .move
-            } else if index >= 0 {
-                // Hovering between members inside the group: AppKit natively renders the insertion bar!
+            let candidates = draggedActionIDs(from: info).filter { couldJoinGroup($0, def: def) }
+            guard !candidates.isEmpty else { return [] }
+            if index == NSOutlineViewDropOnItemIndex || index >= 0 {
                 return .move
             }
         }
@@ -885,17 +923,18 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
             return true
         }
 
-        // Dropped ON or INSIDE custom group
+        // Dropped ON or INSIDE a custom group. A multi-row selection arrives as several pasteboard
+        // items, so add every eligible one in the dragged order.
         if let targetNode = item as? OutlineNode, case .customGroup(let def, _) = targetNode.kind {
-            if index == NSOutlineViewDropOnItemIndex {
-                parent.coordinator.addToGroup(actionID: draggedID, groupID: def.id)
-                expandedNodeIDs.insert(def.id)
-                outlineView.expandItem(targetNode)
-                rebuildTree()
-                outlineView.reloadData()
-                return true
-            } else if index >= 0 {
-                parent.coordinator.addToGroup(actionID: draggedID, groupID: def.id, atIndex: index)
+            let candidates = draggedActionIDs(from: info).filter { couldJoinGroup($0, def: def) }
+            if !candidates.isEmpty {
+                for (offset, id) in candidates.enumerated() {
+                    if index == NSOutlineViewDropOnItemIndex {
+                        parent.coordinator.addToGroup(actionID: id, groupID: def.id)
+                    } else if index >= 0 {
+                        parent.coordinator.addToGroup(actionID: id, groupID: def.id, atIndex: index + offset)
+                    }
+                }
                 expandedNodeIDs.insert(def.id)
                 outlineView.expandItem(targetNode)
                 rebuildTree()
@@ -974,6 +1013,29 @@ final class ActionsOutlineCoordinator: NSObject, NSOutlineViewDataSource, NSOutl
         let destination = index > from ? index - 1 : index
         reordered.insert(id, at: min(max(destination, 0), reordered.count))
         return reordered
+    }
+
+    /// Every action id in a drag, in pasteboard order. A multi-row selection drags as several
+    /// pasteboard items; a single row as one.
+    private func draggedActionIDs(from info: NSDraggingInfo) -> [String] {
+        let ids = (info.draggingPasteboard.pasteboardItems ?? [])
+            .compactMap { $0.string(forType: actionPasteboardType) }
+        if !ids.isEmpty { return ids }
+        return info.draggingPasteboard.string(forType: actionPasteboardType).map { [$0] } ?? []
+    }
+
+    /// Whether a dragged id may join `def`: a groupable top-level action that is not the group
+    /// itself, not another group, not an extension group, and not already a member.
+    private func couldJoinGroup(_ id: String, def: ActionGroupDef) -> Bool {
+        guard id != def.id else { return false }
+        guard !parent.coordinator.actionGroupDefs.contains(where: { $0.id == id }) else { return false }
+        guard parent.coordinator.isEligibleForGrouping(actionID: id) else { return false }
+        guard !def.memberActionIDs.contains(id) else { return false }
+        if let action = parent.coordinator.actions.first(where: { $0.id == id }),
+           action.chrome.popupBehavior == .showSubActions {
+            return false
+        }
+        return true
     }
 
     // MARK: - Grouping by drop

@@ -256,7 +256,7 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
     // MARK: - Item contents per page
 
     private func sync(page: SettingsPage) {
-        setHidden(searchItem, page != .store)
+        setHidden(searchItem, !Self.showsSearch(for: page))
         setHidden(sortItem, page != .store)
         setHidden(storeInstallItem, page != .store)
         setHidden(refreshItem, page != .store)
@@ -277,6 +277,15 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
         // A page with more than one thing to add — the Actions list — turns the button into a menu;
         // everywhere else a single press does the one thing the tooltip names.
         actionMenuItems = PreferencesPlusMenu.items(for: page)
+    }
+
+    /// Pages whose toolbar carries the shared search field: the Store's catalog and the Actions
+    /// list (whose aliases the field also matches).
+    private static func showsSearch(for page: SettingsPage) -> Bool {
+        switch page {
+        case .store, .customize, .shortcuts: return true
+        default: return false
+        }
     }
 
     /// Puts the switch in the title bar, to the right of the toolbar's own items.
@@ -610,7 +619,7 @@ public final class PreferencesToolbarController: NSObject, NSToolbarDelegate, NS
             item.visibilityPriority = .high
             searchField = item.searchField
             searchItem = item
-            setHidden(item, model.page != .store)
+            setHidden(item, !Self.showsSearch(for: model.page))
             return item
 
         case ItemID.sort:
