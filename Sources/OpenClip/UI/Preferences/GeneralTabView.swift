@@ -56,7 +56,7 @@ struct GeneralTab: View {
 
                 SettingsToggleRow(
                     title: "Hold Mouse to Trigger",
-                    subtitle: "Keep the button down after selecting to summon the popup.",
+                    subtitle: "Press and hold without moving the mouse to summon the popup.",
                     systemImage: "hand.tap",
                     isOn: $isMouseHoldEnabled
                 )

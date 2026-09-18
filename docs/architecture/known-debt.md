@@ -24,9 +24,12 @@ areas; stale debt notes are worse than none.
   `"aiCloudAPIKey"` key, then deletes it.
 - **`isAppEnabled` is consolidated** onto `SettingKey.isAppEnabled` — the status bar item and the
   Preferences toggle read/write it through `DefaultSettingsStore`. It means **"Appear
-  Automatically"** (its label in both places): it owns the selection monitor's automatic popup and
-  nothing else. The ⌥⌘C hotkey is an explicit request and is deliberately *not* gated on it — off
-  is the global form of the per-app `hotkeyOnly` rule. `HotkeyManager.triggerAllowed` gates on the
+  Automatically"** (its label in both places): it owns the selection monitor's passive auto-show and
+  nothing else. It is applied in `MacSelectionMonitor.deliverSelection` (the mouse-release/keyboard
+  path) as the global form of the per-app `hotkeyOnly` rule; the explicit **Hold Mouse to Trigger**
+  gesture delivers from `handleMouseDown` and is exempt, so off + hold = hold-only mode. The ⌥⌘C
+  hotkey is an explicit request and is deliberately *not* gated on it.
+  `HotkeyManager.triggerAllowed` gates on the
   real kill switches instead: Pause (`pauseUntilTimestamp`), app exclusion, per-app `disabled`. Builtin store-backed actions
   (`CalculateAction`, `CalendarAction`, `SearchAction`) accept an injected `SettingsStore` via
   `BuiltinRegistry.makeCoreBuiltins(settingsStore:)`.

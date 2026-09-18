@@ -17,7 +17,7 @@ The **General** page configures how OpenClip is summoned, how action outputs are
 
 - **Triggers**:
   - **Appear Automatically**: Shows the popup bar as soon as text is selected.
-  - **Hold Mouse to Trigger**: Keeps the popup hidden until you hold the mouse button down briefly after selection.
+  - **Hold Mouse to Trigger**: Summons the popup when you press and hold the mouse button without moving the pointer (drag-select does not count). Works independently of **Appear Automatically**.
   - **Keyboard Shortcut**: Configures the global hotkey (default `⌥⌘C`) to toggle the popup and search palette.
 - **Action Results**:
   - **Primary click** & **Secondary click**: Configures what happens when an action returns text — **Preview** (in the native result card), **Paste** (over active selection), or **Copy** (to pasteboard).

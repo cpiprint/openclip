@@ -46,6 +46,7 @@
   "General Controls": "一般設定",
   "Trigger Popup Shortcut": "ポップアップ表示ショートカット",
   "Hold Mouse to Trigger": "マウス長押しで起動",
+  "Press and hold without moving the mouse to summon the popup.": "マウスボタンを押したまま動かさずに保持するとポップアップが表示されます。",
   "Show Menu Bar Icon": "メニューバーにアイコンを表示",
   "Menu Bar Icon": "メニューバーアイコン",
   "Keep OpenClip visible in the macOS menu bar for quick access to preferences and updates.": "環境設定やアップデートにすばやくアクセスできるよう、macOSのメニューバーにOpenClipを表示したままにします。",

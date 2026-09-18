@@ -46,6 +46,7 @@
   "General Controls": "Commandes générales",
   "Trigger Popup Shortcut": "Raccourci d’affichage",
   "Hold Mouse to Trigger": "Maintenir la souris pour afficher",
+  "Press and hold without moving the mouse to summon the popup.": "Maintenez le bouton de la souris sans bouger pour faire apparaître la fenêtre.",
   "Show Menu Bar Icon": "Afficher l’icône dans la barre des menus",
   "Menu Bar Icon": "Icône de la barre des menus",
   "Keep OpenClip visible in the macOS menu bar for quick access to preferences and updates.": "Garder OpenClip visible dans la barre des menus de macOS pour un accès rapide aux préférences et aux mises à jour.",

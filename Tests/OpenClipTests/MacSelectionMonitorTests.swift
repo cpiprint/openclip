@@ -851,6 +851,47 @@ final class MacSelectionMonitorTests: XCTestCase {
         XCTAssertEqual(cached.context.text, "hotkey only selection")
     }
 
+    /// Bug #101: "Appear Automatically" is the global form of the per-app `hotkeyOnly` rule — it
+    /// suppresses passive auto-show for mouse-release/keyboard selections but must not block the
+    /// explicit hold gesture, which is a deliberate request for the popup.
+    @MainActor
+    func testAppearAutomaticallyDisabledSuppressesAutoShowButNotHold() async throws {
+        let store = MemorySettingsStore()
+        store.set(.isAppEnabled, value: false)
+        store.set(.isMouseHoldEnabled, value: true)
+        store.set(.mouseHoldDuration, value: 0.05)
+        let monitor = MacSelectionMonitor(settingsStore: store)
+        monitor.isExcludedBundle = { _ in false }
+        monitor.policyResolver = { _ in AppPolicyContext.default }
+        monitor.retriever = SelectionRetrievalCoordinator(inspect: {
+            Self.fixtureTarget(role: "AXTextField", selectedText: "selected word")
+        }, copyCapture: { _ in nil })
+
+        var popupShown = 0
+        monitor.onSelection = { _, _ in popupShown += 1 }
+
+        // Passive drag selection on release: monitoring still runs, but no popup.
+        let app = MockTestApp(bundleID: "com.apple.TextEdit")
+        monitor.handleMouseDown(at: CGPoint(x: 100, y: 100))
+        monitor.handleMouseUp(app: app, cursor: CGPoint(x: 200, y: 100), clickCount: 1)
+        await monitor.debounceTask?.value
+
+        XCTAssertEqual(popupShown, 0, "auto-show must stay off while Appear Automatically is disabled")
+        XCTAssertEqual(monitor.latestSelection?.context.text, "selected word",
+                       "the selection must still be cached for the hotkey")
+
+        // Explicit hold: still summons the popup with auto-show off.
+        let point = CGPoint(x: 150, y: 150)
+        monitor.frontmostAppProvider = { Self.runnerApp() }
+        monitor.currentMouseLocation = { point }
+        monitor.currentCursorProvider = { .arrow }
+        monitor.primaryButtonPressed = { true }
+
+        monitor.handleMouseDown(at: point)
+        try await waitUntil { popupShown == 1 }
+        XCTAssertEqual(popupShown, 1, "the hold gesture must summon the popup with auto-show off")
+    }
+
     // MARK: - Foreign-overlay gate
     // The window-list logic itself lives in OpenSelection's released `CopyTriggerGate`; these pin the
     // macOS-facing decision the monitor relies on.

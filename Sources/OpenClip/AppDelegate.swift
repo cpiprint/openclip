@@ -87,10 +87,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         
         // Setup selection monitor
         let macMonitor = MacSelectionMonitor()
+        // Presentation gate only: "Appear Automatically" is evaluated by the monitor on its
+        // passive (mouse-release/keyboard) path, not here — the explicit hold gesture and the
+        // ⌥⌘C hotkey must still summon the popup with it off. Global Pause is rechecked at
+        // delivery time here because the hold/retrieval sleeps can outlast the pause toggle.
         macMonitor.onSelection = { [weak self] context, canPaste in
-            let isEnabled = DefaultSettingsStore.shared.get(.isAppEnabled)
             let isPaused = DefaultSettingsStore.shared.get(.pauseUntilTimestamp) > Date().timeIntervalSince1970
-            if isEnabled && !isPaused {
+            if !isPaused {
                 // A real selection means the user has seen (or no longer needs) the nudge.
                 self?.coachMarkController?.dismiss()
                 self?.popupController?.show(for: context, pasteAvailable: canPaste)
@@ -197,9 +200,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             object: nil,
             queue: .main
         ) { _ in
-            // "Appear Automatically" is evaluated inside onSelection to decide whether
-            // to show the popup bar automatically. The selection monitor remains running
-            // so explicit hotkeys (⌥⌘C) have immediate access to the selection.
+            // "Appear Automatically" is evaluated by the selection monitor on its passive
+            // (mouse-release/keyboard) path. The selection monitor remains running so the
+            // explicit hold gesture and hotkeys (⌥⌘C) have immediate access to the selection.
         }
 
         NotificationCenter.default.addObserver(

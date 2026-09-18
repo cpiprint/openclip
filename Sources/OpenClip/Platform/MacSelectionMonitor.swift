@@ -506,7 +506,12 @@ internal final class MacSelectionMonitor: SelectionMonitoring {
         guard !Task.isCancelled else { return }
         latestSelection = (context, canPaste)
         await InlineResultEvaluator.shared.awaitPrewarmed(timeout: 0.025)
-        if !policy.hotkeyOnly {
+        // "Appear Automatically" (isAppEnabled) is the global form of the per-app `hotkeyOnly`
+        // rule: it suppresses the passive auto-show for mouse-release and keyboard selections
+        // while leaving the explicit hold gesture (delivered in `handleMouseDown`, which never
+        // routes through here) and the ⌥⌘C hotkey independent. Monitoring still runs, so
+        // `latestSelection` stays warm for the hotkey.
+        if !policy.hotkeyOnly, self.settingsStore.get(.isAppEnabled) {
             self.onSelection?(context, canPaste)
         }
     }

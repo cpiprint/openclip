@@ -124,7 +124,7 @@ The retrieval path above applies to *passive selection monitoring*. The global t
    - The context is flagged `SelectionContext.isClipboardFallback`; `PopupWindowController.show` filters available actions down to **Paste** (and AI Tools launcher).
 3. **Empty Context Fallback**: If the clipboard is also empty, an empty selection context is created with the frontmost app's identity, allowing standalone actions to run.
 
-Passive selection monitoring continues even when "Appear Automatically" is disabled (`isAppEnabled == false` or `hotkeyOnly: true`), updating `latestSelection` and pre-warming the search index in the background so pressing the shortcut opens the palette with zero perceptual delay.
+Passive selection monitoring continues even when "Appear Automatically" is disabled (`isAppEnabled == false` or `hotkeyOnly: true`), updating `latestSelection` and pre-warming the search index in the background so pressing the shortcut opens the palette with zero perceptual delay. `isAppEnabled` is the global form of the per-app `hotkeyOnly` rule: it gates only the monitor's passive (mouse-release/keyboard) auto-show. The explicit hold gesture delivers straight from `handleMouseDown` and stays unaffected.
 
 ---
 

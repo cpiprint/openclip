@@ -46,6 +46,7 @@
   "General Controls": "通用控制",
   "Trigger Popup Shortcut": "弹出栏快捷键",
   "Hold Mouse to Trigger": "按住鼠标触发",
+  "Press and hold without moving the mouse to summon the popup.": "按住鼠标并保持不动以唤出弹窗。",
   "Show Menu Bar Icon": "在菜单栏中显示图标",
   "Menu Bar Icon": "菜单栏图标",
   "Keep OpenClip visible in the macOS menu bar for quick access to preferences and updates.": "在 macOS 菜单栏中保持显示 OpenClip 图标，以便快速访问偏好设置和更新。",

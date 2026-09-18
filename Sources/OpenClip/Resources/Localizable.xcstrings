@@ -11649,6 +11649,34 @@
         }
       }
     },
+    "Press and hold without moving the mouse to summon the popup.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住鼠标并保持不动以唤出弹窗。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住滑鼠並保持不動以喚出彈窗。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintenez le bouton de la souris sans bouger pour faire apparaître la fenêtre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マウスボタンを押したまま動かさずに保持するとポップアップが表示されます。"
+          }
+        }
+      }
+    },
     "Press esc to go back": {
       "localizations": {
         "zh-Hans": {
