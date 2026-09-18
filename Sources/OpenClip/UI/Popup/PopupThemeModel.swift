@@ -194,7 +194,6 @@ public struct PopupCardChromeModifier: ViewModifier {
 
     public func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        let classicBorderColor: Color = colorScheme == .dark ? Color.white.opacity(0.18) : Color.black.opacity(0.12)
         return content
             .background(
                 Group {
@@ -210,16 +209,50 @@ public struct PopupCardChromeModifier: ViewModifier {
                 }
             )
             .clipShape(shape)
-            .overlay(
-                Group {
-                    if effectiveTheme == "glass" {
-                        LayeredGlassBorder(cornerRadius: cornerRadius, colorScheme: colorScheme)
-                    } else {
-                        shape.stroke(classicBorderColor, lineWidth: 1.0)
-                    }
-                }
+            .overlay(outerBorder(shape))
+            .overlay(rimHighlight(shape))
+            // Edge-lit depth: a tight contact shadow grounds the card, a wide low-alpha ambient
+            // lifts it. Replaces the single soft `radius 10` shadow that read as a muddy blur.
+            .shadow(color: .black.opacity(colorScheme == .dark ? 0.35 : 0.12), radius: 1.5, x: 0, y: 1)
+            .shadow(color: .black.opacity(colorScheme == .dark ? 0.30 : 0.14), radius: 18, x: 0, y: 10)
+    }
+
+    /// The outer hairline. Glass keeps its lit gradient; classic now gets the same top-to-bottom
+    /// gradient instead of a flat stroke, so both categories read with the same edge lighting.
+    @ViewBuilder
+    private func outerBorder(_ shape: RoundedRectangle) -> some View {
+        if effectiveTheme == "glass" {
+            LayeredGlassBorder(cornerRadius: cornerRadius, colorScheme: colorScheme)
+        } else {
+            shape.stroke(
+                LinearGradient(
+                    colors: colorScheme == .dark
+                        ? [Color.white.opacity(0.22), Color.white.opacity(0.08)]
+                        : [Color.black.opacity(0.16), Color.black.opacity(0.06)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                ),
+                lineWidth: 1.0
             )
-            .shadow(color: .black.opacity(colorScheme == .dark ? 0.28 : 0.14), radius: 10, x: 0, y: 4)
+        }
+    }
+
+    /// A 1px specular line just inside the top edge, fading out by the bottom: the highlight that
+    /// makes the surface read as a lit pane rather than a flat slab. Inset so it never touches the
+    /// outer hairline.
+    private func rimHighlight(_ shape: RoundedRectangle) -> some View {
+        shape.inset(by: 0.5).stroke(
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(colorScheme == .dark ? 0.28 : 0.55),
+                    Color.white.opacity(0.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            ),
+            lineWidth: 1.0
+        )
+        .allowsHitTesting(false)
     }
 }
 

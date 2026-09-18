@@ -95,6 +95,7 @@ public struct ResultCardView: View {
     @State private var isPasteHovered = false
     @State private var isDismissHovered = false
     @State private var isPinHovered = false
+    @State private var isCardHovered = false
     /// The diff of `payload.original` → `payload.text`, recomputed only when the payload settles
     /// (never per body evaluation, and never mid-stream on a half-written response).\
     @State private var diffSegments: [TextDiffSegment] = []
@@ -156,6 +157,13 @@ public struct ResultCardView: View {
     /// and the payload supports follow-up (AI results).
     private var showsFollowUp: Bool { onFollowUp != nil && !payload.isError && payload.canFollowUp }
 
+    /// The secondary header controls (diff, pin) rest hidden and fade in when the pointer is over
+    /// the card. They stay visible while either is in an active state — diff shown, card pinned —
+    /// so the header never hides a state the user set. Back and close are always visible.
+    private var revealsSecondaryChrome: Bool {
+        isCardHovered || showsDiff || isPinned
+    }
+
     public var body: some View {
         cardChrome {
             ZStack(alignment: .top) {
@@ -181,6 +189,7 @@ public struct ResultCardView: View {
             }
         }
         .frame(width: dynamicCardWidth, height: dynamicCardHeight)
+        .onHover { isCardHovered = $0 }
         .focusable()
         .focusEffectDisabled()
         .focused($isCardFocused)
@@ -346,11 +355,16 @@ public struct ResultCardView: View {
             .help("Drag to move")
 
             HStack(spacing: 4) {
-                if hasDiff {
-                    diffToggle
-                }
+                HStack(spacing: 4) {
+                    if hasDiff {
+                        diffToggle
+                    }
 
-                pinButton
+                    pinButton
+                }
+                .opacity(revealsSecondaryChrome ? 1 : 0)
+                .allowsHitTesting(revealsSecondaryChrome)
+                .animation(.easeOut(duration: 0.15), value: revealsSecondaryChrome)
 
                 closeButton
             }
