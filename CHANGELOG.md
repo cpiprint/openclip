@@ -4,6 +4,26 @@ All notable user-facing changes, feature additions, and improvements to OpenClip
 
 ---
 
+## v1.6.2 - 2026-09-18
+
+### Features & Improvements
+- **Define opens in Dictionary.app**: dictionary lookups can open the word directly in macOS Dictionary from the result card.
+- **Rich pasteboard fidelity**: copy and paste preserve every clipboard representation — including app-private types such as Notes checklists — instead of degrading them to plain text.
+- **Inline results stay warm**: extension inline results persist across popups and repack without losing the inline flag.
+- **Actions list rework**: Preferences › Actions gets clearer rows, search, and drag-and-drop grouping.
+- **Hold-to-trigger independence**: **Hold Mouse to Trigger** now works with **Appear Automatically** turned off.
+- **Keyboard selection reads**: selections made with the keyboard are captured without the copy-evidence gate.
+
+### Fixes & Stability
+- **Log timestamps**: the rotating file log sink formats timestamps on its own serial queue, so its formatter is never shared across threads.
+- **Settings**: the sidebar search strip draws the sidebar's own material, and the window returns to the last pane you were on.
+- **Sub-bar results**: an in-flight inline evaluation is joined rather than re-run.
+
+### Held for a later release
+- **Native file output and interactive preview** stay out of this release.
+
+---
+
 ## v1.6.1 - 2026-09-16
 
 ### Features & Improvements
