@@ -100,8 +100,7 @@ action catalog — including disabled actions — by title. Type a fragment of a
 straight to it.
 
 > [!TIP]
-> No text selected? The popup still appears and acts on the current clipboard contents — Copy/Cut
-> just drop out because there's no live selection to copy from.
+> No text selected? The popup still appears and acts on the current clipboard contents.
 
 ## Extending OpenClip
 
@@ -170,11 +169,6 @@ xcodegen generate
 > entitlements as a release, and Gatekeeper will refuse them on any other Mac. Producing a
 > distributable build is opt-in — see
 > [Code Signing, Hardened Runtime & Notarization](docs/developer-guide/signing-and-notarization.md).
-
-> [!NOTE]
-> The repo is split into a pure-domain **Core** framework and the **OpenClip** app target (AppKit +
-> SwiftUI), with XCTest suites for both. The `Extensions/` folder is a git submodule hosting the
-> official & community extension catalog (`openclip-extensions`).
 
 ## Documentation
 
