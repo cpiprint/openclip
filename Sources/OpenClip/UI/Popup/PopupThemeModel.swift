@@ -211,10 +211,21 @@ public struct PopupCardChromeModifier: ViewModifier {
             .clipShape(shape)
             .overlay(outerBorder(shape))
             .overlay(rimHighlight(shape))
-            // Edge-lit depth: a tight contact shadow grounds the card, a wide low-alpha ambient
-            // lifts it. Replaces the single soft `radius 10` shadow that read as a muddy blur.
-            .shadow(color: .black.opacity(colorScheme == .dark ? 0.35 : 0.12), radius: 1.5, x: 0, y: 1)
-            .shadow(color: .black.opacity(colorScheme == .dark ? 0.30 : 0.14), radius: 18, x: 0, y: 10)
+            // Edge-lit depth: a tight contact shadow grounds the card, a low-alpha ambient lifts
+            // it. Geometry lives in `PopupMetrics` (`cardShadow*`) because `popupShadowInset` must
+            // cover the ambient's full blur tail or the panel frame hard-clips it.
+            .shadow(
+                color: .black.opacity(colorScheme == .dark ? 0.35 : 0.12),
+                radius: PopupMetrics.cardShadowContactRadius,
+                x: 0,
+                y: PopupMetrics.cardShadowContactYOffset
+            )
+            .shadow(
+                color: .black.opacity(colorScheme == .dark ? 0.30 : 0.14),
+                radius: PopupMetrics.cardShadowAmbientRadius,
+                x: 0,
+                y: PopupMetrics.cardShadowAmbientYOffset
+            )
     }
 
     /// The outer hairline. Glass keeps its lit gradient; classic now gets the same top-to-bottom

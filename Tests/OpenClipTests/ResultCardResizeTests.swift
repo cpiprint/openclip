@@ -30,6 +30,10 @@ final class ResultCardResizeTests: XCTestCase {
             settingsStore: settings
         )
         let panel = PopupPanel()
+        // Production lifts the shared bar cap before a resizable surface shows (`showResultCard`),
+        // because a default card (280 pt) plus the shadow ring is taller than `popupMaxHeight`.
+        // Pre-lift it here too so the default card frame is not clamped on the way in.
+        panel.heightCap = NSScreen.main?.visibleFrame.height ?? 2000
         panel.contentView = FixedFittingSizeView(frame: NSRect(origin: .zero, size: cardPanelFrame.size))
         panel.setFrame(cardPanelFrame, display: false)
         controller.panel = panel

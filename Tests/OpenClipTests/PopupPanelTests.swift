@@ -391,7 +391,7 @@ final class PopupPanelTests: XCTestCase {
         // Center of the content area: belongs to the popup.
         XCTAssertTrue(PopupPanel.ContentView.isInsideClickableRegion(
             point: NSPoint(x: bounds.midX, y: bounds.midY), bounds: bounds))
-        // Just inside the shadow ring boundary (16pt from each edge): still the popup's.
+        // Just inside the shadow ring boundary (one point inside the inset): still the popup's.
         XCTAssertTrue(PopupPanel.ContentView.isInsideClickableRegion(
             point: NSPoint(x: inset + 1, y: inset + 1), bounds: bounds))
         // Inside the ring itself (e.g. 4pt from the corner): NOT the popup's — click-through.
