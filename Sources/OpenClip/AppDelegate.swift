@@ -80,6 +80,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         
         // Initialize the status bar controller
         statusBarController = StatusBarController()
+
+        // Deep links can open Preferences (the `open-settings` command); the router is otherwise
+        // self-contained. Configured before any `application(_:open:)` call can arrive.
+        DeepLinkRouter.shared.configure { [weak self] in
+            self?.statusBarController?.showPreferences()
+        }
         
         // Setup popup controller
         let controller = PopupWindowController()
@@ -348,54 +354,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
+    /// Install-only parameter extraction, kept for the existing store deep-link tests. New code
+    /// parses through `OpenClipDeepLink`; `DeepLinkRouter` owns the actual handling.
     public nonisolated static func parseDeepLinkURL(_ url: URL) -> [String: String]? {
-        guard url.scheme?.lowercased() == "openclip", url.host == "install" else { return nil }
-        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let queryItems = components.queryItems else { return nil }
-        
-        var dict: [String: String] = [:]
-        for item in queryItems {
-            if let val = item.value {
-                dict[item.name] = val
-            }
+        guard case .install(let id, let name, let downloadURL) = OpenClipDeepLink.parse(url) else {
+            return nil
         }
+        var dict: [String: String] = ["id": id, "url": downloadURL.absoluteString]
+        if let name { dict["name"] = name }
         return dict
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
-            guard let params = Self.parseDeepLinkURL(url),
-                  let downloadStr = params["url"],
-                  let downloadURL = URL(string: downloadStr),
-                  let extID = params["id"] else { continue }
-            
-            guard let host = downloadURL.host?.lowercased(),
-                  RemoteExtensionInstaller.allowedDownloadHosts.contains(host) else {
-                continue
-            }
-            
-            let alert = NSAlert()
-            alert.messageText = String(localized: "Install Extension?")
-            alert.informativeText = String(localized: "OpenClip wants to install the extension \"\(extID)\" from \(host). Extensions can run scripts when you select text. Only proceed if you trust this source.")
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: String(localized: "Install"))
-            alert.addButton(withTitle: String(localized: "Cancel"))
-            guard alert.runModal() == .alertFirstButtonReturn else { continue }
-            
-            Task { @MainActor in
-                do {
-                    ExtensionManager.shared.prepareInstall(source: "store", packageID: extID)
-                    _ = try await RemoteExtensionInstaller.shared.installFromRemoteURL(downloadURL, extensionID: extID)
-                    await ExtensionUpdateManager.shared.checkForUpdates()
-                } catch {
-                    Log.extensions.error("Failed to install extension '\(extID, privacy: .public)' from host \(host, privacy: .public): \(error.localizedDescription, privacy: .private)")
-                    let failure = NSAlert()
-                    failure.messageText = String(localized: "Extension Install Failed")
-                    failure.informativeText = String(localized: "OpenClip could not install \"\(extID)\": \(error.localizedDescription)")
-                    failure.alertStyle = .warning
-                    failure.runModal()
-                }
-            }
+            DeepLinkRouter.shared.handle(url)
         }
     }
 

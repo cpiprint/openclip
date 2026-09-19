@@ -125,6 +125,7 @@ enum SettingsTint {
     static let customize = Color.purple
     static let shortcuts = Color.purple
     static let appRules = Color.orange
+    static let integrations = Color.teal
     static let store = Color.blue
     static let about = Color(nsColor: .systemGray)
 

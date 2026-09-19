@@ -16,6 +16,9 @@ extension SettingsCatalog {
             SettingKey.searchPaletteWidth.erased,
             SettingKey.searchPaletteHeight.erased,
 
+            SettingKey.integrationSettingsURISchemeEnabled.erased,
+            SettingKey.integrationSettingsURISchemeApproved.erased,
+
             SettingKey.aiActiveProvider.erased,
             SettingKey.aiCloudService.erased,
             SettingKey.aiCloudCustomURL.erased,
