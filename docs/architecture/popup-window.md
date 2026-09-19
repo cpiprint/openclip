@@ -219,13 +219,18 @@ that replaced the former interactive canvas.
   `flushPendingStatus`) are gone. `showsLoading` actions (manifest `"loading"`) early-close the
   popup with a spinner toast, swapping to a description, the resolved companion toast, or fading on
   a description-free result (a keep-visible toast stays up rather than auto-dismissing).
-- **Secondary-click threading**: the click intent captured at mouse-down (`pendingClickIntent`) is
-  threaded into the perform context as `ActionContext.isSecondaryClick` (right-click always; ⇧-click
-  via `PopupView`/`PopupSearchView`'s `onClickIntent` closure) and into the delivery snapshot
-  (`DeliveryContext.clickIntent`, alongside the action's declared `Action.delivery`). Actions can
-  branch on it — `DefineAction` returns `.copyDefinition(word)` on a secondary click (with a
-  declared `secondaryToast` "Copied definition") so the effect door copies the dictionary definition
-  headlessly instead of opening Dictionary.app.
+- **Secondary-click threading**: the click intent is resolved per run and threaded into both the
+  perform context (`ActionContext.isSecondaryClick`) and the delivery snapshot
+  (`DeliveryContext.clickIntent`, alongside the action's declared `Action.delivery`). The bar and
+  sub-bar read it from the mouse monitor at mouse-down (`pendingClickIntent`; right-click or
+  ⇧-click). The palette resolves it itself — `replace` for ⇧⏎ / the ⇧⏎ footer badge, else the
+  captured mouse intent — and passes it explicitly through `onWillPerformAction` /
+  `onRunLoadingAction`, so the perform context and the delivery decision always agree (a keyboard
+  ⇧⏎ must copy, not paste). Entering the palette resets `pendingClickIntent`, so the right-click
+  that opened a group's scoped palette cannot leak `.secondary` into a later Return/⌘-digit run.
+  Actions can branch on it — `DefineAction` returns `.copyDefinition(word)` on a secondary click
+  (with a declared `secondaryToast` "Copied definition") so the effect door copies the dictionary
+  definition headlessly instead of opening Dictionary.app.
 
 ---
 

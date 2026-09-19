@@ -962,6 +962,34 @@ final class ActionResultDeliveryTests: XCTestCase {
         XCTAssertEqual(probe.lastPerformContext?.isSecondaryClick, false, "primary click must not set isSecondaryClick")
     }
 
+    // MARK: - Explicit click intent: the palette's keyboard secondary reaches the delivery snapshot
+
+    /// Regression: the scoped/group palette signals a secondary run with its own `replace` flag
+    /// (⇧⏎ and the ⇧⏎ footer badge), which never reaches the mouse monitor's `pendingClickIntent`.
+    /// The intent is now passed explicitly into `deliverySnapshot(for:clickIntent:)`, so a keyboard
+    /// secondary run of a `.paste` primary delivers a copy. Before the fix the snapshot fell back to
+    /// the pending (primary) intent and pasted.
+    @MainActor
+    func testExplicitSecondaryIntentSnapshotCopiesPasteResult() async throws {
+        let handler = RecordingHandler()
+        let controller = shownController(resultHandler: handler,
+                                         pasteProbe: FixedProbe(result: true),
+                                         appPolicy: .default)
+        defer { controller.hide() }
+
+        let stub = DeclaredDeliveryStub(delivery: .none)
+        let snapshot = controller.deliverySnapshot(for: stub, clickIntent: .secondary)
+        XCTAssertEqual(snapshot.clickIntent, .secondary,
+                       "the explicit intent must win over the pending mouse intent")
+
+        // Model the fixed palette path: snapshot with the explicit intent, then deliver.
+        controller.inFlightDeliveryContext = snapshot
+        controller.deliverResult(.paste("word"))
+
+        assertCase(try await awaitDelivery(from: handler), .copy("word"),
+                   "a keyboard secondary run must deliver a paste primary as a copy")
+    }
+
     // MARK: - Declared delivery wiring: runAction must snapshot the action's delivery and render its toast
 
     /// An action declaring a distinct secondary outcome + secondary toast: a secondary (right-click)

@@ -231,9 +231,10 @@ areas; stale debt notes are worse than none.
 - **`ActionContext.modifiers` is currently unused.** No action reads it; `PopupWindowController`
   passes `modifiers: []`. The click intent itself *is* plumbed: `ActionContext.isSecondaryClick` is
   set from
-  the captured `pendingClickIntent` by the bar/palette perform paths (right-click always; ⇧-click
-  via the `onClickIntent` closure) and read by `DefineAction` to copy a definition headlessly. True
-  modifier keys (⌘/⌥) still don't reach actions.
+  the run's resolved intent by the bar/sub-bar/palette perform paths (right-click or ⇧-click via
+  the bar/sub-bar mouse intent; ⇧⏎ and the ⇧⏎ footer badge via the palette's own `replace` flag,
+  passed explicitly through `onWillPerformAction`/`onRunLoadingAction`) and read by `DefineAction`
+  to copy a definition headlessly. True modifier keys (⌘/⌥) still don't reach actions.
 - **Paste delivery is now standardized but has a probe reliance.** Leaf `.paste` results are
   re-decided by `ActionResultDelivery` (App target) per the rule in the dev-guide §5b: a secondary
   click uses the declared `secondary` outcome (else derives `.copy` from a `.paste` primary), and
@@ -252,8 +253,11 @@ areas; stale debt notes are worse than none.
   probe is started by the trigger sites in parallel with selection retrieval and applied before the
   first frame (probe-before-render, nothing cached), so a same-app focus-context change re-probes
   cleanly. The click-intent capture reads
-  only ⇧ (not ⌘/⌥) and only sets it on mouse-down; a keyboard-driven run (search palette Enter) uses
-  the last left-click intent. Since Task 4, each action's declared `Action.delivery` (a distinct
+  only ⇧ (not ⌘/⌥); the bar/sub-bar take it from mouse-down, while the palette resolves it itself
+  (`replace` for ⇧⏎ / the ⇧⏎ badge, else the captured mouse intent) and passes it explicitly into
+  the delivery snapshot, and entering the palette resets `pendingClickIntent` so a keyboard run
+  never inherits the right-click that opened a group's scoped palette. Since Task 4, each action's
+  declared `Action.delivery` (a distinct
   secondary outcome + per-click `primaryToast`/`secondaryToast`) is snapshotted alongside the click
   intent and fed into `resolve`, and the returned tuple's toast is rendered directly — the manual
   `isDowngradedToCopy`/`isCopyDefinition` inline toast detection was removed in favor of the resolved

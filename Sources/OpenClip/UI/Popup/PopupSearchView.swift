@@ -52,11 +52,15 @@ public struct PopupSearchView: View {
     /// Called when an action is actually run, so the controller can record usage.
     public let onActionPerformed: (@MainActor (String) -> Void)?
     /// Called right before an action performs (before `onResult` can fire), so the controller can
-    /// snapshot the action's declared delivery for the paste-vs-copy decision.
-    public let onWillPerformAction: (@MainActor (any Action) -> Void)?
+    /// snapshot the action's declared delivery for the paste-vs-copy decision. The intent is
+    /// carried explicitly — the palette's secondary signal is `replace` (⇧⏎ / the ⇧⏎ badge), which
+    /// never reaches the mouse monitor's `pendingClickIntent`, so reading live state here would
+    /// deliver a keyboard secondary run as primary.
+    public let onWillPerformAction: (@MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void)?
     /// Called when a `showsLoading` palette result is selected: the controller early-closes the
     /// popup and runs the action via the loading toast flow instead of the inline perform path.
-    public let onRunLoadingAction: (@MainActor (any Action) -> Void)?
+    /// Carries the same explicit intent as `onWillPerformAction`.
+    public let onRunLoadingAction: (@MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void)?
     /// Returns the click intent captured at mouse-down for the current click, so the palette's
     /// perform path can thread a force-copy click (⇧-click) into the action context.
     public let onClickIntent: @MainActor () -> ActionResultDelivery.ClickIntent
@@ -234,8 +238,8 @@ public struct PopupSearchView: View {
         onSaveAIPrompt: @escaping @MainActor (String, Bool) -> Void = { _, _ in },
         aiEnabled: Bool = AIServiceManager.shared.isAIEnabled,
         onActionPerformed: (@MainActor (String) -> Void)? = nil,
-        onWillPerformAction: (@MainActor (any Action) -> Void)? = nil,
-        onRunLoadingAction: (@MainActor (any Action) -> Void)? = nil,
+        onWillPerformAction: (@MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void)? = nil,
+        onRunLoadingAction: (@MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void)? = nil,
         onClickIntent: @escaping @MainActor () -> ActionResultDelivery.ClickIntent = { .primary }
     ) {
         self.catalog = catalog
@@ -843,6 +847,10 @@ public struct PopupSearchView: View {
         }
         guard results.indices.contains(selectedIndex) else { return }
         let action = results[selectedIndex].action
+        // The intent is resolved once, up front, so the perform context and the delivery snapshot
+        // agree: `replace` (⇧⏎ / the ⇧⏎ badge) is the palette's own secondary signal and never
+        // reaches the mouse monitor, while `onClickIntent()` carries a ⇧/right mouse-down.
+        let clickIntent: ActionResultDelivery.ClickIntent = replace ? .secondary : onClickIntent()
         // AI preset actions render their result in the popup's AI card (same flow as the Sparkles
         // toolbar), so route them there instead of through `perform`.
         if ActionIdentity.isAIPreset(action) {
@@ -851,12 +859,12 @@ public struct PopupSearchView: View {
         }
         if action.chrome.showsLoading {
             if let onRunLoadingAction {
-                onRunLoadingAction(action)
+                onRunLoadingAction(action, clickIntent)
                 return
             }
             // No loading callback wired up (e.g. a preview): fall through to the inline perform path.
         }
-        onWillPerformAction?(action)
+        onWillPerformAction?(action, clickIntent)
         onActionPerformed?(action.id)
         if action.chrome.isInlineResult {
             if let result = modeStore.inlineResults[action.id] {
@@ -873,7 +881,7 @@ public struct PopupSearchView: View {
                         let performContext = ActionContext(
                             selection: context.selection,
                             modifiers: context.modifiers,
-                            isSecondaryClick: replace || onClickIntent() == .secondary,
+                            isSecondaryClick: clickIntent == .secondary,
                             match: match
                         )
                         let result = try await action.perform(performContext)
@@ -893,7 +901,7 @@ public struct PopupSearchView: View {
                 let performContext = ActionContext(
                     selection: context.selection,
                     modifiers: context.modifiers,
-                    isSecondaryClick: replace || onClickIntent() == .secondary,
+                    isSecondaryClick: clickIntent == .secondary,
                     match: match
                 )
                 let result = try await action.perform(performContext)
