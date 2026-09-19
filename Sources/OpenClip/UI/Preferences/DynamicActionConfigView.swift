@@ -134,21 +134,24 @@ struct DynamicOptionRowView: View {
                     .labelsHidden()
                     .missingFieldHighlight(isMissing)
                 } else {
-                    TextField(option.label, text: binding)
+                    TextField("", text: binding, prompt: Text(option.label))
                         .textFieldStyle(.roundedBorder)
+                        .labelsHidden()
                         .frame(maxWidth: 200)
                         .missingFieldHighlight(isMissing)
                 }
 
             case .secret:
-                SecureField(option.label, text: binding)
+                SecureField("", text: binding, prompt: Text(option.label))
                     .textFieldStyle(.roundedBorder)
+                    .labelsHidden()
                     .frame(maxWidth: 200)
                     .missingFieldHighlight(isMissing)
 
             case .string:
-                TextField(option.label, text: binding)
+                TextField("", text: binding, prompt: Text(option.label))
                     .textFieldStyle(.roundedBorder)
+                    .labelsHidden()
                     .frame(maxWidth: 200)
                     .missingFieldHighlight(isMissing)
             }
