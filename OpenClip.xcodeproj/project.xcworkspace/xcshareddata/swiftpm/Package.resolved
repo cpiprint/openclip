@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sindresorhus/KeyboardShortcuts",
       "state" : {
-        "revision" : "c3c361f409b8dbe1eab186078b41c330a6a82c9a",
-        "version" : "2.2.2"
+        "revision" : "772133d9dbe800fdac0473226822994c5c162c58",
+        "version" : "3.1.0"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ganeshmshetty/OpenSelection",
       "state" : {
-        "revision" : "126f6181bb278f7f39348b5cd6fad4eb1f64bdc1",
-        "version" : "0.2.1"
+        "revision" : "7a4390c01c3d7777a0b7cc1d95e4908f65b303de",
+        "version" : "0.2.2"
       }
     },
     {

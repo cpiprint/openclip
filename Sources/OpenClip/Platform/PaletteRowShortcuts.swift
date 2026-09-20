@@ -20,15 +20,15 @@ import Core
 import KeyboardShortcuts
 
 extension KeyboardShortcuts.Name {
-    static let paletteRow1 = Self("paletteRow1", default: .init(.one, modifiers: [.command]))
-    static let paletteRow2 = Self("paletteRow2", default: .init(.two, modifiers: [.command]))
-    static let paletteRow3 = Self("paletteRow3", default: .init(.three, modifiers: [.command]))
-    static let paletteRow4 = Self("paletteRow4", default: .init(.four, modifiers: [.command]))
-    static let paletteRow5 = Self("paletteRow5", default: .init(.five, modifiers: [.command]))
-    static let paletteRow6 = Self("paletteRow6", default: .init(.six, modifiers: [.command]))
-    static let paletteRow7 = Self("paletteRow7", default: .init(.seven, modifiers: [.command]))
-    static let paletteRow8 = Self("paletteRow8", default: .init(.eight, modifiers: [.command]))
-    static let paletteRow9 = Self("paletteRow9", default: .init(.nine, modifiers: [.command]))
+    static let paletteRow1 = Self("paletteRow1", initial: .init(.one, modifiers: [.command]))
+    static let paletteRow2 = Self("paletteRow2", initial: .init(.two, modifiers: [.command]))
+    static let paletteRow3 = Self("paletteRow3", initial: .init(.three, modifiers: [.command]))
+    static let paletteRow4 = Self("paletteRow4", initial: .init(.four, modifiers: [.command]))
+    static let paletteRow5 = Self("paletteRow5", initial: .init(.five, modifiers: [.command]))
+    static let paletteRow6 = Self("paletteRow6", initial: .init(.six, modifiers: [.command]))
+    static let paletteRow7 = Self("paletteRow7", initial: .init(.seven, modifiers: [.command]))
+    static let paletteRow8 = Self("paletteRow8", initial: .init(.eight, modifiers: [.command]))
+    static let paletteRow9 = Self("paletteRow9", initial: .init(.nine, modifiers: [.command]))
 }
 
 @MainActor

@@ -60,14 +60,14 @@ A confirmation dialog is shown before installation. Malformed URLs (missing `id`
 Returns the current value of every curated key.
 
 ```
-openclip://settings?callback=droppy%3A%2F%2Fopenclip%2Freply
+openclip://settings?callback=myapp%3A%2F%2Fopenclip%2Freply
 ```
 
 The reply is delivered by opening the `callback` URL with an added `result` query item carrying a
 JSON object keyed by setting name:
 
 ```
-droppy://openclip/reply?result={"isAppEnabled":true,"popupTheme":"glass","popupScale":3,...}
+myapp://openclip/reply?result={"isAppEnabled":true,"popupTheme":"glass","popupScale":3,...}
 ```
 
 If no callback is supplied the route still authorizes but has no reply target; there is currently no
@@ -84,7 +84,7 @@ openclip://set?popupTheme=glass&popupScale=3&isAppEnabled=false
 Every query item other than `callback`/`x-success` is treated as `name=value`. The reply:
 
 ```
-droppy://openclip/reply?result={"ok":true,"applied":3,"skipped":[]}
+myapp://openclip/reply?result={"ok":true,"applied":3,"skipped":[]}
 ```
 
 - `ok` — true when nothing was skipped.
@@ -143,7 +143,7 @@ x-callback-url pattern).
 Example error reply:
 
 ```
-droppy://openclip/reply?error={"message":"OpenClip's settings control is turned off."}
+myapp://openclip/reply?error={"message":"OpenClip's settings control is turned off."}
 ```
 
 ---

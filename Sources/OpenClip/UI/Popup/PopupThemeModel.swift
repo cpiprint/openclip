@@ -158,6 +158,32 @@ struct PopupEdgeFade: View {
     }
 }
 
+// MARK: - Bottom Dissolve
+
+/// Fades scroll content out into the card at the bottom edge by masking the content itself, rather
+/// than painting a fade layer over it. The footer chrome sits on the card's own surface, so there is
+/// no blur and no tint band at the bottom — rows simply lose opacity as they trail under the footer.
+struct PopupBottomDissolve: ViewModifier {
+    /// Height over which the content fades to clear.
+    let height: CGFloat
+
+    func body(content: Content) -> some View {
+        content.mask(
+            VStack(spacing: 0) {
+                Rectangle().fill(.black)
+                LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                    .frame(height: height)
+            }
+        )
+    }
+}
+
+extension View {
+    func popupBottomDissolve(height: CGFloat) -> some View {
+        modifier(PopupBottomDissolve(height: height))
+    }
+}
+
 // MARK: - Effective Theme Environment Key
 
 /// Empty by default — "not set" — so a view hosted outside `PopupView` (previews, tests) falls

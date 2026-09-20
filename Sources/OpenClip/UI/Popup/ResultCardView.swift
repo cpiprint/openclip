@@ -172,9 +172,6 @@ public struct ResultCardView: View {
                 topBlurOverlay
                     .frame(maxWidth: .infinity, alignment: .top)
 
-                bottomBlurOverlay
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-
                 header
                     .frame(maxWidth: .infinity, alignment: .top)
 
@@ -399,16 +396,6 @@ public struct ResultCardView: View {
         )
     }
 
-    private var bottomBlurOverlay: some View {
-        PopupEdgeFade(
-            edge: .bottom,
-            effectiveTheme: effectiveTheme,
-            colorScheme: colorScheme,
-            height: bottomInset + 2,
-            cardColor: cardBackgroundColor
-        )
-    }
-
     private var closeButton: some View {
         Button {
             onDismiss()
@@ -608,6 +595,7 @@ public struct ResultCardView: View {
                 .padding(.bottom, bottomInset)
         }
         .frame(height: dynamicCardHeight)
+        .popupBottomDissolve(height: bottomInset)
     }
 
     @ViewBuilder

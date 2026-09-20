@@ -293,9 +293,6 @@ public struct PopupSearchView: View {
                 .frame(maxWidth: .infinity, alignment: .top)
 
             if rowCount > 0 {
-                bottomBlurOverlay
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-
                 footerOverlay
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             }
@@ -368,17 +365,6 @@ public struct PopupSearchView: View {
             cardColor: cardBackgroundColor
         )
     }
-
-    private var bottomBlurOverlay: some View {
-        PopupEdgeFade(
-            edge: .bottom,
-            effectiveTheme: effectiveTheme,
-            colorScheme: colorScheme,
-            height: 48,
-            cardColor: cardBackgroundColor
-        )
-    }
-
 
     private var searchFieldRow: some View {
         HStack(spacing: 8) {
@@ -525,6 +511,7 @@ public struct PopupSearchView: View {
                 }
             }
             .frame(height: cardHeight)
+            .popupBottomDissolve(height: 38)
             .onChange(of: selectedIndex) { _, newValue in
                 guard scrollSelectionOnKeyboard else { return }
                 scrollSelectionOnKeyboard = false

@@ -210,6 +210,20 @@ final class OutlineTableRowView: NSTableRowView {
         effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
 
+    /// The hairline between rows, so the list reads as one stacked table rather than loose rows.
+    /// Inset from the leading edge the way a system list's separator is.
+    override func drawSeparator(in dirtyRect: NSRect) {
+        let inset: CGFloat = 12
+        let y: CGFloat = isFlipped ? bounds.maxY - 0.5 : bounds.minY + 0.5
+        let path = NSBezierPath()
+        path.move(to: NSPoint(x: bounds.minX + inset, y: y))
+        path.line(to: NSPoint(x: bounds.maxX - inset, y: y))
+        let line = isDark ? NSColor.white.withAlphaComponent(0.09) : NSColor.black.withAlphaComponent(0.08)
+        line.setStroke()
+        path.lineWidth = 1
+        path.stroke()
+    }
+
     private func fillRounded(_ color: NSColor) {
         let rect = bounds.insetBy(dx: 4, dy: 2)
         let path = NSBezierPath(roundedRect: rect, xRadius: Self.cornerRadius, yRadius: Self.cornerRadius)
@@ -390,6 +404,9 @@ struct ActionsOutlineView: NSViewRepresentable {
         outlineView.headerView = nil
         outlineView.selectionHighlightStyle = .regular
         outlineView.style = .inset
+        // Horizontal grid lines turn the flat rows into a stacked table; `OutlineTableRowView`
+        // draws them as the inset hairline a system list uses.
+        outlineView.gridStyleMask = .solidHorizontalGridLineMask
         outlineView.rowHeight = 40
         outlineView.intercellSpacing = NSSize(width: 0, height: 3)
         outlineView.backgroundColor = .clear

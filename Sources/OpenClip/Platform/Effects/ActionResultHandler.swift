@@ -64,7 +64,7 @@ public final class DefaultActionResultHandler: ActionResultHandler, Sendable {
     private let dictionaryLookup: DictionaryLookup
     private let icsCleanupDelay: TimeInterval
     private let openURL: @MainActor @Sendable (URL) -> Void
-    private let openURLInApp: @MainActor @Sendable (URL, String) -> Void
+    private let openURLInApp: @MainActor @Sendable (URL, String) async -> Void
     private var pendingRestoreTask: Task<Void, Never>?
 
     public init(settingsStore: SettingsStore = DefaultSettingsStore.shared,
@@ -79,16 +79,7 @@ public final class DefaultActionResultHandler: ActionResultHandler, Sendable {
         self.icsCleanupDelay = Constants.icsCleanupDelay
         self.openURL = { NSWorkspace.shared.open($0) }
         self.openURLInApp = { url, bundleID in
-            let success = NSWorkspace.shared.open(
-                [url],
-                withAppBundleIdentifier: bundleID,
-                options: [],
-                additionalEventParamDescriptor: nil,
-                launchIdentifiers: nil
-            )
-            if !success {
-                NSWorkspace.shared.open(url)
-            }
+            await BrowserTabOpener().open(url, inApp: bundleID)
         }
     }
 
@@ -99,17 +90,8 @@ public final class DefaultActionResultHandler: ActionResultHandler, Sendable {
                 pasteboardRestoreDelay: TimeInterval = Constants.pasteboardRestoreDelay,
                 icsCleanupDelay: TimeInterval = Constants.icsCleanupDelay,
                 openURL: @escaping @MainActor @Sendable (URL) -> Void = { NSWorkspace.shared.open($0) },
-                openURLInApp: @escaping @MainActor @Sendable (URL, String) -> Void = { url, bundleID in
-                    let success = NSWorkspace.shared.open(
-                        [url],
-                        withAppBundleIdentifier: bundleID,
-                        options: [],
-                        additionalEventParamDescriptor: nil,
-                        launchIdentifiers: nil
-                    )
-                    if !success {
-                        NSWorkspace.shared.open(url)
-                    }
+                openURLInApp: @escaping @MainActor @Sendable (URL, String) async -> Void = { url, bundleID in
+                    await BrowserTabOpener().open(url, inApp: bundleID)
                 }) {
         self.settingsStore = settingsStore
         self.keyboardPoster = keyboardPoster
@@ -204,7 +186,7 @@ public final class DefaultActionResultHandler: ActionResultHandler, Sendable {
             scheduleICSFileCleanupIfNeeded(for: url)
 
         case .openURLInApp(let url, let appBundleIdentifier):
-            openURLInApp(url, appBundleIdentifier)
+            await openURLInApp(url, appBundleIdentifier)
             scheduleICSFileCleanupIfNeeded(for: url)
 
         case .showServices(let text):
