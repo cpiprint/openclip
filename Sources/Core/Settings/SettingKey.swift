@@ -46,6 +46,14 @@ public enum PopupVerticalPosition: String, Codable, CaseIterable, Sendable {
     case below
 }
 
+/// Which Sparkle update feed the app follows ("stable" | "beta"). Beta builds are pre-releases
+/// tagged with Sparkle's `beta` channel and served from a separate appcast, so opting in never
+/// affects users on the stable channel.
+public enum UpdateChannel: String, Codable, CaseIterable, Sendable {
+    case stable
+    case beta
+}
+
 public extension SettingKey where Value == [String] {
     static var actionOrder: SettingKey<[String]> { SettingKey<[String]>("action.order", defaultValue: []) }
 }
@@ -123,9 +131,6 @@ public extension SettingKey where Value == String {
     static var primaryClickBehavior: SettingKey<String> { SettingKey<String>("resultDelivery.primary", defaultValue: "paste") }
     static var secondaryClickBehavior: SettingKey<String> { SettingKey<String>("resultDelivery.secondary", defaultValue: "copy") }
 
-    /// Default directory where action file outputs are saved. Defaults to empty string (which resolves to ~/Downloads).
-    static var fileSaveLocation: SettingKey<String> { SettingKey<String>("fileSaveLocation", defaultValue: "") }
-
     /// Popup theme ("classic"/"glass") and shared appearance ("system"/"light"/"dark").
     static var popupTheme: SettingKey<String> { SettingKey<String>("popupTheme", defaultValue: "classic") }
     static var popupThemeColor: SettingKey<String> { SettingKey<String>("popupThemeColor", defaultValue: "system") }
@@ -139,6 +144,9 @@ public extension SettingKey where Value == String {
     static var lastRunVersion: SettingKey<String> { SettingKey<String>("app.lastRunVersion", defaultValue: "") }
     /// The last build number (CFBundleVersion) the app was launched on.
     static var lastRunBuild: SettingKey<String> { SettingKey<String>("app.lastRunBuild", defaultValue: "") }
+
+    /// Which update feed the app follows: `UpdateChannel.stable` (default) or `UpdateChannel.beta`.
+    static var updateChannel: SettingKey<String> { SettingKey<String>("updates.channel", defaultValue: UpdateChannel.stable.rawValue) }
 
     /// Per-action option value key. The key name matches the legacy `action.<id>.option.<optID>`
     /// convention so existing stored values migrate over with zero data changes.

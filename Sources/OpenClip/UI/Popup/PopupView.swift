@@ -60,11 +60,13 @@ public struct PopupView: View {
     /// Called when an action is actually run (bar / palette / AI), so the controller can record usage.
     public let onActionPerformed: (@MainActor (String) -> Void)?
     /// Called right before an action performs (before `onResult` can fire), so the controller can
-    /// snapshot the action's declared delivery for the paste-vs-copy decision.
-    public let onWillPerformAction: (@MainActor (any Action) -> Void)?
+    /// snapshot the action's declared delivery for the paste-vs-copy decision. The intent is
+    /// carried explicitly so the delivery snapshot matches the perform context.
+    public let onWillPerformAction: (@MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void)?
     /// Called when a `showsLoading` bar action is clicked: the controller early-closes the popup
-    /// and runs the action via the loading toast flow instead of the inline perform path.
-    public let onRunLoadingAction: (@MainActor (any Action) -> Void)?
+    /// and runs the action via the loading toast flow instead of the inline perform path. Carries
+    /// the same explicit intent as `onWillPerformAction`.
+    public let onRunLoadingAction: (@MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void)?
     /// Called when an AI preset action is run: the controller closes the popup and runs via the loading toast flow.
     public let onRunAI: (@MainActor (String) -> Void)?
     /// Runs a palette instruction (the "Ask AI" row or a recent prompt) on the selection:
@@ -191,8 +193,8 @@ public struct PopupView: View {
         onEnteredScopedSearch: (@MainActor (any Action, CGRect?) -> Void)? = nil,
         onPaginationAnchor: (@MainActor (PopupPanel.HorizontalAnchor) -> Void)? = nil,
         onActionPerformed: (@MainActor (String) -> Void)? = nil,
-        onWillPerformAction: (@MainActor (any Action) -> Void)? = nil,
-        onRunLoadingAction: (@MainActor (any Action) -> Void)? = nil,
+        onWillPerformAction: (@MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void)? = nil,
+        onRunLoadingAction: (@MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void)? = nil,
         onRunAI: (@MainActor (String) -> Void)? = nil,
         onRunAIPrompt: (@MainActor (String, Bool, Bool) -> Void)? = nil,
         onSaveAIPrompt: (@MainActor (String, Bool) -> Void)? = nil,
@@ -410,25 +412,9 @@ public struct PopupView: View {
                 isUserSized: modeStore.isSurfaceUserSized,
                 isPinned: modeStore.isCardPinned,
                 onExit: { onExitContent() },
-                onPaste: {
-                    if let file = payload.file {
-                        onCardEffect(.saveFile(file.url))
-                    } else {
-                        onCardEffect(.paste(payload.text))
-                    }
-                },
-                onCopy: {
-                    if let file = payload.file {
-                        onCardEffect(.copyFile(file.url))
-                    } else {
-                        onCardEffect(.copy(payload.text))
-                    }
-                },
-                onSave: {
-                    if let file = payload.file {
-                        onCardEffect(.saveFile(file.url))
-                    }
-                },
+                onDismiss: { onDismissContent() },
+                onPaste: { onCardEffect(.paste(payload.text)) },
+                onCopy: { onCardEffect(.copy(payload.text)) },
                 onDrag: { phase in onCardDrag?(phase) },
                 onResize: { edge, phase in onResize?(edge, phase) },
                 onPin: { onPinCard?() },
@@ -910,11 +896,14 @@ public struct PopupView: View {
                     // Existing perform button unchanged
                     Button {
                         onCancelSubBarDwell?()
+                        // Capture the click intent once, synchronously, so the perform context and
+                        // the delivery snapshot agree and neither reads live state after an await.
+                        let clickIntent = onClickIntent()
                         if action.chrome.showsLoading {
-                            onRunLoadingAction?(action)
+                            onRunLoadingAction?(action, clickIntent)
                             return
                         }
-                        onWillPerformAction?(action)
+                        onWillPerformAction?(action, clickIntent)
                         onActionPerformed?(action.id)
                         if action.chrome.isInlineResult {
                             if let resolved = modeStore.inlineResults[action.id] {
@@ -931,7 +920,7 @@ public struct PopupView: View {
                                         let performContext = ActionContext(
                                             selection: context.selection,
                                             modifiers: context.modifiers,
-                                            isSecondaryClick: onClickIntent() == .secondary,
+                                            isSecondaryClick: clickIntent == .secondary,
                                             match: match
                                         )
                                         let result = try await action.perform(performContext)
@@ -950,7 +939,7 @@ public struct PopupView: View {
                                 let performContext = ActionContext(
                                     selection: context.selection,
                                     modifiers: context.modifiers,
-                                    isSecondaryClick: onClickIntent() == .secondary,
+                                    isSecondaryClick: clickIntent == .secondary,
                                     match: match
                                 )
                                 let result = try await action.perform(performContext)

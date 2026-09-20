@@ -69,6 +69,19 @@ if [ -z "$VERSION" ]; then
     fi
 fi
 
+# A versioned pre-release (e.g. 1.6.3-beta.1) targets the beta channel. Beta items carry
+# <sparkle:channel>beta</sparkle:channel> and are served from a rolling `beta` pre-release, so the
+# fixed beta feed URL is `releases/download/beta/appcast.xml` rather than a version-specific path.
+CHANNEL="stable"
+case "$VERSION" in
+    *-*) CHANNEL="beta" ;;
+esac
+CHANNEL_ARGS=()
+if [ "$CHANNEL" = "beta" ]; then
+    CHANNEL_ARGS=(--channel beta)
+fi
+echo "==> Channel: $CHANNEL"
+
 echo "==> Generating Xcode project..."
 xcodegen generate
 
@@ -168,6 +181,11 @@ if [ -z "$GENERATE_APPCAST" ]; then
 fi
 
 DOWNLOAD_PREFIX="https://github.com/ganeshmshetty/openclip/releases/download/v$VERSION/"
+if [ "$CHANNEL" = "beta" ]; then
+    # Beta archives are mirrored onto the rolling `beta` release so a single, stable feed URL can
+    # point at them; the appcast's download URLs must match where the archives actually live.
+    DOWNLOAD_PREFIX="https://github.com/ganeshmshetty/openclip/releases/download/beta/"
+fi
 
 echo "==> Extracting release notes for v$VERSION from CHANGELOG.md..."
 NOTES_FILE="$BUILD_DIR/OpenClip-v$VERSION.md"
@@ -185,6 +203,7 @@ fi
 if [ -n "${SPARKLE_ED_PRIVATE_KEY:-}" ]; then
     printf '%s\n' "$SPARKLE_ED_PRIVATE_KEY" | "$GENERATE_APPCAST" \
         --ed-key-file - \
+        ${CHANNEL_ARGS[@]+"${CHANNEL_ARGS[@]}"} \
         --download-url-prefix "$DOWNLOAD_PREFIX" \
         --embed-release-notes \
         --full-release-notes-url "https://github.com/ganeshmshetty/openclip/releases/tag/v$VERSION" \
@@ -193,6 +212,7 @@ if [ -n "${SPARKLE_ED_PRIVATE_KEY:-}" ]; then
 else
     "$GENERATE_APPCAST" \
         --account openclip \
+        ${CHANNEL_ARGS[@]+"${CHANNEL_ARGS[@]}"} \
         --download-url-prefix "$DOWNLOAD_PREFIX" \
         --embed-release-notes \
         --full-release-notes-url "https://github.com/ganeshmshetty/openclip/releases/tag/v$VERSION" \

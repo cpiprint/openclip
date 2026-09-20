@@ -9,7 +9,7 @@ import KeyboardShortcuts
 import Core
 
 extension KeyboardShortcuts.Name {
-    public static let togglePopup = Self("togglePopup", default: .init(.c, modifiers: [.command, .option]))
+    public static let togglePopup = Self("togglePopup", initial: .init(.c, modifiers: [.command, .option]))
 
     static func actionHotkey(_ actionID: String) -> Self {
         Self("actionHotkey.\(actionID)")

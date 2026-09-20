@@ -1072,7 +1072,8 @@ final class SelectionRetrievalCoordinatorTests: XCTestCase {
 
         let pptScript = SelectionRetrievalCoordinator.officeScript(for: "com.microsoft.Powerpoint")
         XCTAssertTrue(pptScript?.contains("com.microsoft.Powerpoint") == true)
-        XCTAssertTrue(pptScript?.contains("content of text range of selection") == true)
+        XCTAssertTrue(pptScript?.contains("selection of active window") == true)
+        XCTAssertTrue(pptScript?.contains("selection type text") == true)
     }
 }
 

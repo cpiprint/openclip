@@ -13,8 +13,8 @@ public struct GroupSubActionBarView: View {
     public let subActions: [any Action]
     public let onResult: @MainActor (ActionResult) -> Void
     public let onRunAI: @MainActor (String) -> Void
-    public let onRunLoadingAction: @MainActor (any Action) -> Void
-    public let onWillPerformAction: @MainActor (any Action) -> Void
+    public let onRunLoadingAction: @MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void
+    public let onWillPerformAction: @MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void
     public let onActionPerformed: @MainActor (String) -> Void
     public let onClickIntent: @MainActor () -> ActionResultDelivery.ClickIntent
     public let onHoverTarget: @MainActor (PopupHoverTarget, Bool) -> Void
@@ -43,8 +43,8 @@ public struct GroupSubActionBarView: View {
         modeStore: PopupModeStore = PopupModeStore(),
         onResult: @escaping @MainActor (ActionResult) -> Void,
         onRunAI: @escaping @MainActor (String) -> Void,
-        onRunLoadingAction: @escaping @MainActor (any Action) -> Void,
-        onWillPerformAction: @escaping @MainActor (any Action) -> Void,
+        onRunLoadingAction: @escaping @MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void,
+        onWillPerformAction: @escaping @MainActor (any Action, ActionResultDelivery.ClickIntent) -> Void,
         onActionPerformed: @escaping @MainActor (String) -> Void,
         onClickIntent: @escaping @MainActor () -> ActionResultDelivery.ClickIntent,
         onHoverTarget: @escaping @MainActor (PopupHoverTarget, Bool) -> Void = { _, _ in },
@@ -212,17 +212,20 @@ public struct GroupSubActionBarView: View {
         .contentShape(Rectangle())
 
         Button {
+            // Capture the intent once, synchronously, so the perform context and the delivery
+            // snapshot agree and neither reads live state after an await.
+            let clickIntent = onClickIntent()
             if ActionIdentity.isAIPreset(action) {
                 onRunAI(action.id)
                 return
             }
             if action.chrome.showsLoading {
-                onRunLoadingAction(action)
+                onRunLoadingAction(action, clickIntent)
                 return
             }
             // An already-computed inline result is delivered directly instead of re-running the action.
             if action.chrome.isInlineResult, let resolved = modeStore.inlineResults[action.id] {
-                onWillPerformAction(action)
+                onWillPerformAction(action, clickIntent)
                 onActionPerformed(action.id)
                 onResult(.text(resolved))
                 return
@@ -231,7 +234,7 @@ public struct GroupSubActionBarView: View {
             // rather than re-run, mirroring the main bar; an empty result falls back to perform.
             if action.chrome.isInlineResult, let inFlight = InlineResultEvaluator.shared.runningTask(for: action.id) {
                 Task {
-                    onWillPerformAction(action)
+                    onWillPerformAction(action, clickIntent)
                     onActionPerformed(action.id)
                     do {
                         if let text = await inFlight.value, !text.isEmpty {
@@ -242,7 +245,7 @@ public struct GroupSubActionBarView: View {
                         let performContext = ActionContext(
                             selection: context.selection,
                             modifiers: context.modifiers,
-                            isSecondaryClick: onClickIntent() == .secondary,
+                            isSecondaryClick: clickIntent == .secondary,
                             match: match
                         )
                         let result = try await action.perform(performContext)
@@ -256,13 +259,13 @@ public struct GroupSubActionBarView: View {
             }
             Task {
                 do {
-                    onWillPerformAction(action)
+                    onWillPerformAction(action, clickIntent)
                     onActionPerformed(action.id)
                     let match = action.matchInfo(for: context)
                     let performContext = ActionContext(
                         selection: context.selection,
                         modifiers: context.modifiers,
-                        isSecondaryClick: onClickIntent() == .secondary,
+                        isSecondaryClick: clickIntent == .secondary,
                         match: match
                     )
                     let result = try await action.perform(performContext)

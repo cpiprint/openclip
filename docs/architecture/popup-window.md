@@ -70,15 +70,15 @@ public static func placeNearReleasePoint(
 
 ---
 
-## Content Mode: Native Result Cards (AI & File Outputs)
+## Content Mode: Native AI Result Card
 
-Action, AI, and file output content render **inside** the single `PopupPanel` — there is no second
+Action and AI content render **inside** the single `PopupPanel` — there is no second
 floating panel; status feedback renders separately as a floating toast via `ToastPanelController`
 (see *Status* below). A `.content` mode on `PopupModeStore` (mirroring `.search`) transforms the panel:
 the bar is hidden and `PopupView.barContent` renders `ResultCardView`, a native SwiftUI card
 that replaced the former interactive canvas.
 
-### Content Mode (AI & Text Results)
+### Content Mode
 
 - **Entry**: AI presets stream results into the card via `PopupView.onAIResult(text:isError:title:)` →
   `PopupWindowController.showResultCard`; any other text-returning action (e.g. a shell/JS extension)
@@ -92,21 +92,6 @@ that replaced the former interactive canvas.
   (`Sources/OpenClip/UI/Popup/ResultCardView.swift`), with the back chevron wired to
   `PopupView.onExitContent` → `PopupWindowController.exitContent()`, and both the `✕` button and Esc wired to
   `PopupView.onDismissContent` → `hide()`.
-
-### File Output Results
-
-When an action produces a `.file(FileOutputPayload)` result (via `openclip.file()`, shell JSON, or plain-text file path detection), `PopupWindowController.showFileResultCard` switches the panel to `.content` mode with `filePayload` set:
-
-- **Card Layout & Previews**:
-  - **Image Files**: Image formats (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, `.icns`, `.bmp`, `.tiff`, `.heic` or MIME `image/*`) display an inline scaled preview. Vector SVGs are decoded and rendered natively via `SDWebImageSVGCoder`.
-  - **Non-Image Files**: Display the system file icon (`NSWorkspace.shared.icon(forFile:)`), filename, localized file type description, and formatted byte size.
-  - **Off-Main Processing**: Image rendering, file attributes, and MIME detection load asynchronously off the main thread to ensure smooth 60fps presentation.
-- **Drag-and-Drop**: The file preview/icon is directly draggable via `NSItemProvider(object: url as NSURL)`. Users can drag the file from the card straight into Finder folders, desktop, or other applications.
-- **Action Buttons & Keyboard Shortcuts**:
-  - **Open** (`Space`): Launches the file in its default system application via `NSWorkspace.shared.open(url)`.
-  - **Copy** (`⌘C`): Copies the file URL directly to the macOS clipboard pasteboard.
-  - **Save** (`Return` / `⌘S`): Copies the file into the user-configured destination folder (`SettingKey.fileSaveLocation`, defaulting to `~/Downloads`). Duplicate filenames are safely suffixed (e.g. `filename (1).ext`), followed by a `"Saved to <Folder>"` confirmation toast.
-  - Secondary clicks on the popup trigger action execute `.copyFile` directly.
 - **Card surface**: the card renders a scrollable body plus a compact Copy/Paste footer (or a Dismiss button when
   `isError`; Paste also hidden while `modeStore.canPaste == false`), sized by `PopupMetrics`
   (`aiCardMinWidth 220` / `aiCardIdealWidth 320` /
@@ -234,13 +219,18 @@ When an action produces a `.file(FileOutputPayload)` result (via `openclip.file(
   `flushPendingStatus`) are gone. `showsLoading` actions (manifest `"loading"`) early-close the
   popup with a spinner toast, swapping to a description, the resolved companion toast, or fading on
   a description-free result (a keep-visible toast stays up rather than auto-dismissing).
-- **Secondary-click threading**: the click intent captured at mouse-down (`pendingClickIntent`) is
-  threaded into the perform context as `ActionContext.isSecondaryClick` (right-click always; ⇧-click
-  via `PopupView`/`PopupSearchView`'s `onClickIntent` closure) and into the delivery snapshot
-  (`DeliveryContext.clickIntent`, alongside the action's declared `Action.delivery`). Actions can
-  branch on it — `DefineAction` returns `.copyDefinition(word)` on a secondary click (with a
-  declared `secondaryToast` "Copied definition") so the effect door copies the dictionary definition
-  headlessly instead of opening Dictionary.app.
+- **Secondary-click threading**: the click intent is resolved per run and threaded into both the
+  perform context (`ActionContext.isSecondaryClick`) and the delivery snapshot
+  (`DeliveryContext.clickIntent`, alongside the action's declared `Action.delivery`). The bar and
+  sub-bar read it from the mouse monitor at mouse-down (`pendingClickIntent`; right-click or
+  ⇧-click). The palette resolves it itself — `replace` for ⇧⏎ / the ⇧⏎ footer badge, else the
+  captured mouse intent — and passes it explicitly through `onWillPerformAction` /
+  `onRunLoadingAction`, so the perform context and the delivery decision always agree (a keyboard
+  ⇧⏎ must copy, not paste). Entering the palette resets `pendingClickIntent`, so the right-click
+  that opened a group's scoped palette cannot leak `.secondary` into a later Return/⌘-digit run.
+  Actions can branch on it — `DefineAction` returns `.copyDefinition(word)` on a secondary click
+  (with a declared `secondaryToast` "Copied definition") so the effect door copies the dictionary
+  definition headlessly instead of opening Dictionary.app.
 
 ---
 

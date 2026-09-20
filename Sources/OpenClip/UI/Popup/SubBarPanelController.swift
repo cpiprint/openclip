@@ -50,8 +50,8 @@ public final class SubBarPanelController {
         modeStore: PopupModeStore = PopupModeStore(),
         onResult: @escaping @MainActor @Sendable (ActionResult) -> Void,
         onRunAI: @escaping @MainActor @Sendable (String) -> Void,
-        onRunLoadingAction: @escaping @MainActor @Sendable (any Action) -> Void,
-        onWillPerformAction: @escaping @MainActor @Sendable (any Action) -> Void,
+        onRunLoadingAction: @escaping @MainActor @Sendable (any Action, ActionResultDelivery.ClickIntent) -> Void,
+        onWillPerformAction: @escaping @MainActor @Sendable (any Action, ActionResultDelivery.ClickIntent) -> Void,
         onActionPerformed: @escaping @MainActor @Sendable (String) -> Void,
         onClickIntent: @escaping @MainActor @Sendable () -> ActionResultDelivery.ClickIntent
     ) -> Bool {
@@ -350,8 +350,8 @@ private struct SubBarContentView: View {
     let modeStore: PopupModeStore
     let onResult: @MainActor @Sendable (ActionResult) -> Void
     let onRunAI: @MainActor @Sendable (String) -> Void
-    let onRunLoadingAction: @MainActor @Sendable (any Action) -> Void
-    let onWillPerformAction: @MainActor @Sendable (any Action) -> Void
+    let onRunLoadingAction: @MainActor @Sendable (any Action, ActionResultDelivery.ClickIntent) -> Void
+    let onWillPerformAction: @MainActor @Sendable (any Action, ActionResultDelivery.ClickIntent) -> Void
     let onActionPerformed: @MainActor @Sendable (String) -> Void
     let onClickIntent: @MainActor @Sendable () -> ActionResultDelivery.ClickIntent
     let onHoverChange: @MainActor @Sendable (Bool) -> Void

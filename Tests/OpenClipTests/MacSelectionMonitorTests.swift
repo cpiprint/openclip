@@ -901,8 +901,8 @@ final class MacSelectionMonitorTests: XCTestCase {
         let frontmost: pid_t = 200
         let display = CGRect(x: 0, y: 0, width: 1440, height: 900)
         let windows = [
-            OnScreenWindowInfo(ownerPID: 999, layer: 257, frame: display), // full-screen capture overlay
-            OnScreenWindowInfo(ownerPID: frontmost, layer: 0, frame: display)
+            OnScreenWindowInfo(ownerPID: 999, ownerBundleID: "com.macshot.app", layer: 257, frame: display), // full-screen capture overlay
+            OnScreenWindowInfo(ownerPID: frontmost, ownerBundleID: "com.apple.Safari", layer: 0, frame: display)
         ]
         XCTAssertTrue(CopyTriggerGate.isForeignOverlay(
             windows: windows, at: CGPoint(x: 500, y: 400),

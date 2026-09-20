@@ -65,6 +65,10 @@ final class SearchPaletteResizeTests: XCTestCase {
             settingsStore: settings
         )
         let panel = PopupPanel()
+        // Production lifts the shared bar cap before the palette shows (`enterSearch`), because the
+        // default palette plus the shadow ring is taller than `popupMaxHeight`. Pre-lift it here too
+        // so the default palette frame is not clamped on the way in.
+        panel.heightCap = NSScreen.main?.visibleFrame.height ?? 2000
         panel.contentView = FixedFittingSizeView(frame: NSRect(origin: .zero, size: palettePanelFrame.size))
         panel.setFrame(palettePanelFrame, display: false)
         panel.orderFrontRegardless()

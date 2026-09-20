@@ -349,17 +349,17 @@ public class PopupWindowController {
             onActionPerformed: { [weak self] actionID in
                 self?.usageStore.record(actionID)
             },
-            onWillPerformAction: { [weak self] action in
+            onWillPerformAction: { [weak self] action, clickIntent in
                 guard let self else { return }
                 self.pendingDelivery = action.delivery
                 self.pendingActionTitle = action.title
                 self.pendingActionIcon = action.displayIcon(using: ActionCustomizationManager.shared)
                 self.pendingActionID = action.id
-                self.inFlightDeliveryContext = self.deliverySnapshot(for: action)
+                self.inFlightDeliveryContext = self.deliverySnapshot(for: action, clickIntent: clickIntent)
             },
-            onRunLoadingAction: { [weak self] action in
+            onRunLoadingAction: { [weak self] action, clickIntent in
                 guard let self, let context = self.currentActionContext else { return }
-                self.runLoadingAction(action, with: context, isSecondaryClick: self.pendingClickIntent == .secondary)
+                self.runLoadingAction(action, with: context, isSecondaryClick: clickIntent == .secondary)
             },
             onRunAI: { [weak self] actionID in
                 guard let self, let preset = AIServiceManager.shared.preset(forActionID: actionID) else { return }
@@ -479,6 +479,12 @@ public class PopupWindowController {
     /// stays active throughout.
     public func enterSearch(with scope: SearchScope? = nil, buttonLocalFrame: CGRect? = nil) {
         guard let panel, panel.isVisible else { return }
+        // A fresh palette starts a fresh run context. Drop any intent left by the click that opened
+        // it (right-clicking a group row sets `.secondary`) so a keyboard primary run — Return, a
+        // ⌘-digit, the "Run" badge — is not delivered as a secondary click. Each subsequent run
+        // resolves its own intent (mouse-down, or the palette's `replace` flag) and passes it
+        // explicitly.
+        pendingClickIntent = .primary
         if preSearchFrame == nil {
             preSearchFrame = panel.frame
         }
@@ -651,8 +657,7 @@ public class PopupWindowController {
         session: UUID,
         originalText: String? = nil,
         overrideOriginal: Bool = false,
-        canFollowUp: Bool = true,
-        file: FileOutputPayload? = nil
+        canFollowUp: Bool = true
     ) {
         guard session == aiSessionID else { return }
         if toastController.isLoading {
@@ -668,8 +673,7 @@ public class PopupWindowController {
             icon: icon,
             isStreaming: isStreaming,
             original: original,
-            canFollowUp: canFollowUp,
-            file: file
+            canFollowUp: canFollowUp
         )
         if !isStreaming {
             // A settled card hands the keyboard to its instruction field so the next refinement
@@ -1583,20 +1587,20 @@ public class PopupWindowController {
                 let prompt = AIServiceManager.shared.promptForPreset(preset)
                 self.runAIPreset(prompt: prompt, title: preset.title)
             },
-            onRunLoadingAction: { [weak self] action in
+            onRunLoadingAction: { [weak self] action, clickIntent in
                 guard let self, let context = self.currentActionContext else { return }
                 self.subBarController.hide()
                 self.modeStore.isSubBarActive = false
                 self.modeStore.activeSubGroupID = nil
-                self.runLoadingAction(action, with: context, isSecondaryClick: self.pendingClickIntent == .secondary)
+                self.runLoadingAction(action, with: context, isSecondaryClick: clickIntent == .secondary)
             },
-            onWillPerformAction: { [weak self] action in
+            onWillPerformAction: { [weak self] action, clickIntent in
                 guard let self else { return }
                 self.pendingDelivery = action.delivery
                 self.pendingActionTitle = action.title
                 self.pendingActionIcon = action.displayIcon(using: ActionCustomizationManager.shared)
                 self.pendingActionID = action.id
-                self.inFlightDeliveryContext = self.deliverySnapshot(for: action)
+                self.inFlightDeliveryContext = self.deliverySnapshot(for: action, clickIntent: clickIntent)
             },
             onActionPerformed: { [weak self] actionID in
                 self?.usageStore.record(actionID)
@@ -2159,43 +2163,8 @@ public class PopupWindowController {
                     showResultCard(text: text, isError: false, title: delivery?.actionTitle ?? "Action", icon: delivery?.actionIcon, session: aiSessionID, canFollowUp: false)
                     return
                 }
-                if case .file(let filePayload) = resolved.result {
-                    showResultCard(
-                        text: filePayload.displayName,
-                        isError: false,
-                        title: delivery?.actionTitle ?? filePayload.displayName,
-                        icon: delivery?.actionIcon,
-                        session: aiSessionID,
-                        canFollowUp: false,
-                        file: filePayload
-                    )
-                    return
-                }
                 try await resultHandler.handle(resolved.result, in: panel?.contentView)
-                let toastToShow: StatusFeedback? = {
-                    if let toast = resolved.toast {
-                        if case .saveFile = resolved.result {
-                            let saveDir = settingsStore.get(.fileSaveLocation)
-                            let folderName = !saveDir.isEmpty ? URL(fileURLWithPath: (saveDir as NSString).expandingTildeInPath).lastPathComponent : "Downloads"
-                            return StatusFeedback(message: String(localized: "Saved to \(folderName)"), style: .success, symbolName: "arrow.down.circle")
-                        }
-                        return toast
-                    }
-                    if delivery == nil {
-                        switch resolved.result {
-                        case .saveFile:
-                            let saveDir = settingsStore.get(.fileSaveLocation)
-                            let folderName = !saveDir.isEmpty ? URL(fileURLWithPath: (saveDir as NSString).expandingTildeInPath).lastPathComponent : "Downloads"
-                            return StatusFeedback(message: String(localized: "Saved to \(folderName)"), style: .success, symbolName: "arrow.down.circle")
-                        case .copyFile:
-                            return StatusFeedback(message: String(localized: "Copied File"), style: .success, symbolName: "doc.on.doc")
-                        default:
-                            return nil
-                        }
-                    }
-                    return nil
-                }()
-                if let toast = toastToShow, !suppressDeliveryToast {
+                if let toast = resolved.toast, !suppressDeliveryToast {
                     toastController.show(toast, anchorFrame: panel?.frame ?? lastPopupFrame)
                 }
             } catch {
@@ -2486,36 +2455,8 @@ public class PopupWindowController {
                     }
                     return
                 }
-                if case .file(let filePayload) = resolved.result {
-                    toastController.hide()
-                    if let selection = delivery.selection {
-                        let canPaste = await pasteProbe.canPaste(in: delivery.application, policy: delivery.policy) ?? false
-                        show(for: selection, pasteAvailable: canPaste)
-                        showResultCard(
-                            text: filePayload.displayName,
-                            isError: false,
-                            title: delivery.actionTitle ?? filePayload.displayName,
-                            icon: delivery.actionIcon,
-                            session: aiSessionID,
-                            canFollowUp: false,
-                            file: filePayload
-                        )
-                    }
-                    return
-                }
                 try await resultHandler.handle(resolved.result, in: panel?.contentView)
-                let toastToShow: StatusFeedback? = {
-                    if let toast = resolved.toast {
-                        if case .saveFile = resolved.result {
-                            let saveDir = settingsStore.get(.fileSaveLocation)
-                            let folderName = !saveDir.isEmpty ? URL(fileURLWithPath: (saveDir as NSString).expandingTildeInPath).lastPathComponent : "Downloads"
-                            return StatusFeedback(message: String(localized: "Saved to \(folderName)"), style: .success, symbolName: "arrow.down.circle")
-                        }
-                        return toast
-                    }
-                    return nil
-                }()
-                if let toast = toastToShow, !suppressDeliveryToast {
+                if let toast = resolved.toast, !suppressDeliveryToast {
                     toastController.swapTo(toast)
                 } else if !suppressDeliveryToast {
                     toastController.hide()

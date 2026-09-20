@@ -21,7 +21,6 @@ The **General** page configures how OpenClip is summoned, how action outputs are
   - **Keyboard Shortcut**: Configures the global hotkey (default `⌥⌘C`) to toggle the popup and search palette.
 - **Action Results**:
   - **Primary click** & **Secondary click**: Configures what happens when an action returns text — **Preview** (in the native result card), **Paste** (over active selection), or **Copy** (to pasteboard).
-  - **Save Location**: Destination directory where file outputs (`.saveFile` or Save button in file result cards) are written. Defaults to your user `~/Downloads` folder. Click **Choose…** to pick a custom directory, or the reset button to return to Downloads.
 - **App**:
   - **Show Menu Bar Icon**: Displays OpenClip in the macOS menu bar. Turning it off removes the icon immediately without stopping OpenClip or its shortcut.
   - **Start at Login**: Launches OpenClip automatically when you log in.
@@ -41,7 +40,10 @@ The settings window is laid out like System Settings:
   App Rules, Store, About), then a page for everything that provides actions — **AI, then the
   built-in actions, then your Custom Actions, then every installed extension**. What shipped with
   OpenClip comes before what you installed, and names sort alphabetically inside each of those.
-- **About** carries every outward link: Website, Documentation, GitHub and Report an Issue.
+- **About** carries app identity and version, the software-update controls — including an **Update
+  Channel** picker with **Stable** and **Beta** — and every outward link: Website, Documentation,
+  Support, GitHub and Report an Issue. Beta builds are pre-releases: they include features still being
+  tested and update from a separate feed, so being on Beta never changes what Stable users receive.
 - Anything you drill into — an action's settings, the icon chooser, a prompt — opens as a page in
   the same column. The **‹ ›** arrows in the toolbar (or `⌘[` / `⌘]`) move back and forward
   through the pages you visited, exactly like System Settings. Nothing opens in a popover or a

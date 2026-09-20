@@ -15,6 +15,11 @@ public final class AppUpdateManager: NSObject, ObservableObject, SPUUpdaterDeleg
     public static let shared = AppUpdateManager()
 
     public static let defaultFeedURL = "https://github.com/ganeshmshetty/openclip/releases/latest/download/appcast.xml"
+
+    /// The beta feed. It lives on a rolling `beta` pre-release rather than `latest`, so the stable
+    /// feed (which GitHub resolves to the newest non-pre-release) never advertises a beta build.
+    public static let betaFeedURL = "https://github.com/ganeshmshetty/openclip/releases/download/beta/appcast.xml"
+
     public static let updateNotificationCategory = "OPENCLIP_UPDATE_CATEGORY"
 
     /// Sparkle's standard controller; `startingUpdater: true` enables the background schedule
@@ -59,6 +64,17 @@ public final class AppUpdateManager: NSObject, ObservableObject, SPUUpdaterDeleg
         }
     }
 
+    /// Which update feed Sparkle follows. Changing it re-points the feed and re-arms the update
+    /// cycle so the new channel takes effect without a relaunch.
+    @Published public var updateChannel: UpdateChannel {
+        didSet {
+            guard updateChannel != oldValue else { return }
+            DefaultSettingsStore.shared.set(.updateChannel, value: updateChannel.rawValue)
+            controller?.updater.resetUpdateCycleAfterShortDelay()
+            Log.updates.info("Update channel changed to \(self.updateChannel.rawValue, privacy: .public)")
+        }
+    }
+
     private var immediateInstallationBlock: (() -> Void)?
     private var cancellables = Set<AnyCancellable>()
     private var lastNotifiedVersion: String?
@@ -67,10 +83,12 @@ public final class AppUpdateManager: NSObject, ObservableObject, SPUUpdaterDeleg
         let autoCheck = DefaultSettingsStore.shared.get(.automaticallyChecksForUpdates)
         let autoDownload = DefaultSettingsStore.shared.get(.automaticallyDownloadsUpdates)
         let notify = DefaultSettingsStore.shared.get(.notifyOnUpdate)
+        let channel = UpdateChannel(rawValue: DefaultSettingsStore.shared.get(.updateChannel)) ?? .stable
 
         self.automaticallyChecksForUpdates = autoCheck
         self.automaticallyDownloadsUpdates = autoDownload
         self.notifyOnUpdate = notify
+        self.updateChannel = channel
 
         super.init()
 
@@ -104,7 +122,31 @@ public final class AppUpdateManager: NSObject, ObservableObject, SPUUpdaterDeleg
     // MARK: - SPUUpdaterDelegate
 
     public func feedURLString(for updater: SPUUpdater) -> String? {
-        Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String ?? Self.defaultFeedURL
+        currentFeedURL
+    }
+
+    /// Beta appcast items are tagged `<sparkle:channel>beta</sparkle:channel>`. Only clients whose
+    /// delegate allows that channel see them; stable clients ignore them entirely — and the stable
+    /// feed never contains them anyway.
+    public func allowedChannels(for updater: SPUUpdater) -> Set<String> {
+        allowedChannelNames
+    }
+
+    /// The feed URL for the selected channel. Stable keeps the Info.plist URL (GitHub's `latest`
+    /// download, which resolves to the newest non-pre-release); beta points at the rolling
+    /// `beta` pre-release.
+    public var currentFeedURL: String {
+        switch updateChannel {
+        case .stable:
+            return Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String ?? Self.defaultFeedURL
+        case .beta:
+            return Self.betaFeedURL
+        }
+    }
+
+    /// The Sparkle channels this build accepts for the selected channel.
+    public var allowedChannelNames: Set<String> {
+        updateChannel == .beta ? ["beta"] : []
     }
 
     /// Triggers an interactive update check (shows the Sparkle UI).

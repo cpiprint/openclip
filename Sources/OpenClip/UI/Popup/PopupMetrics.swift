@@ -56,13 +56,31 @@ public enum PopupMetrics {
     /// surface), so the ring can never swallow clicks.
     public static let toastShadowInset: CGFloat = 8.0
     public static let popupPadding: CGFloat = 8.0
+    /// Card drop-shadow geometry, mirrored by `PopupCardChromeModifier` (`PopupThemeModel.swift`).
+    /// A tight contact shadow grounds the card and a low-alpha ambient lifts it. The ambient blur
+    /// spreads beyond its nominal `radius` before fading out and its `y` offset pushes that spread
+    /// further down, so the panel's transparent ring must cover the whole tail or the window frame
+    /// hard-clips the shadow on every side (a straight seam, worst along the bottom edge).
+    public static let cardShadowContactRadius: CGFloat = 1.5
+    public static let cardShadowContactYOffset: CGFloat = 1.0
+    public static let cardShadowAmbientRadius: CGFloat = 12.0
+    public static let cardShadowAmbientYOffset: CGFloat = 4.0
+    /// Measured blur-tail factor for a SwiftUI shadow: alpha stays above ~1% out to roughly
+    /// `yOffset + factor * radius` below the card (the sides and top fall off sooner). The nominal
+    /// `radius` alone badly understates the extent — `r18 y10` still had ~4% alpha at 28 pt.
+    private static let cardShadowTailFactor: CGFloat = 2.0
     /// Transparent ring (pt) around the popup content *inside* the panel frame: `PopupView` pads
     /// its content by this amount so the SwiftUI drop shadow renders inside the panel edge instead
-    /// of being clipped. The ring is excluded from mouse hit-testing by `PopupPanelContentView`
+    /// of being clipped. Sized to the widest shadow any surface paints — the result card / search
+    /// palette ambient, whose downward tail is the worst case; the action bar's smaller shadow fits
+    /// inside it trivially. The ring is excluded from mouse hit-testing by `PopupPanelContentView`
     /// so clicks in the visible shadow fall through to the app underneath (and dismiss the popup)
     /// instead of being silently swallowed by the panel frame. Keep in sync with PopupView's
     /// `.padding(popupShadowInset)`.
-    public static let popupShadowInset: CGFloat = 16.0
+    public static let popupShadowInset: CGFloat = max(
+        cardShadowAmbientRadius,
+        cardShadowAmbientYOffset + cardShadowTailFactor * cardShadowAmbientRadius
+    )
     /// Cursor distance (pt) beyond which the popup auto-dismisses (suspended in search/content mode).
     public static let popupDismissalDistance: CGFloat = 160.0
     /// Dynamically scales dismissal distance based on screen width, scaling between 180pt and 280pt

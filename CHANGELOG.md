@@ -1,109 +1,114 @@
 # OpenClip Changelog
 
-All notable user-facing changes, feature additions, and improvements to OpenClip are documented here.
+All notable user-facing changes to OpenClip.
+
+---
+
+## v1.6.2 - 2026-09-20
+
+### Features & Improvements
+- **Inbound `openclip://` automation API**: other apps can read and write a curated set of settings and run app-level commands (`open-settings`, `pause`, `resume`, `reset-appearance`).
+- **Popup card chrome**: lit top rim, gradient hairline, and contact + ambient shadows; diff and pin controls hover-reveal.
+- **Popup bottom fade**: content fades at the bottom edge instead of a material band; inset Actions-list separators.
+- **Browser front-window opens**: browser-sourced URLs open through the browser's scripting, so private/incognito windows get a tab in the current window.
+- **Define opens in Dictionary.app** from the result card.
+- **Rich pasteboard fidelity**: copy and paste preserve every representation, including app-private types.
+- **Inline results stay warm** across popups and repacks.
+- **Actions list rework**: clearer rows, search, and drag-and-drop grouping; deleting a custom action removes it from its groups and clears its alias.
+- **Hold-to-trigger** now works with **Appear Automatically** off.
+- **Keyboard selection reads** without the copy-evidence gate.
+
+### Fixes & Stability
+- **Popup shadow**: no longer clipped, with the transparent ring derived from the shadow geometry.
+- **Click intent**: resolved once per run, fixing right-click bleed and the wrong ⇧⏎ copy/paste outcome.
+- **Log timestamps** format on the rotating file sink's own serial queue.
+- **Settings**: sidebar search strip and last-pane restore.
+- **Sub-bar results**: an in-flight inline evaluation is joined, not re-run.
+- **Action editor**: option labels show as field prompts.
+- **PowerPoint selection**: fixed via OpenSelection 0.2.3; KeyboardShortcuts 3.1.0.
+
+### Held for a later release
+- Native file output and interactive preview.
 
 ---
 
 ## v1.6.1 - 2026-09-16
 
 ### Features & Improvements
-- **Apple Intelligence availability**: Preferences › AI now reports whether Apple Intelligence is available, unsupported, switched off, or still downloading, and how to fix it.
-- **More reliable Apple Intelligence answers**: guided generation replaces scraping XML tags from free-form output.
-- **Inline results in sub-action bars**: group sub-actions show computed text in place of their icon, matching the main bar.
+- **Apple Intelligence availability** is reported in Preferences › AI, with how to fix each state.
+- **More reliable Apple Intelligence answers** via guided generation.
+- **Inline results in sub-action bars** match the main bar.
 - **Dependency update**: OpenSelection 0.1.2.
 
 ### Fixes & Stability
-- **Overlay-safe selection reads**: the automatic path no longer posts a synthetic ⌘C while a foreign overlay (e.g. a screenshot tool) owns the key window; the explicit hotkey path still reads.
-- **Result card stays on screen**: the popup re-clamps itself as the card resizes.
-- **Empty-state hint**: custom actions now point to Actions for placing actions in the popup bar.
+- **Overlay-safe selection reads**: no synthetic ⌘C while a foreign overlay owns the key window.
+- **Result card stays on screen** as it resizes.
+- **Empty-state hint** points custom actions to Actions.
 
 ---
 
 ## v1.6.0 - 2026-09-14
 
 ### First signed & notarized release
-- **First genuinely signed, hardened, and notarized release.** v1.5.0 announced this, but the work landed after the tag, so every earlier build was ad-hoc signed and could not be notarized.
-- **Upgrading from an ad-hoc build needs Accessibility re-granted one last time** (and any Input Monitoring or Screen Recording grant); Developer ID signing makes the permission survive future updates.
-- **Fresh installs** open without a Gatekeeper warning or quarantine workaround; the app runs hardened with a single entitlement (Apple events), and both app and disk image are signed, notarized, and stapled.
-
-### Highlights
-- **Settings rebuilt like System Settings**: one router, a searchable sidebar, and a page for every extension, built-in action, and custom action.
-- **Ask AI from the palette**: a query matching no action offers **Ask AI: “…”** and **Save as AI tool**; ⏎ shows the answer with a diff, ⇧⏎ replaces the selection in place.
-- **Refine answers in the result card**: an inline follow-up re-runs AI, keeps the previous answer visible, and diffs against your original selection.
-- **AI engines**: local CLIs and universal local models with intelligent model resolution, plus standalone Ask AI and Apply to Selection.
-- **Duplication, pinning, and a sortable Store** with real publish dates.
+- **First genuinely signed, hardened, and notarized release** (app and DMG); every earlier build was ad-hoc and could not be notarized.
+- **Re-grant Accessibility once** when upgrading from an ad-hoc build; Developer ID signing makes it survive future updates.
+- **Fresh installs** open with no Gatekeeper warning.
 
 ### Features & Improvements
-- **Settings**: sidebar filtering and back/forward; a hero page per extension with per-command switches and settings; drag-to-group Customize; one consistent row shape; extension-derived sidebar colours; pages instead of popovers, sheets, or alerts.
-- **Store**: sort by Featured / Name / Downloads / Recently Added, publish dates, offline and update states, no-cache Refresh, and **Install from File…**.
-- **AI**: Ask AI and Save as AI tool in the palette; inline result-card refinement with session context; CLI tools and universal local models with automatic Ollama migration; standalone Ask AI and Apply to Selection; clearer AI row names.
-- **Result card and actions**: duplicate extensions and custom actions; pin button; Copy/Paste hidden while streaming; frozen size during refinement; selection engine extracted into OpenSelection 0.1.1.
+- **Settings rebuilt like System Settings**: one router, a searchable sidebar, and a page for every extension, built-in action, and custom action.
+- **Ask AI from the palette**, including **Save as AI tool**; ⏎ shows the answer and ⇧⏎ replaces the selection.
+- **Refine answers in the result card** with an inline follow-up, diffed against the original selection.
+- **AI engines**: local CLIs and universal local models with automatic model resolution.
+- **Duplication, pinning, and a sortable Store** with real publish dates.
+- **Store**: sort options, publish dates, offline and update states, and **Install from File…**.
+- **Result card and actions**: duplicate extensions and custom actions; pin button; frozen size while streaming; selection engine extracted to OpenSelection 0.1.1.
 
 ### Security & Distribution
-- **Inside-out signing and notarization**: packaging no longer runs `codesign --deep`; the app is signed deepest-first, notarized, and stapled, the DMG likewise, and the pipeline verifies both zip and image and fails on a non-distributable artifact.
+- **Inside-out signing and notarization**: no `codesign --deep`; app and DMG are signed deepest-first, verified, and stapled, failing on any non-distributable artifact.
 
 ### Fixes & Stability
-- Single-command extension pages render correctly; the hero scrolls with the page; title-bar hairline and overlapping footer buttons removed.
-- Sidebar search has its own strip; the page switch no longer stretches; the Store sort control moved into the page.
-- Follow-up keeps focus so Esc cancels, refinement never re-opens a dismissed card, and Store offline/refresh/update states are handled.
+- Single-command extension pages render correctly and the hero scrolls with the page.
+- Sidebar search has its own strip; the page switch no longer stretches; Store sort moved into the page.
+- Follow-up keeps focus so Esc cancels; refinement never reopens a dismissed card.
 
 ### Contributors
-- **Matej Bačo ([@Meldiron](https://github.com/Meldiron))** — Developer ID signing, hardened runtime, and notarization; palette Ask AI; in-place result-card refinement; and the unified Settings window.
-- **Ganesh M ([@ganeshmshetty](https://github.com/ganeshmshetty))** — AI CLI tools, universal local models, and model resolution; inline extension results.
-- **JTOBIN ([@binjto-boop](https://github.com/binjto-boop))** — rebuilding the preferences window on stock AppKit controls.
-
-### Fixes & Stability
-- **Log File Timestamps**: The rotating log file sink now formats timestamps on its own serial queue instead of on the thread that emitted the log, so its `DateFormatter` is never shared across threads ([#45](https://github.com/ganeshmshetty/openclip/issues/45)).
+- **Matej Bačo (@Meldiron)** — Developer ID signing, hardened runtime, and notarization; palette Ask AI; in-place result-card refinement; unified Settings window.
+- **Ganesh M (@ganeshmshetty)** — AI CLI tools, universal local models, and model resolution; inline extension results.
+- **JTOBIN (@binjto-boop)** — rebuilt the preferences window on stock AppKit controls.
 
 ---
 
 ## v1.5.0 - 2026-09-10
 
-### Highlights
-- **Resizable Result Cards & Search Palette**: Action output cards, AI streaming responses, and the action search palette can now be resized by dragging edges or corner handles, remembering your preferred maximum size without blowing up short responses ([#78](https://github.com/ganeshmshetty/openclip/pull/78)).
-- **Per-Action Global Hotkeys & Search Aliases**: Trigger favorite actions instantly with dedicated global keyboard shortcuts, or assign custom search aliases for rapid invocation in the palette.
-- **Extension Group & Sub-Action Reordering**: Fully customize your action workflow by reordering extension groups and individual member actions via drag-and-drop in Preferences, complete with custom member icon overrides ([#68](https://github.com/ganeshmshetty/openclip/issues/68)).
-- **Universal Binaries (Apple Silicon & Intel Macs)**: Universal binary distribution restored with multi-stage verification across release archives and DMGs, ensuring OpenClip runs natively on both Intel and Apple Silicon Macs ([#72](https://github.com/ganeshmshetty/openclip/pull/72)).
-- **In-App Updater Release Notes Delivery**: Fixed an issue where update changelogs failed to appear during updates by upgrading the release pipeline to Sparkle 2.9, providing native markdown release notes directly in the update window.
-- **Redesigned DMG Installer**: Beautiful new branded installer window with Retina-sharp HTML-rendered backgrounds, guided drop indicators, and scroll-free layout built via `dmgbuild` ([#67](https://github.com/ganeshmshetty/openclip/pull/67)).
-
 ### Features & Improvements
-- **Resizable Result Card and Search Palette**: The result card that shows an action's output (including before/after diffs and AI responses) and the action-search palette can now be resized by dragging their right edge, bottom edge, or the bottom-right corner grip. Resized dimensions are remembered as an intelligent maximum constraint: short answers stay compact, while longer text expands up to your preferred dimensions ([#78](https://github.com/ganeshmshetty/openclip/pull/78) by [@Meldiron](https://github.com/Meldiron)).
-- **Per-Action Global Hotkeys and Search Aliases**: Assign direct system-wide keyboard shortcuts and custom keyword aliases to any individual action, allowing you to trigger actions anywhere without opening the floating menu.
-- **Extension Group & Member Reordering**: Multi-action extension groups and member actions can now be rearranged via drag-and-drop within Preferences › Actions. Sub-action ordering is persisted cleanly in `extensionGroupMemberOrder`, and individual member actions can be customized with custom icons in the group editor sheet ([#68](https://github.com/ganeshmshetty/openclip/issues/68)).
-- **Custom Icon Importing**: Import custom icon assets (SF Symbols, custom SVG/PNG images) to personalize action buttons and extension groups in Preferences.
-- **Per-Command Extension Settings**: Commands inside a multi-command extension now display the settings cog in Preferences › Actions whenever options are declared, enabling inline configuration of API keys, endpoints, and parameters ([#79](https://github.com/ganeshmshetty/openclip/pull/79) by [@Meldiron](https://github.com/Meldiron)).
-- **Redesigned DMG Installer**: The disk image now opens with a styled installation window aligned with `getopenclip.app` design tokens, featuring a Retina 1×/2× TIFF background, branded icon placements, and clean zero-scroll geometry ([#67](https://github.com/ganeshmshetty/openclip/pull/67) by [@Meldiron](https://github.com/Meldiron)).
-- **Synchronous Palette Resolution & Prewarming**: Hotkey invocation now resolves the search palette synchronously while prewarming selection context in the background, eliminating trigger latency.
-- **Extension Store Catalog Refresh**: Added a dedicated Refresh button to Preferences › Store header to bypass cached catalog entries and fetch updates immediately, paired with single-line description formatting.
-- **Visual Palette & Toast Polish**: Styled search palette with neutral selection highlights and capped floating toast notifications to 40 characters for compact readability.
+- **Resizable result cards and search palette** with remembered maximum dimensions.
+- **Per-action global hotkeys and search aliases.**
+- **Extension group and sub-action reordering** via drag-and-drop, with custom member icons.
+- **Universal binaries** (Apple Silicon + Intel) with verification across archives and DMGs.
+- **In-app updater release notes** via Sparkle 2.9.
+- **Redesigned DMG installer** with a branded, Retina background.
+- **Custom icon importing** (SF Symbols, SVG, PNG).
+- **Per-command extension settings** shown inline when options are declared.
+- **Synchronous palette resolution and prewarming** to cut trigger latency.
+- **Extension Store refresh button** and single-line descriptions.
+- **Visual polish**: neutral selection highlights and capped toasts.
 
 ### Security & Distribution
-- **Signed, Hardened & Notarized Builds**: OpenClip is now signed with an Apple Developer ID certificate, built with the hardened runtime genuinely enabled, and notarized and stapled by Apple — the app and the disk image both. macOS opens it without a Gatekeeper warning, and nothing has to strip a quarantine attribute to make it launch. Every previous release was ad-hoc signed: the packaging step finished with `codesign --deep`, which replaced Xcode's hardened signature with an unhardened ad-hoc one, so the app could not be notarized and Gatekeeper refused it on every Mac but the one that built it.
-- **Accessibility Permission Survives Updates**: An ad-hoc signature identifies an app by a hash that changes with every build, so macOS treated each update as a brand-new application and dropped the Accessibility grant. A Developer ID signature identifies it by bundle ID and team instead, so the permission now persists across updates. Upgrading to this version needs the Accessibility toggle re-granted one last time.
-- **Minimal Entitlements**: The hardened runtime is granted exactly one exception, for the Apple events that AppleScript actions send. JIT, library-validation, and dynamic-linker exceptions are all withheld, and the release scripts fail if a build's entitlements ever differ from the file that declares them. Building from source still needs no Apple Developer account: local builds are ad-hoc signed with the same hardening and entitlements.
-
-### Fixes & Stability
-- **Log File Timestamps**: The rotating log file sink now formats timestamps on its own serial queue instead of on the thread that emitted the log, so its `DateFormatter` is never shared across threads ([#45](https://github.com/ganeshmshetty/openclip/issues/45)).
+- **Signed, hardened, and notarized builds** (app and DMG) open without a Gatekeeper warning.
+- **Accessibility permission survives updates** with a Developer ID signature.
+- **Minimal entitlements**: one exception for Apple events; the release scripts fail on any mismatch.
 
 ---
 
 ## v1.4.0 - 2026-09-07
 
-### Highlights
+### Features & Improvements
 - **Visual before-and-after text diffs** in result cards.
 - **Screen-space floating tooltips** that never clip.
 - **Palette row keyboard shortcuts** (⌘1–⌘9 and alphanumeric).
 - **Preferences and action-configuration fixes**, including editor persistence and Dock restore.
 - **Process lifecycle cleanup** that kills descendant process trees.
 - **Hardened AI presets** against prompt injection.
-
-### Features & Improvements
-- **Diff engine** (`TextDiff.swift`): word- and line-level deltas, with inline and side-by-side views in the result card.
-- **Tooltips**: independent overlay panel and boundary-aware placement.
-- **Preferences**: action editor stays open during navigation; minimized Settings windows reuse correctly; extension and custom groups separated; glyph icon state fixed.
-- **Runtime**: watchdog terminates descendant process trees; subtree traversal optimized; `dev_run.sh` launches the fresh binary.
-- **AI**: prompt-injection boundary, polished default presets, updated localizations.
 
 ### Fixes & Stability
 - Paste probe starvation recovery with aggregate deadlines.
@@ -112,33 +117,33 @@ All notable user-facing changes, feature additions, and improvements to OpenClip
 - Hermetic, fully isolated test suite.
 
 ### Contributors
-- **Matej Bačo ([@Meldiron](https://github.com/Meldiron))** — action editor persistence; `dev_run.sh` improvements.
-- **Jtobin ([@binjto-boop](https://github.com/binjto-boop))** — Settings window Dock restore.
-- **Md ([@md786-dotcom](https://github.com/md786-dotcom))** — descendant process termination; paste probe recovery.
-- **Ganesh M ([@ganeshmshetty](https://github.com/ganeshmshetty))** — diff engine, tooltips, AI hardening, test refactor.
+- **Matej Bačo (@Meldiron)** — action editor persistence; `dev_run.sh` improvements.
+- **Jtobin (@binjto-boop)** — Settings window Dock restore.
+- **Md (@md786-dotcom)** — descendant process termination; paste probe recovery.
+- **Ganesh M (@ganeshmshetty)** — diff engine, tooltips, AI hardening, test refactor.
 
 ---
 
 ## v1.3.1 - 2026-09-05
 
 ### Features & Improvements
-- **Direct action search** via shortcut, centered and focused, dismissed with `Escape`.
+- **Direct action search** via shortcut, centered and focused, dismissed with Escape.
 - **Search alignment clamping** within the bar and screen.
-- **Layered glass contrast** with an adaptive backing scrim and specular borders.
+- **Layered glass contrast** with an adaptive scrim and specular borders.
 - **Preferences label updates**: "Horizontal Position" and "Popup Width".
 
 ### Fixes & Stability
-- **Extension Store resilience**: network retries, loading states, and offline diagnostics.
+- **Extension Store resilience**: retries, loading states, and offline diagnostics.
 
 ---
 
 ## v1.3.0 - 2026-09-04
 
-### Highlights
+### Features & Improvements
 - **`openclip.pasteboard` JavaScript API** for reading, inspecting, and writing clipboard content.
 - **Customizable popup alignment and vertical position**, with synchronized sub-action bars.
-- **Full multilingual localization**: Traditional Chinese, French, and Japanese, plus multilingual search keywords.
-- **Storefront and Actions overhaul**: category tabs, pagination, and a zebra-striped outline with drag-and-drop.
+- **Full multilingual localization**: Traditional Chinese, French, Japanese, plus multilingual search keywords.
+- **Storefront and Actions overhaul**: category tabs, pagination, and drag-and-drop.
 - **Snooze and per-app pause** from the status bar menu.
 
 ### Fixes & Stability
@@ -167,7 +172,7 @@ All notable user-facing changes, feature additions, and improvements to OpenClip
 - Calendar `.ics` cleanup; safe `SettingsStore.get`; docs synced with Swift 6.
 
 ### Contributors
-- **[@ayangweb](https://github.com/ayangweb)** — [#26](https://github.com/ganeshmshetty/openclip/pull/26), [#27](https://github.com/ganeshmshetty/openclip/pull/27), [#28](https://github.com/ganeshmshetty/openclip/pull/28), [#29](https://github.com/ganeshmshetty/openclip/pull/29), [#30](https://github.com/ganeshmshetty/openclip/pull/30), [#31](https://github.com/ganeshmshetty/openclip/pull/31), [#32](https://github.com/ganeshmshetty/openclip/pull/32)
+- **[@ayangweb](https://github.com/ayangweb)** — #26–#32.
 
 ---
 
@@ -186,8 +191,8 @@ All notable user-facing changes, feature additions, and improvements to OpenClip
 - Empty action groups can be created and configured.
 
 ### Contributors
-- **[@ayangweb](https://github.com/ayangweb)** — [#5](https://github.com/ganeshmshetty/openclip/pull/5), [#12](https://github.com/ganeshmshetty/openclip/pull/12), [#13](https://github.com/ganeshmshetty/openclip/pull/13)
-- **[@cauton2020](https://github.com/cauton2020)** — [#3](https://github.com/ganeshmshetty/openclip/pull/3)
+- **[@ayangweb](https://github.com/ayangweb)** — #5, #12, #13.
+- **[@cauton2020](https://github.com/cauton2020)** — #3.
 
 ---
 
@@ -237,9 +242,9 @@ All notable user-facing changes, feature additions, and improvements to OpenClip
 The initial major release — a native floating action bar that turns selected text into instant actions.
 
 ### Highlights
-- **Floating action bar**: contextual trigger, adaptive positioning, three themes (Glass, Dark, Light), hover feedback, and clipboard fallback.
-- **Built-in actions**: web search, inline calculator, dictionary, word completion, text transformations, and macOS Services/Share.
+- **Floating action bar**: contextual trigger, adaptive positioning, three themes, hover feedback, and clipboard fallback.
+- **Built-in actions**: web search, calculator, dictionary, word completion, text transformations, and macOS Services/Share.
 - **Search palette**: global **Option+Command+C** shortcut with recent-action ranking.
-- **AI assistants**: Apple Intelligence, Ollama, OpenAI, or Anthropic, with streaming result cards and one-click insert/replace.
+- **AI assistants**: Apple Intelligence, Ollama, OpenAI, or Anthropic, with streaming result cards and insert/replace.
 - **Extensions**: in-app store, no-code custom actions, a 9,000+ icon library, and JavaScript / AppleScript / Shell / URL / Shortcuts runtimes.
 - **Customization and privacy**: per-app rules, action reordering, 100% local operation, Keychain storage, subprocess isolation, and start at login.

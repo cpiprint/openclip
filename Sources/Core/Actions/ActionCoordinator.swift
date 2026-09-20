@@ -174,12 +174,28 @@ public final class ActionCoordinator: ObservableObject, Sendable {
         updated.removeAll(where: { $0.id == actionID })
         persistCustomActions(updated)
         registry.unregister(actionID: actionID)
+        self.actions = registry.actions
+
+        // Deleting an action has to take it out of any custom group, exactly like dragging it out
+        // does (`removeFromGroup`): drop the id from every group and disband a group the deletion
+        // emptied. `syncGroupMemberOrder` only re-sorts members, so without this a group kept a
+        // phantom member — and could survive as an empty row — until the next manual edit.
+        if !actionGroupDefs.isEmpty {
+            let hadMembers = nonEmptyGroupIDs
+            for index in actionGroupDefs.indices {
+                actionGroupDefs[index].memberActionIDs.removeAll { $0 == actionID }
+            }
+            saveAndApplyGroupDefs(pruningEmptiedFrom: hadMembers)
+        }
+
         var disabled = settingsStore.get(.disabledActionIDs)
         if disabled.contains(actionID) {
             disabled.remove(actionID)
             settingsStore.set(.disabledActionIDs, value: disabled)
         }
-        self.actions = registry.actions
+        // A deleted action's palette alias must go with it, or it stays reserved and a new action
+        // can never claim it ("That alias is already used").
+        ActionBindingStore.shared.setAlias(nil, for: actionID)
         syncGroupMemberOrder()
     }
 

@@ -22,8 +22,8 @@ final class PopupPositionerTests: XCTestCase {
         let frame = PopupPositioner.placeNearReleasePoint(
             releasePoint: release, popupSize: size, screenBounds: screen, alignment: .left
         )
-        // X: left-aligned with firstActionCenterOffset (16 + 17 = 33) -> 400 - 33 = 367
-        XCTAssertEqual(frame.origin.x, 367)
+        // X: left-aligned with firstActionCenterOffset (shadowInset + half a button)
+        XCTAssertEqual(frame.origin.x, 400 - PopupPositioner.firstActionCenterOffset)
         XCTAssertEqual(frame.origin.y, 206)
     }
 
@@ -32,8 +32,8 @@ final class PopupPositionerTests: XCTestCase {
         let frame = PopupPositioner.placeNearReleasePoint(
             releasePoint: release, popupSize: size, screenBounds: screen, alignment: .right
         )
-        // X: right-aligned with firstActionCenterOffset -> 400 - (50 - 33) = 383
-        XCTAssertEqual(frame.origin.x, 383)
+        // X: right-aligned so the last button's center sits on the release point
+        XCTAssertEqual(frame.origin.x, 400 - (size.width - PopupPositioner.firstActionCenterOffset))
         XCTAssertEqual(frame.origin.y, 206)
     }
 

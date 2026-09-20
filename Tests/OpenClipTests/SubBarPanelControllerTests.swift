@@ -65,8 +65,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -103,8 +103,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -148,8 +148,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -188,8 +188,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -228,8 +228,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -259,8 +259,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -305,8 +305,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -330,8 +330,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -368,8 +368,8 @@ final class SubBarPanelControllerTests: XCTestCase {
                 presenter: ActionCustomizationManager.shared,
                 onResult: { _ in },
                 onRunAI: { _ in },
-                onRunLoadingAction: { _ in },
-                onWillPerformAction: { _ in },
+                onRunLoadingAction: { _, _ in },
+                onWillPerformAction: { _, _ in },
                 onActionPerformed: { _ in },
                 onClickIntent: { .primary }
             )
@@ -421,8 +421,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -494,8 +494,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -555,8 +555,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -609,8 +609,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -645,8 +645,8 @@ final class SubBarPanelControllerTests: XCTestCase {
             presenter: ActionCustomizationManager.shared,
             onResult: { _ in },
             onRunAI: { _ in },
-            onRunLoadingAction: { _ in },
-            onWillPerformAction: { _ in },
+            onRunLoadingAction: { _, _ in },
+            onWillPerformAction: { _, _ in },
             onActionPerformed: { _ in },
             onClickIntent: { .primary }
         )
@@ -696,8 +696,8 @@ final class SubBarPanelControllerTests: XCTestCase {
                 modeStore: store,
                 onResult: { _ in },
                 onRunAI: { _ in },
-                onRunLoadingAction: { _ in },
-                onWillPerformAction: { _ in },
+                onRunLoadingAction: { _, _ in },
+                onWillPerformAction: { _, _ in },
                 onActionPerformed: { _ in },
                 onClickIntent: { .primary }
             )

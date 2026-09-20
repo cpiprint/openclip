@@ -53,13 +53,30 @@ struct AboutTab: View {
 
                 SettingsRow(
                     title: "Check for Updates",
-                    subtitle: lastCheckedSubtitle,
+                    subtitle: updateChannelSubtitle ?? lastCheckedSubtitle,
                     systemImage: "arrow.triangle.2.circlepath"
                 ) {
-                    Button("Check Now") {
-                        updateManager.checkForUpdates()
+                    HStack(spacing: 10) {
+                        Picker("", selection: $updateManager.updateChannel) {
+                            Text("Stable").tag(UpdateChannel.stable)
+                            Text("Beta").tag(UpdateChannel.beta)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .frame(width: 150)
+                        .accessibilityLabel("Update Channel")
+
+                        Button {
+                            updateManager.checkForUpdates()
+                        } label: {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                        }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.roundedRectangle)
+                        .disabled(!updateManager.canCheckForUpdates)
+                        .accessibilityLabel("Check Now")
+                        .help("Check Now")
                     }
-                    .disabled(!updateManager.canCheckForUpdates)
                 }
             } header: {
                 // The identity block rides the first section's header: a header
@@ -78,6 +95,11 @@ struct AboutTab: View {
                     "Documentation",
                     systemImage: "book",
                     url: "https://www.getopenclip.app/docs"
+                )
+                linkRow(
+                    "Support",
+                    systemImage: "questionmark.circle",
+                    url: "https://www.getopenclip.app/support"
                 )
                 linkRow(
                     "GitHub",
@@ -139,6 +161,19 @@ struct AboutTab: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+
+            Button {
+                openURL("https://www.getopenclip.app/support")
+            } label: {
+                HStack(spacing: 4) {
+                    Text("Support")
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption.weight(.semibold))
+                }
+            }
+            .buttonStyle(.link)
+            .font(.callout)
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 12)
@@ -169,6 +204,12 @@ struct AboutTab: View {
     private var lastCheckedSubtitle: LocalizedStringKey? {
         guard let lastCheck = updateManager.lastUpdateCheckDate else { return nil }
         return LocalizedStringKey("Last checked \(Self.shortTimeAgo(lastCheck))")
+    }
+
+    private var updateChannelSubtitle: LocalizedStringKey? {
+        updateManager.updateChannel == .beta
+            ? "Beta builds include features that are still being tested."
+            : nil
     }
 
     /// Secondary navigation, so the whole row is the target and the only
