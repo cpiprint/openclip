@@ -5,35 +5,28 @@ curated part of its configuration. This document is the **current-state contract
 today, exactly as implemented. It is intentionally not a roadmap — anything not listed under
 "Available now" does not exist.
 
-> **Status:** first iteration. The surface is deliberately small (power, appearance, AI on/off)
-> and gated behind an explicit opt-in. There is no discovery endpoint and no CLI yet; see
-> [Not available yet](#not-available-yet).
+> **Status:** first iteration. The surface is deliberately small (power, appearance, AI on/off).
+> There is no discovery endpoint and no CLI yet; see [Not available yet](#not-available-yet).
 
 ---
 
-## Enabling it
+## Availability
 
-The integration routes are **refused entirely** until the user turns them on.
+The settings, command, and write routes are always available — no opt-in switch or approval prompt.
 
-- **Preferences → Integrations → Allow Settings Control** (off by default).
-- The first request after enabling shows an approval prompt ("Allow Settings Control?"). Declining
-  turns the scheme back off, so a caller cannot keep re-asking.
-- Enabling stores `integration.settingsURISchemeEnabled`; approval stores
-  `integration.settingsURISchemeApproved`. Both are cleared when the switch is turned off.
-
-The `install` route is **not** behind this gate — it is the existing extension-store flow and keeps
-its own source allow-list and confirmation dialog.
+The `install` route is the existing extension-store flow and keeps its own source allow-list and
+confirmation dialog.
 
 ---
 
 ## Routes
 
-| URL | Purpose | Gated |
-|-----|---------|:-----:|
-| `openclip://install?id=<id>&url=<https-url>[&name=<name>]` | Install a store extension | no (allow-listed + dialog) |
-| `openclip://settings[?callback=<url>]` | Read the curated settings | yes |
-| `openclip://set?<key>=<value>[&…][&callback=<url>]` | Write curated settings | yes |
-| `openclip://command/<name>[?callback=<url>]` | Run an app-level command | yes |
+| URL | Purpose |
+|-----|---------|
+| `openclip://install?id=<id>&url=<https-url>[&name=<name>]` | Install a store extension (allow-listed + dialog) |
+| `openclip://settings[?callback=<url>]` | Read the curated settings |
+| `openclip://set?<key>=<value>[&…][&callback=<url>]` | Write curated settings |
+| `openclip://command/<name>[?callback=<url>]` | Run an app-level command |
 
 The scheme is `openclip` (registered in `Info.plist`). The host selects the route; matching is
 case-insensitive. Routing and parsing live in `Sources/Core/Integration/OpenClipDeepLink.swift`;
@@ -70,7 +63,7 @@ JSON object keyed by setting name:
 myapp://openclip/reply?result={"isAppEnabled":true,"popupTheme":"glass","popupScale":3,...}
 ```
 
-If no callback is supplied the route still authorizes but has no reply target; there is currently no
+If no callback is supplied the route still runs but has no reply target; there is currently no
 other read channel.
 
 ### `openclip://set` (write)
@@ -135,16 +128,10 @@ Reads and command/write results are returned by opening a caller-supplied URL (t
 x-callback-url pattern).
 
 - Parameter: `callback` — `x-success` is accepted as an alias.
-- Reply query item: `result` on success, `error` on failure (both JSON).
+- Reply query item: `result` (JSON).
 - **Only non-web custom schemes are accepted.** `http`, `https`, `file`, `javascript`, `data`,
   `about`, `blob`, `ws`, `wss`, and `ftp` callbacks are dropped, so a web page cannot use the read
   route to collect settings. The reply is delivered with `NSWorkspace.open`.
-
-Example error reply:
-
-```
-myapp://openclip/reply?error={"message":"OpenClip's settings control is turned off."}
-```
 
 ---
 
@@ -174,7 +161,6 @@ are readable or writable; anything else is reported in `skipped`.
   on/off switch is reachable.
 - **Extension store / arbitrary installs** — only the allow-listed `install` route exists.
 - **Update channel, hotkeys, Action Results, per-action enable toggles.**
-- The integration's own gate keys (`integration.*`).
 
 ---
 
@@ -221,9 +207,7 @@ are candidates for a later iteration:
 |---------|----------|
 | URL grammar + reply construction | `Sources/Core/Integration/OpenClipDeepLink.swift` |
 | Curated read/write + value normalization | `Sources/Core/Integration/SettingsBridge.swift` |
-| Trust gate, consent, dispatch, broadcast, install | `Sources/OpenClip/Platform/DeepLinkRouter.swift` |
+| Dispatch, broadcast, install | `Sources/OpenClip/Platform/DeepLinkRouter.swift` |
 | Allow-list + side effects | `Sources/OpenClip/Settings/IntegrationSettings.swift` |
-| Opt-in keys | `Sources/OpenClip/Settings/SettingKey+Integration.swift` |
-| Preferences UI | `Sources/OpenClip/UI/Preferences/IntegrationsTab.swift` |
 | Entry point | `AppDelegate.application(_:open:)` → `DeepLinkRouter.shared.handle(_:)` |
 | Tests | `Tests/OpenClipTests/DeepLinkTests.swift`, `IntegrationSettingsBridgeTests.swift` |

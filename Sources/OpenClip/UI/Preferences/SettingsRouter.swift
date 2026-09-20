@@ -30,7 +30,6 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
     case customize
     case shortcuts
     case appRules
-    case integrations
     case store
     case about
 
@@ -62,7 +61,6 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
         case .customize: return "customize"
         case .shortcuts: return "shortcuts"
         case .appRules: return "appRules"
-        case .integrations: return "integrations"
         case .store: return "store"
         case .about: return "about"
         case .ai: return "ai"
@@ -81,13 +79,13 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
 
     /// The sidebar's first group, in order.
     public static let systemPages: [SettingsPage] = [
-        .general, .appearance, .customize, .appRules, .integrations, .store, .about
+        .general, .appearance, .customize, .appRules, .store, .about
     ]
 
     /// True for pages the sidebar lists; false for pages reached from one of them.
     public var isSidebarPage: Bool {
         switch self {
-        case .general, .appearance, .customize, .shortcuts, .appRules, .integrations, .store, .about, .ai, .extensionPackage,
+        case .general, .appearance, .customize, .shortcuts, .appRules, .store, .about, .ai, .extensionPackage,
              .builtinAction, .customActions:
             return true
         case .action, .newCustomAction, .newGroup, .iconPicker, .aiPreset, .aiNewPreset, .addApplication:
@@ -104,7 +102,6 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
         case .customize: return String(localized: "Actions")
         case .shortcuts: return String(localized: "Shortcuts")
         case .appRules: return String(localized: "App Rules")
-        case .integrations: return String(localized: "Integrations")
         case .store: return String(localized: "Store")
         case .about: return String(localized: "About")
         case .ai: return String(localized: "AI")
@@ -126,7 +123,6 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
         case .customize: return "slider.horizontal.3"
         case .shortcuts: return "command"
         case .appRules: return "shield.checkered"
-        case .integrations: return "link.circle.fill"
         case .store: return "bag.fill"
         case .about: return "info.circle.fill"
         case .ai: return "sparkles"
@@ -152,7 +148,6 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
         case .customize: return SettingsTint.customize
         case .shortcuts: return SettingsTint.shortcuts
         case .appRules: return SettingsTint.appRules
-        case .integrations: return SettingsTint.integrations
         case .store: return SettingsTint.store
         case .about: return SettingsTint.about
         case .ai, .customActions, .builtinAction:
@@ -173,7 +168,6 @@ public enum SettingsPage: Hashable, Identifiable, Sendable {
         case .customize: return ["actions", "popup bar", "order", "reorder", "arrange", "group", "groups", "layout", "install", "shortcuts", "hotkey", "keyboard", "alias", "shortcut", "key", "binding"]
         case .shortcuts: return ["hotkey", "keyboard", "alias", "shortcut", "key", "binding"]
         case .appRules: return ["apps", "exclude", "allow", "block", "rules", "disable", "per-app"]
-        case .integrations: return ["droppy", "integration", "automation", "url scheme", "api", "deep link", "deepLink", "control panel"]
         case .store: return ["extensions", "install", "catalog", "browse", "download"]
         case .about: return ["version", "update", "licence", "license", "logs", "diagnostics", "github"]
         case .ai: return ["model", "api key", "prompt", "openai", "claude", "gemini", "ollama", "cli", "local", "cloud", "apple intelligence", "rewrite", "summarize"]

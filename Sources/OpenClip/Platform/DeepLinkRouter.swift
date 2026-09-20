@@ -1,13 +1,11 @@
 // DeepLinkRouter.swift
 // OpenClip
 //
-// The one place that acts on an inbound `openclip://` URL. It owns the trust boundary the URL
-// scheme needs — the scheme is off until the user enables it in Preferences → Integrations, and
-// the first request after enabling asks for approval — then dispatches to the settings bridge, the
-// app-level commands, or the extension installer.
+// The one place that acts on an inbound `openclip://` URL. It dispatches to the settings bridge,
+// the app-level commands, or the extension installer.
 //
-// The grammar itself lives in Core (`OpenClipDeepLink`), so the app target only decides *whether*
-// and *how* to act. `AppDelegate.application(_:open:)` is a one-line delegate to `handle(_:)`.
+// The grammar itself lives in Core (`OpenClipDeepLink`), so the app target only decides *how* to
+// act. `AppDelegate.application(_:open:)` is a one-line delegate to `handle(_:)`.
 import AppKit
 import Core
 import Foundation
@@ -27,9 +25,6 @@ final class DeepLinkRouter {
     /// Brings OpenClip's Settings window forward. Injected by `AppDelegate`, which owns the status
     /// bar controller that shows it.
     private var openPreferences: () -> Void = {}
-    /// Confirms the first request after the user enables the scheme. Injectable so tests can bypass
-    /// the modal.
-    private var confirmFirstUse: @MainActor (String) -> Bool = DeepLinkRouter.presentConsentPrompt
 
     private init() {}
 
@@ -53,44 +48,15 @@ final class DeepLinkRouter {
             install(id: id, name: name, downloadURL: downloadURL)
 
         case .readSettings(let callback):
-            guard authorize(callback: callback) else { return }
             let payload = IntegrationSettingsBridge.read(keys: IntegrationSettings.curatedKeys, store: store)
             reply(callback: callback, payload: payload)
 
         case .writeSettings(let values, let callback):
-            guard authorize(callback: callback) else { return }
             write(values: values, callback: callback)
 
         case .command(let command, let callback):
-            guard authorize(callback: callback) else { return }
             run(command, callback: callback)
         }
-    }
-
-    // MARK: - Trust gate
-
-    /// Refuses integration routes while the scheme is off, and asks once after it is enabled. A
-    /// declined prompt turns the scheme back off, so a caller cannot keep re-asking.
-    private func authorize(callback: URL?) -> Bool {
-        guard store.get(.integrationSettingsURISchemeEnabled) else {
-            Log.settings.notice("Refused integration request: settings control is off")
-            reply(callback: callback, error: String(localized: "OpenClip's settings control is turned off."))
-            return false
-        }
-        guard store.get(.integrationSettingsURISchemeApproved) else {
-            let approved = confirmFirstUse(
-                String(localized: "An app is asking to read and change OpenClip's settings. Allow it?")
-            )
-            guard approved else {
-                store.set(.integrationSettingsURISchemeEnabled, value: false)
-                Log.settings.notice("Integration request declined; settings control disabled")
-                reply(callback: callback, error: String(localized: "The request was not approved."))
-                return false
-            }
-            store.set(.integrationSettingsURISchemeApproved, value: true)
-            return true
-        }
-        return true
     }
 
     // MARK: - Settings
@@ -130,13 +96,6 @@ final class DeepLinkRouter {
 
     private func reply(callback: URL?, payload: [String: Any]) {
         guard let callback, let url = OpenClipDeepLinkReply.success(callback: callback, payload: payload) else {
-            return
-        }
-        NSWorkspace.shared.open(url)
-    }
-
-    private func reply(callback: URL?, error: String) {
-        guard let callback, let url = OpenClipDeepLinkReply.failure(callback: callback, message: error) else {
             return
         }
         NSWorkspace.shared.open(url)
@@ -182,16 +141,5 @@ final class DeepLinkRouter {
                 failure.runModal()
             }
         }
-    }
-
-    /// The approval prompt for the first integration request after the scheme is enabled.
-    private static func presentConsentPrompt(_ message: String) -> Bool {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "Allow Settings Control?")
-        alert.informativeText = message
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: String(localized: "Allow"))
-        alert.addButton(withTitle: String(localized: "Don't Allow"))
-        return alert.runModal() == .alertFirstButtonReturn
     }
 }

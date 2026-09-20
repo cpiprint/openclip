@@ -17,20 +17,20 @@ final class DeepLinkTests: XCTestCase {
     }
 
     func testParsesReadSettingsWithCallback() {
-        let url = URL(string: "openclip://settings?callback=droppy%3A%2F%2Freply")!
+        let url = URL(string: "openclip://settings?callback=panel%3A%2F%2Freply")!
         guard case .readSettings(let callback)? = OpenClipDeepLink.parse(url) else {
             return XCTFail("expected a read deep link")
         }
-        XCTAssertEqual(callback, URL(string: "droppy://reply"))
+        XCTAssertEqual(callback, URL(string: "panel://reply"))
     }
 
     func testParsesWriteSettingsExcludingCallback() {
-        let url = URL(string: "openclip://set?popupTheme=glass&popupScale=3&callback=droppy%3A%2F%2Fdone")!
+        let url = URL(string: "openclip://set?popupTheme=glass&popupScale=3&callback=panel%3A%2F%2Fdone")!
         guard case .writeSettings(let values, let callback)? = OpenClipDeepLink.parse(url) else {
             return XCTFail("expected a write deep link")
         }
         XCTAssertEqual(values, ["popupTheme": "glass", "popupScale": "3"])
-        XCTAssertEqual(callback, URL(string: "droppy://done"))
+        XCTAssertEqual(callback, URL(string: "panel://done"))
     }
 
     func testParsesCommand() {
@@ -42,11 +42,11 @@ final class DeepLinkTests: XCTestCase {
     }
 
     func testAcceptsXSuccessCallbackAlias() {
-        let url = URL(string: "openclip://settings?x-success=droppy%3A%2F%2Freply")!
+        let url = URL(string: "openclip://settings?x-success=panel%3A%2F%2Freply")!
         guard case .readSettings(let callback)? = OpenClipDeepLink.parse(url) else {
             return XCTFail("expected a read deep link")
         }
-        XCTAssertEqual(callback, URL(string: "droppy://reply"))
+        XCTAssertEqual(callback, URL(string: "panel://reply"))
     }
 
     // MARK: - Rejections
@@ -61,7 +61,7 @@ final class DeepLinkTests: XCTestCase {
     }
 
     func testRejectsWriteWithNoValues() {
-        XCTAssertNil(OpenClipDeepLink.parse(URL(string: "openclip://set?callback=droppy%3A%2F%2Fdone")!))
+        XCTAssertNil(OpenClipDeepLink.parse(URL(string: "openclip://set?callback=panel%3A%2F%2Fdone")!))
     }
 
     /// A web callback would let any page receive the settings, so it is dropped (the route still
@@ -77,7 +77,7 @@ final class DeepLinkTests: XCTestCase {
     // MARK: - Reply
 
     func testSuccessReplyCarriesResultJSON() {
-        let callback = URL(string: "droppy://reply")!
+        let callback = URL(string: "panel://reply")!
         guard let reply = OpenClipDeepLinkReply.success(callback: callback, payload: ["ok": true, "applied": 2]) else {
             return XCTFail("expected a reply URL")
         }
@@ -90,7 +90,7 @@ final class DeepLinkTests: XCTestCase {
     }
 
     func testFailureReplyCarriesMessage() {
-        let callback = URL(string: "droppy://reply")!
+        let callback = URL(string: "panel://reply")!
         guard let reply = OpenClipDeepLinkReply.failure(callback: callback, message: "nope") else {
             return XCTFail("expected a reply URL")
         }

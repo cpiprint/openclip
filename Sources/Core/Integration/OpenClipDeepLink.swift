@@ -2,10 +2,10 @@
 // OpenClip
 //
 // The inbound `openclip://` URL grammar, parsed into a typed value. This is the write/read side of
-// the droplet contract third-party control panels (Droppy) use to mirror and drive OpenClip.
+// the contract third-party control panels use to mirror and drive OpenClip.
 //
 // The parser is pure and lives in Core so the grammar is testable without the app: the router that
-// gates, asks for consent, and performs the side effects stays in the app target.
+// performs the side effects stays in the app target.
 //
 // Routes (host-based, matching the existing `openclip://install`):
 //

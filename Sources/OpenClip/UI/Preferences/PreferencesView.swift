@@ -563,9 +563,6 @@ public struct PreferencesView: View {
         case .appRules:
             AppRulesTab()
                 .settingsPaneWidth()
-        case .integrations:
-            IntegrationsTab()
-                .settingsPaneWidth()
         case .store:
             ExtensionStoreView(viewModel: storeViewModel)
                 .settingsPaneWidth(SettingsLayout.storeMaxWidth)
