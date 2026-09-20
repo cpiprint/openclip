@@ -12,7 +12,7 @@ today, exactly as implemented. It is intentionally not a roadmap — anything no
 
 ## Availability
 
-The settings, command, and write routes are always available — no opt-in switch or approval prompt.
+The settings, command, and write routes are always available.
 
 The `install` route is the existing extension-store flow and keeps its own source allow-list and
 confirmation dialog.
